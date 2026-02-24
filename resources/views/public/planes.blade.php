@@ -3,7 +3,26 @@
 
 @section('content')
 <!-- PLANES -->
-<section id="planes" class="relative home-hero plans-bg w-full py-16 sm:pt-24">
+<section id="planes" class="relative w-full py-16 sm:pt-24">
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+        <!-- Fondo -->
+        <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image:
+        linear-gradient(to bottom,
+          rgba(0,0,0,0) 0%,
+          rgba(0,0,0,0.25) 55%,
+          rgba(0,0,0,0.75) 80%,
+          rgba(0,0,0,1) 100%
+        ),
+        url('{{ Vite::asset('resources/img/hero/planes.webp') }}');" aria-hidden="true"></div>
+
+        <!-- Oscurecer general -->
+        <div class="absolute inset-0 bg-black/85" aria-hidden="true"></div>
+
+        <!-- Grano -->
+        <div class="absolute inset-0 mix-blend-overlay"
+            style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.8%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23n)%27 opacity=%27.6%27/%3E%3C/svg%3E'); background-repeat:repeat;"
+            aria-hidden="true"></div>
+    </div>
     <div class="relative z-10 mx-auto mt-5 max-w-6xl px-4 sm:px-6 lg:px-8" x-data="{
          plan: 'mensual',
          label() {
@@ -51,41 +70,55 @@
         </div>
 
         <!-- Tabs -->
-        <div class="mt-8 flex justify-center">
-            <div class="inline-flex border border-accent">
+          <div class="mt-8 flex justify-center">
+            <div class="w-full flex justify-center max-w-md sm:max-w-none">
+              <div class="flex flex-wrap sm:inline-flex sm:flex-nowrap border border-accent w-full sm:w-auto">
                 <button
-                    class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
-                    :class="plan === 'mensual'
-            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
-            : 'text-accent hover:bg-accent/10 hover:text-accent'" @click="plan = 'mensual'" type="button">
-                    Mensual
+                  class="w-1/2 sm:w-auto text-center font-brand uppercase not-italic px-3 sm:px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+                  :class="plan === 'mensual'
+                    ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+                    : 'text-accent hover:bg-accent/10 hover:text-accent'"
+                  @click="plan = 'mensual'"
+                  type="button"
+                >
+                  Mensual
                 </button>
 
                 <button
-                    class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
-                    :class="plan === 'trimestral'
-            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
-            : 'text-accent hover:bg-accent/10 hover:text-accent'" @click="plan = 'trimestral'" type="button">
-                    Trimestral
+                  class="w-1/2 sm:w-auto text-center font-brand uppercase not-italic px-3 sm:px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+                  :class="plan === 'trimestral'
+                    ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+                    : 'text-accent hover:bg-accent/10 hover:text-accent'"
+                  @click="plan = 'trimestral'"
+                  type="button"
+                >
+                  Trimestral
                 </button>
 
                 <button
-                    class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
-                    :class="plan === 'semestral'
-            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
-            : 'text-accent hover:bg-accent/10 hover:text-accent'" @click="plan = 'semestral'" type="button">
-                    Semestral
+                  class="w-1/2 sm:w-auto text-center font-brand uppercase not-italic px-3 sm:px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+                  :class="plan === 'semestral'
+                    ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+                    : 'text-accent hover:bg-accent/10 hover:text-accent'"
+                  @click="plan = 'semestral'"
+                  type="button"
+                >
+                  Semestral
                 </button>
 
                 <button
-                    class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
-                    :class="plan === 'temporada'
-            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
-            : 'text-accent hover:bg-accent/10 hover:text-accent'" @click="plan = 'temporada'" type="button">
-                    Temporada
+                  class="w-1/2 sm:w-auto text-center font-brand uppercase not-italic px-3 sm:px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+                  :class="plan === 'temporada'
+                    ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+                    : 'text-accent hover:bg-accent/10 hover:text-accent'"
+                  @click="plan = 'temporada'"
+                  type="button"
+                >
+                  Temporada
                 </button>
+              </div>
             </div>
-        </div>
+          </div>
 
         <!-- Cards -->
         <div class="mt-12 grid gap-6 lg:grid-cols-3">
