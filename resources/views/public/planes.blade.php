@@ -4,7 +4,7 @@
 @section('content')
 <!-- PLANES -->
 <section id="planes" class="relative home-hero plans-bg w-full py-16 sm:pt-24">
-    <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8" x-data="{
+    <div class="relative z-10 mx-auto mt-5 max-w-6xl px-4 sm:px-6 lg:px-8" x-data="{
          plan: 'mensual',
          label() {
            if (this.plan === 'mensual') return 'mes'
