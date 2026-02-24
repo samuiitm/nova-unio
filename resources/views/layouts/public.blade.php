@@ -191,7 +191,7 @@
 </main>
 
 <footer>
-    <div class="max-w-7xl m-auto text-xs px-4 lg:px-16 lg:text-lg 2xl:px-24 py-12 flex items-center justify-between">
+    <div class="max-w-7xl m-auto text-xs px-4 lg:px-16 lg:text-lg 2xl:px-24 py-[1.7rem] flex items-center justify-between">
         <p class="text-main">
           © Club Esportiu Nova Unió {{ date('Y') }}. Diseñado y desarrollado por
           <a href="https://samuiitm.github.io" class="text-accent underline">samuiitm</a>
