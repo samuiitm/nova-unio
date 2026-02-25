@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\ContactController;
 
 Route::get('/', [PublicController::class, 'home'])->name('public.home');
 
@@ -15,5 +16,6 @@ Route::get('/preinscripcion', [PublicController::class, 'preinscripcion'])->name
 Route::get('/aviso-legal', [PublicController::class, 'avisoLegal'])->name('public.aviso-legal');
 Route::get('/politica-privacidad', [PublicController::class, 'politicaPrivacidad'])->name('public.politica-privacidad');
 Route::get('/politica-cookies', [PublicController::class, 'politicaCookies'])->name('public.politica-cookies');
+Route::post('/contacto', [ContactController::class, 'store'])->name('public.contacto.enviar');
 
 require __DIR__.'/auth.php';
