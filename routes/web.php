@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PreinscripcionController;
 
 Route::get('/', [PublicController::class, 'home'])->name('public.home');
 
@@ -17,5 +18,8 @@ Route::get('/aviso-legal', [PublicController::class, 'avisoLegal'])->name('publi
 Route::get('/politica-privacidad', [PublicController::class, 'politicaPrivacidad'])->name('public.politica-privacidad');
 Route::get('/politica-cookies', [PublicController::class, 'politicaCookies'])->name('public.politica-cookies');
 Route::post('/contacto', [ContactController::class, 'store'])->name('public.contacto.enviar');
+Route::post('/preinscripcion', [PreinscripcionController::class, 'store'])
+  ->name('public.preinscripcion.enviar')
+  ->middleware('throttle:10,1');
 
 require __DIR__.'/auth.php';
