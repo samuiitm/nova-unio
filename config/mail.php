@@ -115,4 +115,5 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'contact_to' => env('MAIL_CONTACT_TO', 'contacto@novaunio.cat'),
 ];
