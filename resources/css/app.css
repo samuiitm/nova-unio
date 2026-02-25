@@ -45,6 +45,18 @@ body {
   isolation: isolate;
 }
 
+/* animacion de entrada de secciones */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .header-dynamic{
   position: fixed;
   inset-inline: 0;

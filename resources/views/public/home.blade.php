@@ -4,7 +4,7 @@
 @section('content')
 
 <!-- HERO -->
-<section id="hero" class="relative home-hero w-full pt-16 hero-section">
+<section id="hero" class="relative reveal home-hero w-full pt-16 hero-section">
   <div class="relative z-10 mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 flex items-center min-h-[calc(100svh-6rem)] lg:min-h-[calc(100vh-10rem)] hero-container">
     <div class="hero-box flex flex-col gap-8">
       <div class="flex flex-col gap-2">
@@ -23,7 +23,7 @@
       <img src="{{ Vite::asset('resources/img/hero/flechas.svg') }}" alt="" class="w-4 sm:w-5 opacity-80 mt-2">
 
       <a href="{{ route('public.preinscripcion') }}"
-         class="w-fit inline-flex font-brand font-semibold uppercase tracking-wide not-italic bg-accent text-black px-5 py-3 text-sm sm:text-base md:text-lg">
+         class="w-fit inline-flex font-brand font-semibold uppercase tracking-wide not-italic bg-accent text-black px-5 py-3 text-sm sm:text-base md:text-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_50px_-22px_rgba(255,255,0,0.55)] active:translate-y-0">
         Preinscríbete
       </a>
     </div>
@@ -31,7 +31,7 @@
 </section>
 
 <!-- EL CLUB -->
-<section id="el-club" class="relative w-full py-14 sm:pt-20 overflow-hidden md:mt-0">
+<section id="el-club" class="reveal relative w-full py-14 sm:pt-20 overflow-hidden md:mt-0">
   <!-- Fondo SOLO en móvil -->
   <div class="absolute inset-0 lg:hidden pointer-events-none">
     <img
@@ -75,7 +75,7 @@
         </p>
 
         <a href="{{ route('public.elclub') }}"
-           class="mt-8 font-brand uppercase not-italic font-bold tracking-wide bg-accent text-black px-10 py-4 text-lg">
+           class="mt-8 font-brand uppercase not-italic font-bold tracking-wide bg-accent text-black px-10 py-3 text-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_50px_-22px_rgba(255,255,0,0.55)] active:translate-y-0">
           Leer más
         </a>
       </div>
@@ -85,7 +85,7 @@
 </section>
 
 <!-- PLANES -->
-<section id="planes" class="relative home-hero plans-bg w-full py-16 sm:pt-24">
+<section id="planes" class="reveal relative home-hero plans-bg w-full py-16 sm:pt-24">
   <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8" x-data="{ plan: 'mensual' }">
 
     <!-- Título -->
@@ -104,16 +104,20 @@
     <div class="mt-8 flex justify-center">
       <div class="inline-flex border border-accent">
         <button
-          class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base"
-          :class="plan === 'mensual' ? 'bg-accent text-black' : 'text-accent'"
+          class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+          :class="plan === 'mensual'
+            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+            : 'text-accent hover:bg-accent/10 hover:text-accent'"
           @click="plan = 'mensual'"
           type="button"
         >
           Mensual
         </button>
         <button
-          class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base"
-          :class="plan === 'temporada' ? 'bg-accent text-black' : 'text-accent'"
+          class="font-brand uppercase not-italic px-5 py-2 text-sm sm:text-base transition duration-200 ease-out"
+          :class="plan === 'temporada'
+            ? 'bg-accent text-black shadow-[0_10px_30px_-18px_rgba(255,255,0,0.35)]'
+            : 'text-accent hover:bg-accent/10 hover:text-accent'"
           @click="plan = 'temporada'"
           type="button"
         >
@@ -126,112 +130,129 @@
     <div class="mt-12 grid gap-6 lg:grid-cols-3">
 
       <!-- Card 1 -->
-      <div class="border border-white/15 backdrop-blur-[1px] p-6 sm:p-8 bg-gradient-to-tr from-transparent via-white/2 to-white/5">
-        <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">Sambo Kids</h3>
-        <p class="mt-3 text-main text-sm sm:text-base leading-relaxed">
-          Programa formativo que combina judo, jiu jitsu, sambo, grappling y deportes de contacto para aprender a luchar
-          con y sin kimono, defenderse de golpes y entrenar de forma segura en un entorno educativo.
-        </p>
+      <div class="relative overflow-hidden group border border-white/15 backdrop-blur-[1px] p-6 sm:p-8 bg-gradient-to-tr from-transparent via-white/2 to-white/5 transition duration-300 ease-out hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_20px_70px_-30px_rgba(0,0,0,0.85)]">
+        <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300"
+             style="background: radial-gradient(650px 260px at 20% 0%, rgba(255,255,0,0.12), transparent 60%);"></div>
 
-        <div class="mt-6">
-          <div class="text-4xl font-black text-white">
-            <span x-text="plan === 'mensual' ? '30€' : '250€'">30€</span>
-            <span class="text-accent text-sm font-bold" x-text="plan === 'mensual' ? '/mes' : '/temporada'">/mes</span>
+        <div class="relative">
+          <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">Sambo Kids</h3>
+          <p class="mt-3 text-main group-hover:text-[rgb(var(--c-gray)/0.90)] transition duration-200 text-sm sm:text-base leading-relaxed">
+            Programa formativo que combina judo, jiu jitsu, sambo, grappling y deportes de contacto para aprender a luchar
+            con y sin kimono, defenderse de golpes y entrenar de forma segura en un entorno educativo.
+          </p>
+
+          <div class="mt-6">
+            <div class="text-4xl font-black text-white">
+              <span x-text="plan === 'mensual' ? '30€' : '250€'">30€</span>
+              <span class="text-accent text-sm font-bold" x-text="plan === 'mensual' ? '/mes' : '/temporada'">/mes</span>
+            </div>
+            <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-1 group-hover:text-[rgb(var(--c-gray)/0.85)] transition duration-200"
+                 x-text="plan === 'mensual' ? 'Abonar mensualmente o 250€ por temporada' : 'Abonar 250€ por temporada (equivalente a 25€/mes)'">
+              Abonar mensualmente o 250€ por temporada
+            </div>
           </div>
-          <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-1"
-               x-text="plan === 'mensual' ? 'Abonar mensualmente o 250€ por temporada' : 'Abonar 250€ por temporada (equivalente a 30€/mes)'">
-            Abonar mensualmente o 250€ por temporada
-          </div>
+
+          <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
+            <li class="flex gap-3"><span class="text-accent">●</span> 3 días a la semana</li>
+            <li class="flex gap-3"><span class="text-accent">●</span> Seguro deportivo obligatorio</li>
+          </ul>
+
+          <a href="{{ route('public.preinscripcion') }}"
+             class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-transparent border border-accent text-accent px-6 py-3 transition duration-200 ease-out hover:bg-accent hover:text-black hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-20px_rgba(255,255,0,0.45)] active:translate-y-0">
+            Preinscríbete ya
+          </a>
         </div>
-
-        <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
-          <li class="flex gap-3"><span class="text-accent">●</span> 3 días a la semana</li>
-          <li class="flex gap-3"><span class="text-accent">●</span> Seguro deportivo obligatorio</li>
-        </ul>
-
-        <a href="{{ route('public.preinscripcion') }}"
-           class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-transparent border border-accent text-accent px-6 py-3">
-          Preinscríbete ya
-        </a>
       </div>
 
       <!-- Card 2 (destacada) -->
-      <div class="border-4 border-accent bg-gradient-to-br from-transparent via-[rgb(var(--c-accent)/0.10)] to-transparent shadow-[0_0_20px_0_rgba(255,255,0,0.16)] p-6 sm:p-8">
-        <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">MMA-Sambo</h3>
-        <p class="mt-3 text-main text-sm sm:text-base leading-relaxed">
-          Programa con un enfoque completo de combate: Sambo, Combat Sambo y MMA, combinando golpeo, proyecciones y
-          trabajo en el suelo, con luxaciones y sumisiones. Un entrenamiento exigente orientado tanto a la mejora personal
-          como a la competición.
-        </p>
+      <div class="relative overflow-hidden group border-4 border-accent bg-gradient-to-br from-transparent via-[rgb(var(--c-accent)/0.10)] to-transparent shadow-[0_0_20px_0_rgba(255,255,0,0.16)] p-6 sm:p-8 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_30px_90px_-35px_rgba(255,255,0,0.28)]">
+        <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300"
+             style="background: radial-gradient(700px 300px at 50% 10%, rgba(255,255,0,0.16), transparent 60%);"></div>
 
-        <div class="mt-6">
-          <div class="text-4xl font-black text-white">
-            <span x-text="plan === 'mensual' ? '40€' : '300€'">40€</span>
-            <span class="text-accent text-sm font-bold" x-text="plan === 'mensual' ? '/mes' : '/temporada'">/mes</span>
+        <div class="relative">
+          <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">MMA-Sambo</h3>
+          <p class="mt-3 text-main group-hover:text-[rgb(var(--c-gray)/0.90)] transition duration-200 text-sm sm:text-base leading-relaxed">
+            Programa con un enfoque completo de combate: Sambo, Combat Sambo y MMA, combinando golpeo, proyecciones y
+            trabajo en el suelo, con luxaciones y sumisiones. Un entrenamiento exigente orientado tanto a la mejora personal
+            como a la competición.
+          </p>
+
+          <div class="mt-6">
+            <div class="text-4xl font-black text-white">
+              <span x-text="plan === 'mensual' ? '40€' : '300€'">40€</span>
+              <span class="text-accent text-sm font-bold" x-text="plan === 'mensual' ? '/mes' : '/temporada'">/mes</span>
+            </div>
+            <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-1 group-hover:text-[rgb(var(--c-gray)/0.85)] transition duration-200"
+                 x-text="plan === 'mensual' ? 'Abonar mensualmente o 300€ por temporada' : 'Abonar 300€ por temporada (equivalente a 30€/mes)'">
+              Abonar mensualmente o 300€ por temporada
+            </div>
           </div>
-          <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-1"
-               x-text="plan === 'mensual' ? 'Abonar mensualmente o 300€ por temporada' : 'Abonar 300€ por temporada (equivalente a 25€/mes)'">
-            Abonar mensualmente o 300€ por temporada
-          </div>
+
+          <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
+            <li class="flex gap-3"><span class="text-accent">●</span> 3 días a la semana</li>
+            <li class="flex gap-3"><span class="text-accent">●</span> Seguro deportivo obligatorio</li>
+          </ul>
+
+          <a href="{{ route('public.preinscripcion') }}"
+             class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-accent text-black px-6 py-3 transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_50px_-22px_rgba(255,255,0,0.55)] active:translate-y-0">
+            Preinscríbete ya
+          </a>
         </div>
-
-        <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
-          <li class="flex gap-3"><span class="text-accent">●</span> 3 días a la semana</li>
-          <li class="flex gap-3"><span class="text-accent">●</span> Seguro deportivo obligatorio</li>
-        </ul>
-
-        <a href="{{ route('public.preinscripcion') }}"
-           class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-accent text-black px-6 py-3">
-          Preinscríbete ya
-        </a>
       </div>
 
       <!-- Card 3 -->
-      <div class="border border-white/15 bg-gradient-to-tl from-transparent via-white/2 to-white/5 backdrop-blur-[1px] p-6 sm:p-8 flex flex-col justify-between">
-        <div class="flex flex-col">
-          <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">Clases Privadas</h3>
-          <p class="mt-3 text-main text-sm sm:text-base leading-relaxed">
-            Entrenamiento personalizado adaptado a tus objetivos y nivel, con la opción de contratar sesiones sueltas o un
-            bono de 4 entrenamientos individuales para un seguimiento más continuado.
-          </p>
-        </div>
+      <div class="relative overflow-hidden group border border-white/15 bg-gradient-to-tl from-transparent via-white/2 to-white/5 backdrop-blur-[1px] p-6 sm:p-8 flex flex-col justify-between transition duration-300 ease-out hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_20px_70px_-30px_rgba(0,0,0,0.85)]">
+        <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300"
+             style="background: radial-gradient(650px 260px at 20% 0%, rgba(255,255,0,0.10), transparent 60%);"></div>
 
-        <div class="mt-6">
-          <div class="flex sm:flex-row gap-6 sm:gap-8 items-start sm:items-end">
-            <div class="text-4xl font-black text-white">40€ <span class="text-accent text-sm font-bold">/sesión</span></div>
-            <div class="text-4xl font-black text-white">120€ <span class="text-accent text-sm font-bold">/4 sesiones</span></div>
-          </div>
-
-          <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-2">
-            Abonar 40€ por sesión suelta o 120€ por bono de 4 sesiones
-          </div>
+        <div class="relative flex flex-col justify-between h-full">
           <div class="flex flex-col">
-            <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
-              <li class="flex gap-3"><span class="text-accent">●</span> Entrenamiento adaptado a tu nivel y objetivos</li>
-              <li class="flex gap-3"><span class="text-accent">●</span> Seguimiento técnico individual</li>
-            </ul>
+            <h3 class="uppercase font-black text-2xl sm:text-3xl text-white">Clases Privadas</h3>
+            <p class="mt-3 text-main group-hover:text-[rgb(var(--c-gray)/0.90)] transition duration-200 text-sm sm:text-base leading-relaxed">
+              Entrenamiento personalizado adaptado a tus objetivos y nivel, con la opción de contratar sesiones sueltas o un
+              bono de 4 entrenamientos individuales para un seguimiento más continuado.
+            </p>
+          </div>
 
-            <a href="{{ route('public.contacto') }}"
-              class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-transparent border border-accent text-accent px-6 py-3">
-              Contacta ya
-            </a>
+          <div class="mt-6">
+            <div class="flex sm:flex-row gap-6 sm:gap-8 items-start sm:items-end">
+              <div class="text-4xl font-black text-white">40€ <span class="text-accent text-sm font-bold">/sesión</span></div>
+              <div class="text-4xl font-black text-white">120€ <span class="text-accent text-sm font-bold">/4 sesiones</span></div>
+            </div>
+
+            <div class="text-[rgb(var(--c-gray)/0.70)] text-sm mt-2 group-hover:text-[rgb(var(--c-gray)/0.85)] transition duration-200">
+              Abonar 40€ por sesión suelta o 120€ por bono de 4 sesiones
+            </div>
+
+            <div class="flex flex-col">
+              <ul class="mt-6 space-y-3 text-[rgb(var(--c-white)/0.80)] text-sm">
+                <li class="flex gap-3"><span class="text-accent">●</span> Entrenamiento adaptado a tu nivel y objetivos</li>
+                <li class="flex gap-3"><span class="text-accent">●</span> Seguimiento técnico individual</li>
+              </ul>
+
+              <a href="{{ route('public.contacto') }}"
+                 class="mt-8 inline-flex w-full justify-center font-brand uppercase not-italic bg-transparent border border-accent text-accent px-6 py-3 transition duration-200 ease-out hover:bg-accent hover:text-black hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-20px_rgba(255,255,0,0.45)] active:translate-y-0">
+                Contacta ya
+              </a>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <div class="flex flex-col gap-4 m-auto w-fit mt-12">
       <a href="{{ route('public.planes') }}"
-         class="w-fit inline-flex font-brand font-semibold uppercase tracking-wide not-italic bg-accent text-black px-5 py-3 text-sm sm:text-base md:text-lg">
+         class="w-fit inline-flex font-brand font-semibold uppercase tracking-wide not-italic bg-accent text-black px-5 py-3 text-sm sm:text-base md:text-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_50px_-22px_rgba(255,255,0,0.55)] active:translate-y-0">
         Ver más planes
       </a>
     </div>
-    
+
   </div>
 </section>
 
 <!-- FAQ + CONTACTO -->
-<section id="faq" class="relative w-full sm:pt-10">
+<section id="faq" class="reveal relative w-full sm:pt-10">
   <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 
     <div class="max-w-3xl">
