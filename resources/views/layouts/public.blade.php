@@ -49,7 +49,7 @@
 >
   <nav class="relative w-full px-4 lg:px-16 2xl:px-24 py-4 flex items-center justify-between">
     <a href="{{ route('public.home') }}" class="flex items-center gap-3 transition duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0">
-      <img src="{{ Vite::asset('resources/img/logo.png') }}" alt="Nova Unió" class="h-10 sm:h-12 w-auto opacity-90">
+      <img src="{{ Vite::asset('resources/img/logo-novaunio.svg') }}" alt="Nova Unió" class="h-10 sm:h-12 w-auto opacity-90">
     </a>
 
     <div class="flex items-center gap-3">

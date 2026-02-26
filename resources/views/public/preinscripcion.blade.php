@@ -6,7 +6,7 @@
 
   <!-- Fondo -->
   <div class="fixed inset-0 -z-10 pointer-events-none">
-    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image:
+    <div class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image:
     linear-gradient(to bottom,
     rgba(0,0,0,0) 0%,
     rgba(0,0,0,0.25) 55%,
