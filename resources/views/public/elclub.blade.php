@@ -99,17 +99,15 @@
         // Solo si el scroll ocurre dentro de esta sección
         if (!this.$el.contains(e.target)) return;
 
-        // si está haciendo zoom con ctrl, no toques
+        // si está haciendo zoom con ctrl no tocar el scroll
         if (e.ctrlKey) return;
 
         const dy = e.deltaY || 0;
-
-        // trackpads a veces dan valores muy pequeños
         if (Math.abs(dy) < 2) return;
 
         const dir = dy > 0 ? 1 : -1;
 
-        // Si ya estamos al principio y sube, o al final y baja, deja scroll normal
+        // Si ya estamos al principio y sube, o al final y baja, dejar scroll normal
         if ((dir < 0 && this.active <= 0) || (dir > 0 && this.active >= this.total - 1)) {
             return;
         }
@@ -125,10 +123,8 @@
         this.goClamp(this.active + dir);
         };
 
-        // IMPORTANTE: en window, para que siempre se capture
         window.addEventListener('wheel', wheelHandler, { passive: false });
 
-        // limpieza al salir de la página
         if (this.$cleanup) {
         this.$cleanup(() => window.removeEventListener('wheel', wheelHandler));
         }
@@ -174,10 +170,6 @@
     @endforeach
 
     <div class="absolute inset-0 bg-black/55"></div>
-
-    <div class="absolute inset-0 opacity-[0.10] mix-blend-overlay"
-         style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.8%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23n)%27 opacity=%27.6%27/%3E%3C/svg%3E'); background-repeat:repeat;">
-    </div>
 
     <div class="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/85 to-transparent"></div>
   </div>

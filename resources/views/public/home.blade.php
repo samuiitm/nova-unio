@@ -88,23 +88,19 @@
 </section>
 
 <!-- PLANES -->
-<section id="planes" class="reveal relative plans-bg w-full py-16 sm:pt-24">
+<section id="planes" class="reveal relative plans-bg w-full py-10 sm:pt-10">
     <!-- Fondo (solo para esta sección) -->
     <div class="absolute inset-0 -z-10 pointer-events-none">
         <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image:
         linear-gradient(to bottom,
-        rgba(0,0,0,0.9) 0%,
+        rgba(0,0,0,0.5) 0%,
         rgba(0,0,0,0.25) 55%,
-        rgba(0,0,0,0.75) 80%,
-        rgba(0,0,0,1) 100%
+        rgba(0,0,0,0.6) 80%,
+        rgba(0,0,0,8) 100%
         ),
         url('{{ Vite::asset('resources/img/hero/planes.webp') }}');" aria-hidden="true"></div>
 
         <div class="absolute inset-0 bg-black/80" aria-hidden="true"></div>
-
-        <div class="absolute inset-0 mix-blend-overlay"
-            style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.8%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23n)%27 opacity=%27.6%27/%3E%3C/svg%3E'); background-repeat:repeat;"
-            aria-hidden="true"></div>
     </div>
     <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8" x-data="{ plan: 'mensual' }">
 
@@ -286,7 +282,7 @@
 </section>
 
 <!-- FAQ + CONTACTO -->
-<section id="faq" class="reveal relative w-full sm:pt-10">
+<section id="faq" class="reveal relative w-full">
     <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 
         <div class="max-w-3xl">
@@ -346,7 +342,7 @@
             </div>
         </div>
 
-        <div class="mt-14 flex mx-auto justify-center items-center gap-10">
+        <div class="mt-10 flex mx-auto justify-center items-center gap-10">
             <div class="font-black text-xl sm:text-3xl text-white/90">
                 Mantente en contacto
             </div>
@@ -389,7 +385,7 @@
         </div>
 
         <!-- Separador antes del footer -->
-        <div class="mt-14 h-[4px]
+        <div class="mt-10 h-[4px]
       bg-[radial-gradient(circle,rgba(255,255,255,0.2)_2px,transparent_2px)]
       bg-[length:8px_4px]
       bg-repeat-x"></div>

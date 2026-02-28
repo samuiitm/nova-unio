@@ -59,10 +59,6 @@ $filas = [
 
         <!-- Oscurecer general -->
         <div class="absolute inset-0 bg-black/80" aria-hidden="true"></div>
-
-        <div class="absolute inset-0 mix-blend-overlay"
-            style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.8%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23n)%27 opacity=%27.6%27/%3E%3C/svg%3E'); background-repeat:repeat;"
-            aria-hidden="true"></div>
     </div>
     </div>
 

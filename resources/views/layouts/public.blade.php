@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 </head>
 
-<body class="min-h-screen bg-svg text-main">
+<body class="min-h-screen bg-black text-main">
 <header
   class="header-dynamic z-[90]"
   x-data="{ open: false, a: 0 }"
@@ -92,10 +92,6 @@
       @click.self="open = false"
       @keydown.escape.window="open = false"
     >
-      <!-- ruido suave encima del negro -->
-      <div class="absolute inset-0 pointer-events-none opacity-[0.10] mix-blend-overlay"
-           style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.8%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27140%27 height=%27140%27 filter=%27url(%23n)%27 opacity=%27.6%27/%3E%3C/svg%3E'); background-repeat:repeat;">
-      </div>
 
       <div class="h-full flex flex-col justify-center mt-8 px-4 sm:px-6 lg:px-16 2xl:px-24">
         <div class="mx-auto w-full max-w-3xl">
