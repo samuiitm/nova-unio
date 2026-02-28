@@ -1,5 +1,5 @@
 import './bootstrap';
-
+import.meta.glob(['../img/**/*'], { eager: true });
 import Alpine from 'alpinejs'
 import collapse from '@alpinejs/collapse'
 
