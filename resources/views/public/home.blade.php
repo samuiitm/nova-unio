@@ -5,7 +5,8 @@
 @section('og_image', Vite::asset('resources/img/banner.webp'))
 
 @push('head')
-<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero-mobile.webp') }}" type="image/webp" media="(max-width: 1023px)">
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero-desktop.webp') }}" type="image/webp" media="(min-width: 1024px)">
 @endpush
 
 @section('content')
@@ -42,8 +43,13 @@
 <section id="el-club" class="reveal relative w-full py-14 sm:pt-12 overflow-hidden md:mt-0">
     <!-- Fondo SOLO en móvil -->
     <div class="absolute inset-0 lg:hidden pointer-events-none">
-        <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt="" width="720" height="960" loading="lazy" decoding="async"
-        class="h-full w-full object-cover opacity-35 mix-blend-multiply">
+        <img
+            src="{{ Vite::asset('resources/img/home/home-elclub-420.webp') }}"
+            alt=""
+            width="420" height="560"
+            loading="lazy"
+            decoding="async"
+            class="h-full w-full object-cover opacity-35 mix-blend-multiply">
 
         <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent"></div>
     </div>
@@ -54,8 +60,13 @@
             <!-- Imagen izquierda SOLO en desktop -->
             <div class="hidden lg:block relative">
                 <div class="aspect-3 overflow-hidden">
-                    <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt="El club" width="720" height="960" loading="lazy" decoding="async"
-                    class="h-full w-full object-cover opacity-80">
+                    <img
+                        src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}"
+                        alt="El club"
+                        width="720" height="960"
+                        loading="lazy"
+                        decoding="async"
+                        class="h-full w-full object-cover opacity-80">
                 </div>
                 <div
                     class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent">

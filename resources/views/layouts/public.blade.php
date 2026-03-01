@@ -49,8 +49,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link rel="stylesheet" href="https://use.typekit.net/fxa0uin.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://use.typekit.net/fxa0uin.css" as="style" crossorigin
+      onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://use.typekit.net/fxa0uin.css"></noscript>
+
+    <link rel="preload"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap">
+    </noscript>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -109,7 +119,11 @@
 >
   <nav class="relative w-full px-4 lg:px-16 2xl:px-24 py-4 flex items-center justify-between">
     <a href="{{ route('public.home') }}" class="flex items-center gap-3 transition duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0">
-      <img src="{{ Vite::asset('resources/img/logo-novaunio.svg') }}" alt="Nova Unió" class="h-10 sm:h-12 w-auto opacity-90">
+      <img src="{{ Vite::asset('resources/img/logo-novaunio.svg') }}"
+            alt="Nova Unió"
+            width="48" height="48"
+            decoding="async"
+            class="h-10 sm:h-12 w-auto opacity-90">
     </a>
 
     <div class="flex items-center gap-3">
