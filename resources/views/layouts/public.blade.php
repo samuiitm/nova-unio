@@ -19,7 +19,7 @@
         $robots      = trim($__env->yieldContent('meta_robots')) ?: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
     @endphp
 
-    <title>{{!! $title !!}}</title>
+    <title>{!! $title !!}</title>
     <meta name="description" content="{{ $description }}">
     <meta name="robots" content="{{ $robots }}">
     <link rel="canonical" href="{{ $canonical }}">
