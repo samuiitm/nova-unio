@@ -1,5 +1,8 @@
 @extends('layouts.public')
-@section('title','Nova Unió')
+
+@section('title','Nova Unió · Club de MMA y Sambo')
+@section('meta_description','Club de artes marciales Nova Unió: MMA y Sambo. Entrenamientos para niños, youth y adultos. Consulta planes, horarios, profesores y haz la preinscripción online.')
+@section('og_image', Vite::asset('resources/img/hero/hero.webp'))
 
 @section('content')
 

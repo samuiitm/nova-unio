@@ -1,15 +1,74 @@
 <!doctype html>
 <html lang="es">
+<!doctype html>
+<html lang="{{ str_replace('_','-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Nova Unió')</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="google-site-verification" content="8k-PPG0EF-rqgSVuGiRkWwZaN2AWPCzJz-u5ELU8yiU" />
+
+    @php
+        $siteName    = config('app.name', 'Nova Unió');
+        $canonical   = trim($__env->yieldContent('canonical')) ?: url()->current();
+        $title       = trim($__env->yieldContent('title')) ?: $siteName;
+        $description = trim($__env->yieldContent('meta_description')) ?: 'Club de artes marciales Nova Unió: MMA y Sambo. Entrenamientos para niños, adolescentes y adultos. Planes, horarios, profesores y preinscripción online.';
+        $ogType      = trim($__env->yieldContent('og_type')) ?: 'website';
+        $ogImage     = trim($__env->yieldContent('og_image')) ?: Vite::asset('resources/img/banner.webp');
+        $ogImageAbs  = str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage);
+        $robots      = trim($__env->yieldContent('meta_robots')) ?: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+    @endphp
+
+    <title>{{ $title }}</title>
+    <meta name="description" content="{{ $description }}">
+    <meta name="robots" content="{{ $robots }}">
+    <link rel="canonical" href="{{ $canonical }}">
+    <link rel="alternate" hreflang="es" href="{{ $canonical }}">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:type" content="{{ $ogType }}">
+    <meta property="og:title" content="{{ $title }}">
+    <meta property="og:description" content="{{ $description }}">
+    <meta property="og:url" content="{{ $canonical }}">
+    <meta property="og:locale" content="es_ES">
+    <meta property="og:image" content="{{ $ogImageAbs }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $title }}">
+    <meta name="twitter:description" content="{{ $description }}">
+    <meta name="twitter:image" content="{{ $ogImageAbs }}">
+
+    <meta name="theme-color" content="#000000">
+
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+    <link rel="preconnect" href="https://p.typekit.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link rel="stylesheet" href="https://use.typekit.net/fxa0uin.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <meta name="google-site-verification" content="8k-PPG0EF-rqgSVuGiRkWwZaN2AWPCzJz-u5ELU8yiU" />
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @hasSection('jsonld')
+        @yield('jsonld')
+    @else
+        <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => $siteName,
+            'url' => url('/'),
+            'logo' => url(Vite::asset('resources/img/logo.png')),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
+    @endif
+
+    @stack('head')
 </head>
 
 <body class="min-h-screen bg-black text-main">

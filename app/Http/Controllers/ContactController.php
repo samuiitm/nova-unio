@@ -22,8 +22,12 @@ class ContactController extends Controller
             'mensaje'  => $data['mensaje'],
         ]);
 
-        // Mandamos mail al club
-        Mail::to(config('mail.contact_to'))->send(new ContactoMail($msg));
+        // Mandamos mail al club (si falla, no rompemos el flujo)
+        try {
+            Mail::to(config('mail.contact_to'))->send(new ContactoMail($msg));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return back()->with('ok', '¡Mensaje enviado! Te contestaremos lo antes posible.');
     }
