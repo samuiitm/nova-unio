@@ -44,7 +44,7 @@ jobs:
           rm -rf deploy_out
           mkdir -p deploy_out/nova-unio
 
-          # Copiar TODO el proyecto a /nova-unio (incluye vendor y public/build)
+          # Copia TODO el proyecto a /nova-unio (incluye vendor y public/build)
           rsync -a --delete \
             --exclude='.git' \
             --exclude='.github' \
@@ -54,24 +54,32 @@ jobs:
             --exclude='storage/logs' \
             ./ deploy_out/nova-unio/
 
-          # Copiar lo "público" al root (/, donde está el dominio)
-          # .htaccess del public
+          # .htaccess del public al root (/)
           if [ -f "public/.htaccess" ]; then cp public/.htaccess deploy_out/.htaccess; fi
 
           # build de Vite al root (/build)
           if [ -d "public/build" ]; then cp -R public/build deploy_out/build; fi
 
-          # index.php en root, pero apuntando a /nova-unio/...
-          php -r '
-            $src = file_get_contents("public/index.php");
-            $src = str_replace("__DIR__.\"/../\"", "__DIR__.\"/nova-unio/\"", $src);
-            $src = str_replace("__DIR__.\"/../vendor\"", "__DIR__.\"/nova-unio/vendor\"", $src);
-            $src = str_replace("__DIR__.\"/../bootstrap\"", "__DIR__.\"/nova-unio/bootstrap\"", $src);
-            $src = str_replace("__DIR__.\"/../storage\"", "__DIR__.\"/nova-unio/storage\"", $src);
-            file_put_contents("deploy_out/index.php", $src);
-          ';
+          # Index.php del root (/) apuntando SIEMPRE a /nova-unio/...
+          cat > deploy_out/index.php <<'PHP'
+          <?php
 
-          # Copia opcional de robots/favicon si existen
+          use Illuminate\Http\Request;
+
+          define('LARAVEL_START', microtime(true));
+
+          if (file_exists($maintenance = __DIR__.'/nova-unio/storage/framework/maintenance.php')) {
+              require $maintenance;
+          }
+
+          require __DIR__.'/nova-unio/vendor/autoload.php';
+
+          $app = require_once __DIR__.'/nova-unio/bootstrap/app.php';
+
+          $app->handleRequest(Request::capture());
+          PHP
+
+          # Opcional
           if [ -f "public/robots.txt" ]; then cp public/robots.txt deploy_out/robots.txt; fi
           if [ -f "public/favicon.ico" ]; then cp public/favicon.ico deploy_out/favicon.ico; fi
 
