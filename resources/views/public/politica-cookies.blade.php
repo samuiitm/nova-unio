@@ -3,6 +3,10 @@
 
 @section('meta_description','Política de cookies de Nova Unió: qué cookies usamos, para qué sirven y cómo gestionarlas.')
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 

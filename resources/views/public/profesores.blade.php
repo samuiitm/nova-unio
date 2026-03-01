@@ -4,6 +4,10 @@
 @section('meta_description','Equipo técnico de Nova Unió: entrenadores de MMA y Sambo con experiencia y metodología clara. Conócelos y entrena con confianza.')
 @section('og_image', Vite::asset('resources/img/hero/profesores.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/profesores.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 @php
 $profesores = [
@@ -145,9 +149,10 @@ entrenar con seriedad en un ambiente cercano y respetuoso.'
                     <div class="relative">
                         <div class="aspect-[4/5] md:aspect-auto md:h-full bg-black/40 overflow-hidden">
                             <img src="{{ $p['foto'] }}" onerror="this.onerror=null;this.src='{{ $p['fallback'] }}';"
-                                alt="Foto de {{ $p['nombre'] }}"
-                                class="h-full w-full object-cover opacity-95 group-hover:opacity-100 transition duration-300"
-                                loading="lazy">
+                            alt="Foto de {{ $p['nombre'] }}"
+                            class="h-full w-full object-cover opacity-95 group-hover:opacity-100 transition duration-300"
+                            width="750" height="1000" decoding="async"
+                            loading="lazy">
                         </div>
 
                         <!-- overlay foto -->

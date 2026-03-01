@@ -4,6 +4,10 @@
 @section('meta_description','Club de artes marciales Nova Unió: MMA y Sambo. Entrenamientos para niños, youth y adultos. Consulta planes, horarios, profesores y haz la preinscripción online.')
 @section('og_image', Vite::asset('resources/img/banner.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 
 <!-- HERO -->
@@ -24,8 +28,8 @@
                 </p>
             </div>
 
-            <img src="{{ Vite::asset('resources/img/hero/flechas.svg') }}" alt="" class="w-4 sm:w-5 opacity-80 mt-2">
-
+            <img src="{{ Vite::asset('resources/img/hero/flechas.svg') }}" alt="" width="10" height="45" class="w-4 sm:w-5 opacity-80 mt-2" decoding="async">
+            
             <a href="{{ route('public.preinscripcion') }}"
                 class="w-fit inline-flex font-brand font-semibold uppercase tracking-wide not-italic bg-accent text-black px-5 py-3 text-sm sm:text-base md:text-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_50px_-22px_rgba(255,255,0,0.55)] active:translate-y-0">
                 Preinscríbete
@@ -38,8 +42,9 @@
 <section id="el-club" class="reveal relative w-full py-14 sm:pt-12 overflow-hidden md:mt-0">
     <!-- Fondo SOLO en móvil -->
     <div class="absolute inset-0 lg:hidden pointer-events-none">
-        <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt=""
-            class="h-full w-full object-cover opacity-35 mix-blend-multiply">
+        <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt="" width="720" height="960" loading="lazy" decoding="async"
+        class="h-full w-full object-cover opacity-35 mix-blend-multiply">
+
         <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent"></div>
     </div>
 
@@ -49,8 +54,8 @@
             <!-- Imagen izquierda SOLO en desktop -->
             <div class="hidden lg:block relative">
                 <div class="aspect-3 overflow-hidden">
-                    <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt="El club"
-                        class="h-full w-full object-cover opacity-80">
+                    <img src="{{ Vite::asset('resources/img/home/home-elclub.webp') }}" alt="El club" width="720" height="960" loading="lazy" decoding="async"
+                    class="h-full w-full object-cover opacity-80">
                 </div>
                 <div
                     class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent">

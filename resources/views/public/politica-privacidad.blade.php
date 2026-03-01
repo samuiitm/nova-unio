@@ -2,6 +2,10 @@
 @section('title','Política de privacidad · Nova Unió')
 @section('meta_description','Política de privacidad de Nova Unió: tratamiento de datos, finalidades, base legal y derechos del usuario.')
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 

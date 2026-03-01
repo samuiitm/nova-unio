@@ -1,4 +1,4 @@
 User-agent: *
-Disallow:
+Disallow: /nova-unio/
 
 Sitemap: https://novaunio.cat/sitemap.xml

@@ -4,6 +4,10 @@
 @section('meta_description','Horarios de entrenamientos en Nova Unió. Consulta las clases semanales de MMA y Sambo y encuentra el grupo que mejor encaja contigo.')
 @section('og_image', Vite::asset('resources/img/hero/horarios.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/horarios.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 @php
 $dias = [

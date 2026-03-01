@@ -4,6 +4,10 @@
 @section('meta_description','Planes y cuotas de Nova Unió: opciones por edades y niveles para MMA y Sambo. Elige tu plan y empieza a entrenar con nosotros.')
 @section('og_image', Vite::asset('resources/img/hero/planes.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/planes.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 <!-- PLANES -->
 <section id="planes" class="relative w-full py-16 sm:pt-24">

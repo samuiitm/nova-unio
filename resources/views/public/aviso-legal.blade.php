@@ -3,6 +3,10 @@
 
 @section('meta_description','Aviso legal de Nova Unió: información del titular, condiciones de uso y responsabilidades.')
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 

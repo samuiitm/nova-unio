@@ -4,6 +4,10 @@
 @section('meta_description','Resolvemos dudas frecuentes: qué necesitas para empezar, niveles, edades, seguridad, prueba, cuotas y cómo funciona el club.')
 @section('og_image', Vite::asset('resources/img/hero/faq.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/faq.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 @php
 $faq = [

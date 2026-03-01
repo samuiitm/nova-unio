@@ -3,6 +3,10 @@
 @section('meta_description','Conoce Nova Unió: historia, valores y cómo entrenamos MMA y Sambo. Un ambiente exigente, seguro y cercano para progresar de verdad.')
 @section('og_image', Vite::asset('resources/img/el-club/adultos.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/el-club/recuerdos.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 @php
   $steps = [

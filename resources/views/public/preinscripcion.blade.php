@@ -4,6 +4,10 @@
 @section('meta_description','Haz la preinscripción para entrenar en Nova Unió. Envíanos tus datos y te proponemos el grupo y plan más adecuados para ti.')
 @section('og_image', Vite::asset('resources/img/hero/preinscripcion.webp'))
 
+@push('head')
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/preinscripcion.webp') }}" type="image/webp">
+@endpush
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 
