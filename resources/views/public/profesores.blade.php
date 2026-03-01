@@ -16,7 +16,7 @@ $profesores = [
 'nombre' => 'Alejo Luna',
 'roles' => ['Clases MMA', 'Sambo Kids'],
 'foto' => Vite::asset('resources/img/profesores/alejo-luna.webp'),
-'fallback' => Vite::asset('resources/img/hero/hero.webp'),
+'fallback' => Vite::asset('resources/img/hero/hero-desktop.webp'),
 'subtitulo' => 'Entrenador de MMA · Competidor activo',
 'bio_corta' => 'Entrenador de MMA y Sambo kids en el club y luchador activo, donde compite a nivel amateur.',
 'bio' => [
@@ -41,7 +41,7 @@ entrenar con seriedad en un ambiente cercano y respetuoso.'
   'nombre' => 'Marc Dailos',
   'roles' => ['Headcoach', 'Entrenador de Sambo'],
   'foto' => Vite::asset('resources/img/profesores/marc-dailos.webp'),
-  'fallback' => Vite::asset('resources/img/hero/hero.webp'),
+  'fallback' => Vite::asset('resources/img/hero/hero-desktop.webp'),
   'subtitulo' => 'Headcoach · Entrenador de Sambo',
   'bio_corta' => 'Deportista y entrenador con más de 30 años de experiencia en el mundo de la lucha, vinculado a judo y disciplinas de combate.',
   'bio' => [

@@ -3,7 +3,8 @@
 @section('meta_description','Política de privacidad de Nova Unió: tratamiento de datos, finalidades, base legal y derechos del usuario.')
 
 @push('head')
-<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero.webp') }}" type="image/webp">
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero-mobile.webp') }}" type="image/webp" media="(max-width: 1023px)">
+<link rel="preload" as="image" href="{{ Vite::asset('resources/img/hero/hero-desktop.webp') }}" type="image/webp" media="(min-width: 1024px)">
 @endpush
 
 @section('content')
@@ -18,7 +19,7 @@
     rgba(0,0,0,0.75) 80%,
     rgba(0,0,0,1) 100%
     ),
-    url('{{ Vite::asset('resources/img/hero/hero.webp') }}');" aria-hidden="true"></div>
+    url('{{ Vite::asset('resources/img/hero/hero-desktop.webp') }}');" aria-hidden="true"></div>
 
     <!-- Oscurecer general -->
     <div class="absolute inset-0 bg-black/80" aria-hidden="true"></div>
