@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title','Contacto · Nova Unió')
 
+@section('meta_description','Contacto Nova Unió. Escríbenos para dudas, pruebas, grupos, planes u horarios y te orientamos según tu edad y objetivo.')
+@section('og_image', Vite::asset('resources/img/hero/contacto.webp'))
+
 @section('content')
 <section class="relative w-full pt-16 pb-4 sm:pt-24">
 

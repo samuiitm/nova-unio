@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title','Profesores · Nova Unió')
 
+@section('meta_description','Equipo técnico de Nova Unió: entrenadores de MMA y Sambo con experiencia y metodología clara. Conócelos y entrena con confianza.')
+@section('og_image', Vite::asset('resources/img/hero/profesores.webp'))
+
 @section('content')
 @php
 $profesores = [

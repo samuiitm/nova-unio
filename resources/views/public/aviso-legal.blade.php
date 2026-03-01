@@ -1,6 +1,8 @@
 @extends('layouts.public')
 @section('title','Aviso legal · Nova Unió')
 
+@section('meta_description','Aviso legal de Nova Unió: información del titular, condiciones de uso y responsabilidades.')
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 

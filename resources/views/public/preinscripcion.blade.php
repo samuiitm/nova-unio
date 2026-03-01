@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title','Preinscripción · Nova Unió')
 
+@section('meta_description','Haz la preinscripción para entrenar en Nova Unió. Envíanos tus datos y te proponemos el grupo y plan más adecuados para ti.')
+@section('og_image', Vite::asset('resources/img/hero/preinscripcion.webp'))
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 

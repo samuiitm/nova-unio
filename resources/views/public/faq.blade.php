@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title','Preguntas frecuentes · Nova Unió')
 
+@section('meta_description','Resolvemos dudas frecuentes: qué necesitas para empezar, niveles, edades, seguridad, prueba, cuotas y cómo funciona el club.')
+@section('og_image', Vite::asset('resources/img/hero/faq.webp'))
+
 @section('content')
 @php
 $faq = [

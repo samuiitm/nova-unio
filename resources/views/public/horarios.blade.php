@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title','Horarios · Nova Unió')
 
+@section('meta_description','Horarios de entrenamientos en Nova Unió. Consulta las clases semanales de MMA y Sambo y encuentra el grupo que mejor encaja contigo.')
+@section('og_image', Vite::asset('resources/img/hero/horarios.webp'))
+
 @section('content')
 @php
 $dias = [

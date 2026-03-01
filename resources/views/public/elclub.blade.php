@@ -1,5 +1,7 @@
 @extends('layouts.public')
 @section('title','El club · Nova Unió')
+@section('meta_description','Conoce Nova Unió: historia, valores y cómo entrenamos MMA y Sambo. Un ambiente exigente, seguro y cercano para progresar de verdad.')
+@section('og_image', Vite::asset('resources/img/el-club/adultos.webp'))
 
 @section('content')
 @php

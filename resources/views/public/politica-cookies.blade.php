@@ -1,6 +1,8 @@
 @extends('layouts.public')
 @section('title','Política de cookies · Nova Unió')
 
+@section('meta_description','Política de cookies de Nova Unió: qué cookies usamos, para qué sirven y cómo gestionarlas.')
+
 @section('content')
 <section class="relative w-full py-16 sm:pt-24">
 
