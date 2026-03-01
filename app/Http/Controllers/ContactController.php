@@ -9,26 +9,23 @@ use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
-    public function store(StoreContactRequest $request)
-    {
-        $data = $request->validated();
+    public function store(StoreContactRequest $request){
+        $to = config('mail.contact_to') ?: config('mail.from.address');
 
-        // Guardamos en BD (va bien para no perder mensajes)
-        $msg = ContactMessage::create([
-            'nombre'   => $data['nombre'],
-            'email'    => $data['email'],
-            'telefono' => $data['telefono'] ?? null,
-            'asunto'   => $data['asunto'],
-            'mensaje'  => $data['mensaje'],
-        ]);
+        $smtp = config('mail.mailers.smtp');
+        $hasSmtp = !empty($smtp['host'])
+            && $smtp['host'] !== '127.0.0.1'
+            && !empty($smtp['username']);
 
-        // Mandamos mail al club (si falla, no rompemos el flujo)
+        $mailer = config('mail.default');
+        if (in_array($mailer, ['log', 'array'], true) && $hasSmtp) {
+            $mailer = 'smtp';
+        }
+
         try {
-            Mail::to(config('mail.contact_to'))->send(new ContactoMail($msg));
+            Mail::mailer($mailer)->to($to)->send(new ContactoMail($msg));
         } catch (\Throwable $e) {
             report($e);
         }
-
-        return back()->with('ok', '¡Mensaje enviado! Te contestaremos lo antes posible.');
     }
 }

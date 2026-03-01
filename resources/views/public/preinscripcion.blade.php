@@ -143,7 +143,7 @@
                        focus:border-accent focus:shadow-[0_0_0_3px_rgba(255,255,0,0.15)]"
               >
                 <option value="" class="bg-black">Selecciona…</option>
-                @foreach(['Sambo Kids', 'MMA', 'Sambo Adultos', 'Combat Sambo'] as $m)
+                @foreach(['Sambo Kids', 'MMA', 'Sambo', 'Combat Sambo', 'MMA-Sambo'] as $m)
                   <option value="{{ $m }}" @selected(old('modalidad')===$m) class="bg-black">{{ $m }}</option>
                 @endforeach
               </select>

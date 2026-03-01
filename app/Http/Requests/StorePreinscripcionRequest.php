@@ -21,7 +21,14 @@ class StorePreinscripcionRequest extends FormRequest
             'telefono'  => ['nullable','string','max:30'],
             'edad'      => ['nullable','integer','min:3','max:80'],
 
-            'modalidad' => ['required', Rule::in(['Sambo Kids','MMA-Sambo','Sambo Adultos','MMA Youth','Sparring'])],
+            'modalidad' => ['required', Rule::in([
+                'Sambo Kids',
+                'MMA',
+                'Sambo',
+                'Combat Sambo',
+                'MMA-Sambo'
+            ])],
+
             'nivel'     => ['nullable', Rule::in(['Principiante','Intermedio','Avanzado'])],
             'objetivo'  => ['nullable', Rule::in(['Aprender','Ponerme en forma','Competir'])],
             'mensaje'   => ['nullable','string','max:2000'],
