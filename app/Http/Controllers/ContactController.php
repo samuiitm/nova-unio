@@ -9,7 +9,18 @@ use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
-    public function store(StoreContactRequest $request){
+    public function store(StoreContactRequest $request)
+    {
+        $data = $request->validated();
+
+        $msg = ContactMessage::create([
+            'nombre'   => $data['nombre'],
+            'email'    => $data['email'],
+            'telefono' => $data['telefono'] ?? null,
+            'asunto'   => $data['asunto'] ?? null,
+            'mensaje'  => $data['mensaje'],
+        ]);
+
         $to = config('mail.contact_to') ?: config('mail.from.address');
 
         $smtp = config('mail.mailers.smtp');
@@ -27,5 +38,7 @@ class ContactController extends Controller
         } catch (\Throwable $e) {
             report($e);
         }
+
+        return back()->with('ok', 'Se ha enviado correctamente. Te responderemos lo antes posible.');
     }
 }
