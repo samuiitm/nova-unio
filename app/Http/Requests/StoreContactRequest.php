@@ -16,7 +16,7 @@ class StoreContactRequest extends FormRequest
         return [
             'nombre'   => ['required', 'string', 'max:80'],
             'email'    => ['required', 'email', 'max:120'],
-            'telefono' => ['nullable', 'string', 'max:30'],
+            'telefono' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s().-]{7,20}$/'],
             'asunto'   => ['required', 'string', 'max:120'],
             'mensaje'  => ['required', 'string', 'min:10', 'max:2000'],
             // anti-spam
@@ -27,6 +27,7 @@ class StoreContactRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'telefono.regex' => 'El teléfono no parece válido. Usa solo números y opcionalmente prefijo (ej. +34).',
             'empresa.max' => 'Error al enviar el formulario.',
         ];
     }

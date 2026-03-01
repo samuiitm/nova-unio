@@ -6,6 +6,7 @@ use App\Http\Requests\StoreContactRequest;
 use App\Mail\ContactoMail;
 use App\Models\ContactMessage;
 use Illuminate\Support\Facades\Mail;
+use App\Support\Phone;
 
 class ContactController extends Controller
 {
@@ -16,7 +17,7 @@ class ContactController extends Controller
         $msg = ContactMessage::create([
             'nombre'   => $data['nombre'],
             'email'    => $data['email'],
-            'telefono' => $data['telefono'] ?? null,
+            'telefono' => Phone::normalize($data['telefono'] ?? null),
             'asunto'   => $data['asunto'] ?? null,
             'mensaje'  => $data['mensaje'],
         ]);

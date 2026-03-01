@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePreinscripcionRequest;
 use App\Models\Preinscripcion;
+use App\Support\Phone;
 
 class PreinscripcionController extends Controller
 {
@@ -15,7 +16,7 @@ class PreinscripcionController extends Controller
             'nombre'    => $data['nombre'],
             'apellidos' => $data['apellidos'] ?? null,
             'email'     => $data['email'],
-            'telefono'  => $data['telefono'] ?? null,
+            'telefono'  => Phone::normalize($data['telefono'] ?? null),
             'edad'      => $data['edad'] ?? null,
             'modalidad' => $data['modalidad'],
             'nivel'     => $data['nivel'] ?? null,

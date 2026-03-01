@@ -91,9 +91,16 @@
                             <label class="block text-white/70 uppercase text-xs font-brand not-italic tracking-wide">
                                 Teléfono (opcional)
                             </label>
-                            <input type="text" name="telefono" value="{{ old('telefono') }}" class="mt-2 w-full border border-white/15 bg-black/25 px-4 py-3 text-white placeholder-white/30 outline-none transition
-                       focus:border-accent focus:shadow-[0_0_0_3px_rgba(255,255,0,0.15)]"
-                                placeholder="+34 600 000 000">
+                            <input
+                                type="tel"
+                                name="telefono"
+                                value="{{ old('telefono') }}"
+                                inputmode="tel"
+                                autocomplete="tel"
+                                class="mt-2 w-full border border-white/15 bg-black/25 px-4 py-3 text-white placeholder-white/30 outline-none transition
+                                        focus:border-accent focus:shadow-[0_0_0_3px_rgba(255,255,0,0.15)]"
+                                placeholder="+34 600 000 000"
+                                />
                         </div>
 
                         <div>

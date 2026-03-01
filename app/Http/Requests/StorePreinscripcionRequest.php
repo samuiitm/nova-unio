@@ -18,7 +18,7 @@ class StorePreinscripcionRequest extends FormRequest
             'nombre'    => ['required','string','max:80'],
             'apellidos' => ['nullable','string','max:120'],
             'email'     => ['required','email','max:120'],
-            'telefono'  => ['nullable','string','max:30'],
+            'telefono' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s().-]{7,20}$/'],
             'edad'      => ['nullable','integer','min:3','max:80'],
 
             'modalidad' => ['required', Rule::in([
@@ -45,6 +45,7 @@ class StorePreinscripcionRequest extends FormRequest
         return [
             'privacidad.accepted' => 'Tienes que aceptar la política de privacidad.',
             'empresa.max' => 'Error al enviar el formulario.',
+            'telefono.regex' => 'El teléfono no parece válido. Usa solo números y opcionalmente prefijo (ej. +34).',
         ];
     }
 }
