@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://use.typekit.net/fxa0uin.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=League+Spartan:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <meta name="google-site-verification" content="8k-PPG0EF-rqgSVuGiRkWwZaN2AWPCzJz-u5ELU8yiU" />
 </head>
 
 <body class="min-h-screen bg-black text-main">
