@@ -9,7 +9,7 @@
     <meta name="google-site-verification" content="8k-PPG0EF-rqgSVuGiRkWwZaN2AWPCzJz-u5ELU8yiU" />
 
     @php
-        $siteName    = config('app.name', 'Nova Unió');
+        $siteName    = config('app.name', 'Nova Unió | MMA & Sambo | Lloret de Mar');
         $canonical   = trim($__env->yieldContent('canonical')) ?: url()->current();
         $title       = trim($__env->yieldContent('title')) ?: $siteName;
         $description = trim($__env->yieldContent('meta_description')) ?: 'Club de artes marciales Nova Unió: MMA y Sambo. Entrenamientos para niños, adolescentes y adultos. Planes, horarios, profesores y preinscripción online.';
