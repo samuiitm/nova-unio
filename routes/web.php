@@ -5,9 +5,10 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PreinscripcionController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
 
+// -- Parte Pública
 Route::get('/', [PublicController::class, 'home'])->name('public.home');
-
 Route::get('/el-club', [PublicController::class, 'elclub'])->name('public.elclub');
 Route::get('/profesores', [PublicController::class, 'profesores'])->name('public.profesores');
 Route::get('/horarios', [PublicController::class, 'horarios'])->name('public.horarios');
@@ -22,7 +23,6 @@ Route::post('/contacto', [ContactController::class, 'store'])->name('public.cont
 Route::post('/preinscripcion', [PreinscripcionController::class, 'store'])
   ->name('public.preinscripcion.enviar')
   ->middleware('throttle:10,1');
-
 
 Route::get('/sitemap.xml', function () {
     $today = now()->toDateString();
@@ -58,6 +58,7 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200)->header('Content-Type', 'application/xml');
 })->name('seo.sitemap');
 
+// -- Parte Privada
 Route::middleware('auth')->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
 
@@ -65,5 +66,36 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// ^ Breeze (perfil)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ^ Dashboard legacy -> panel
+Route::get('/dashboard', function () {
+    return redirect()->route('panel.home');
+})->middleware('auth')->name('dashboard');
+
+// ^ Panel privado para admin y entrenadores
+Route::prefix('panel')
+    ->name('panel.')
+    ->middleware([
+        'auth',
+        // Middleware inline para no depender de Kernel (seguro y simple)
+        function (Request $request, $next) {
+            $role = $request->user()?->role;
+            abort_unless(in_array($role, ['admin', 'entrenador'], true), 403);
+            return $next($request);
+        },
+    ])
+    ->group(function () {
+        Route::get('/', function () {
+            return view('panel.home');
+        })->name('home');
+    });
+
 
 require __DIR__.'/auth.php';
