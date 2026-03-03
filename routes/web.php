@@ -57,12 +57,4 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200)->header('Content-Type', 'application/xml');
 })->name('seo.sitemap');
 
-Route::get('/robots.txt', function () {
-    $txt = "User-agent: *\n";
-    $txt .= "Disallow:\n\n";
-    $txt .= "Sitemap: " . url('/sitemap.xml') . "\n";
-
-    return response($txt, 200)->header('Content-Type', 'text/plain');
-})->name('seo.robots');
-
 require __DIR__.'/auth.php';
