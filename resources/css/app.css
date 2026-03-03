@@ -126,3 +126,44 @@ body {
 }
 
 .plans-bg::before { opacity: 0.15 !important; }
+
+@layer components {
+  .panel-body{
+    font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: rgb(226 232 240);
+    background:
+      radial-gradient(900px 520px at 18% 0%, rgba(79,70,229,.25), transparent 60%),
+      radial-gradient(900px 520px at 82% 0%, rgba(14,165,233,.16), transparent 55%),
+      #070815;
+  }
+
+  .panel-card{
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+  }
+
+  .panel-muted{ color: rgba(255,255,255,.62); }
+
+  .panel-input{
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px;
+    color: rgba(255,255,255,.90);
+  }
+  .panel-input::placeholder{ color: rgba(255,255,255,.35); }
+  .panel-input:focus{
+    outline: none;
+    border-color: rgba(99,102,241,.55);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.20);
+  }
+
+  .panel-btn{
+    background: rgb(79 70 229);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .panel-btn:hover{ filter: brightness(1.06); }
+}
