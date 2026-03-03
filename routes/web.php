@@ -82,19 +82,9 @@ Route::get('/dashboard', function () {
 // ^ Panel privado para admin y entrenadores
 Route::prefix('panel')
     ->name('panel.')
-    ->middleware([
-        'auth',
-        // Middleware inline para no depender de Kernel (seguro y simple)
-        function (Request $request, $next) {
-            $role = $request->user()?->role;
-            abort_unless(in_array($role, ['admin', 'entrenador'], true), 403);
-            return $next($request);
-        },
-    ])
+    ->middleware(['auth', 'panel.access'])
     ->group(function () {
-        Route::get('/', function () {
-            return view('panel.home');
-        })->name('home');
+        Route::view('/', 'panel.dashboard')->name('home');
     });
 
 
