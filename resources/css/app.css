@@ -130,6 +130,7 @@ body {
 @layer components {
   .panel-body{
     font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    font-style: normal;
     color: rgb(226 232 240);
     background:
       radial-gradient(900px 520px at 18% 0%, rgba(79,70,229,.25), transparent 60%),
