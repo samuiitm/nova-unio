@@ -11,14 +11,11 @@ class EnsurePanelAccess
     {
         $user = $request->user();
 
-        if (!$user || !$user->is_active) {
+        if (!$user || !$user->activo) {
             abort(403);
         }
 
-        $role = $user->role;
-        $roleValue = is_object($role) && property_exists($role, 'value') ? $role->value : $role;
-
-        abort_unless(in_array($roleValue, ['admin', 'entrenador'], true), 403);
+        abort_unless(in_array($user->rol, ['admin', 'entrenador'], true), 403);
 
         return $next($request);
     }
