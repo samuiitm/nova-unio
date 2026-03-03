@@ -57,6 +57,30 @@ entrenar con seriedad en un ambiente cercano y respetuoso.'
   ],
   'tags' => ['SAMBO'],
 ],
+[
+  'slug' => 'zaki-banane',
+  'nombre' => 'Zaki Banane',
+  'roles' => ['Preparación física (competición)'],
+  'foto' => Vite::asset('resources/img/profesores/zaki-banane.webp'),
+  'fallback' => Vite::asset('resources/img/hero/hero-desktop.webp'),
+  'subtitulo' => 'Preparador físico · Especialista en deportes de combate',
+  'bio_corta' => 'Prepara físicamente a luchadores y competidores del club para mejorar el rendimiento real en combate: fuerza, potencia, resistencia específica y control corporal aplicado al gesto técnico.',
+  'bio' => [
+    'Trabaja como preparador físico enfocado al rendimiento deportivo competitivo, orientando el trabajo a capacidades que marcan la diferencia en competición: fuerza, potencia, resistencia específica y control corporal aplicado al gesto técnico.',
+    'Cuenta con más de cinco años de experiencia preparando deportistas y equipos que compiten, desarrollando programas tanto individuales como colectivos según las demandas del deporte.',
+    'Durante dos años dirigió su propio centro de entrenamiento (AZ Performance), trabajando con atletas de distintas disciplinas.',
+    'Ha sido preparador físico en clubes de patinaje artístico, pádel, atletismo, fútbol sala y voleibol, además de su implicación directa en deportes de combate.',
+    'Su enfoque parte de que el rendimiento no es genérico: cada deporte exige una estructura concreta y cada deportista necesita una planificación adaptada a su contexto competitivo, buscando transferencia directa a la competición.',
+    'Formación: EXOS Performance Specialist Course · Especialización en preparación física para deportes de combate (Phil Daru).',
+    'Palmarés: 3º de España en Combat Sambo 2025 · Jugador de voleibol en Primera División Autonómica.',
+  ],
+  'stats' => [
+    ['k' => 'EXOS Certification', 'v' => 'Performance Specialist'],
+    ['k' => 'ESP 2025', 'v' => '3º Combat Sambo'],
+    ['k' => '5+', 'v' => 'Años exp.'],
+  ],
+  'tags' => ['PERFORMANCE', 'S&C'],
+],
 // POR SI HAY QUE AÑADIR MÁS PROFES
 // [
 // 'slug' => 'nombre-apellido',
