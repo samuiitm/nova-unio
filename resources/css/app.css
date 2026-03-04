@@ -126,45 +126,145 @@ body {
 }
 
 .plans-bg::before { opacity: 0.15 !important; }
+@layer base {
+  html[data-area="panel"]{
+    /* Fondo y superficies */
+    --p-bg: 7 8 21;          /* #070815 */
+    --p-shell: 7 8 21;       /* sidebar/topbar */
+    --p-surface: 255 255 255;/* cards/inputs via alpha */
+
+    /* Texto */
+    --p-text: 226 232 240;
+    --p-muted: 148 163 184;
+
+    /* Bordes */
+    --p-border: 255 255 255;
+    --p-border-a: .10;
+
+    /* Alphas */
+    --p-shell-a: .80;
+    --p-topbar-a: .65;
+    --p-surface-a: .04;
+    --p-surface-2a: .06;
+
+    /* Accentos */
+    --p-accent: 99 102 241;
+    --p-success: 16 185 129;
+    --p-danger: 248 113 113;
+
+    /* Glows */
+    --p-glow-1: 99 102 241;
+    --p-glow-2: 14 165 233;
+  }
+
+  /*
+    FUTURO (modo claro):
+    html[data-area="panel"][data-theme="light"]{ ... }
+    (Cuando la app esté completa)
+  */
+}
 
 @layer components {
   .panel-body{
     font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    font-weight: 400;
     font-style: normal;
-    color: rgb(226 232 240);
+    color: rgb(var(--p-text));
     background:
-      radial-gradient(900px 520px at 18% 0%, rgba(79,70,229,.25), transparent 60%),
-      radial-gradient(900px 520px at 82% 0%, rgba(14,165,233,.16), transparent 55%),
-      #070815;
+      radial-gradient(900px 520px at 18% 0%, rgb(var(--p-glow-1) / .22), transparent 60%),
+      radial-gradient(900px 520px at 82% 0%, rgb(var(--p-glow-2) / .14), transparent 55%),
+      rgb(var(--p-bg));
+  }
+
+  .panel-border{ border-color: rgb(var(--p-border) / var(--p-border-a)); }
+
+  .panel-shell{
+    background: rgb(var(--p-shell) / var(--p-shell-a));
+    backdrop-filter: blur(10px);
+  }
+
+  .panel-topbar{
+    background: rgb(var(--p-shell) / var(--p-topbar-a));
+    backdrop-filter: blur(10px);
   }
 
   .panel-card{
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
+    background: rgb(var(--p-surface) / var(--p-surface-a));
+    border: 1px solid rgb(var(--p-border) / var(--p-border-a));
     border-radius: 18px;
   }
 
-  .panel-muted{ color: rgba(255,255,255,.62); }
+  .panel-popover{
+    background: rgb(var(--p-shell));
+    border: 1px solid rgb(var(--p-border) / var(--p-border-a));
+    border-radius: 18px;
+  }
+
+  .panel-muted{ color: rgb(var(--p-muted)); }
 
   .panel-input{
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.10);
+    background: rgb(var(--p-surface) / var(--p-surface-2a));
+    border: 1px solid rgb(var(--p-border) / var(--p-border-a));
     border-radius: 14px;
-    color: rgba(255,255,255,.90);
+    color: rgb(var(--p-text));
   }
-  .panel-input::placeholder{ color: rgba(255,255,255,.35); }
+  .panel-input::placeholder{ color: rgb(var(--p-muted)); opacity: .65; }
   .panel-input:focus{
     outline: none;
-    border-color: rgba(99,102,241,.55);
-    box-shadow: 0 0 0 3px rgba(99,102,241,.20);
+    border-color: rgb(var(--p-accent) / .55);
+    box-shadow: 0 0 0 3px rgb(var(--p-accent) / .18);
   }
 
   .panel-btn{
-    background: rgb(79 70 229);
-    border: 1px solid rgba(255,255,255,.10);
+    background: rgb(var(--p-accent));
+    border: 1px solid rgb(var(--p-border) / .12);
     border-radius: 14px;
     color: #fff;
     font-weight: 600;
   }
   .panel-btn:hover{ filter: brightness(1.06); }
+
+  .panel-icon-btn{
+    background: rgb(var(--p-surface) / var(--p-surface-2a));
+    border: 1px solid rgb(var(--p-border) / var(--p-border-a));
+    border-radius: 14px;
+  }
+  .panel-icon-btn:hover{ filter: brightness(1.03); }
+
+  /* NAV */
+  .panel-nav-item{
+    border-radius: 14px;
+    border: 1px solid transparent;
+    color: rgb(var(--p-text) / .78);
+  }
+  .panel-nav-item:hover{
+    background: rgb(var(--p-surface) / .06);
+  }
+  .panel-nav-item-active{
+    background: rgb(var(--p-accent) / .14);
+    border-color: rgb(var(--p-accent) / .25);
+    color: rgb(var(--p-accent));
+  }
+
+  .panel-nav-group-btn{
+    border-radius: 14px;
+    border: 1px solid transparent;
+    color: rgb(var(--p-text) / .78);
+  }
+  .panel-nav-group-btn:hover{
+    background: rgb(var(--p-surface) / .06);
+  }
+
+  .panel-subitem{
+    border-radius: 12px;
+    color: rgb(var(--p-text) / .68);
+  }
+  .panel-subitem:hover{
+    background: rgb(var(--p-surface) / .06);
+    color: rgb(var(--p-text) / .88);
+  }
+  .panel-subitem-active{
+    background: rgb(var(--p-surface) / .08);
+    color: rgb(var(--p-text));
+  }
 }
