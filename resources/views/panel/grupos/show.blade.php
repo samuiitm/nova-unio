@@ -118,7 +118,9 @@
 
                 <div>
                     <label class="text-sm font-medium">Vigente desde</label>
-                    <input type="date" name="vigente_desde" class="mt-1 w-full panel-input px-4 py-3">
+                    <input type="date" name="vigente_desde"
+                            class="mt-1 w-full panel-input px-4 py-3"
+                            value="{{ old('vigente_desde', now()->format('Y-m-d')) }}">
                 </div>
 
                 <div>
@@ -159,9 +161,9 @@
                                     {{ substr($p->hora_inicio,0,5) }} - {{ substr($p->hora_fin,0,5) }}
                                 </td>
                                 <td class="py-3 panel-muted">
-                                    {{ $p->vigente_desde ? $p->vigente_desde->format('d/m/Y') : '—' }}
-                                    →
-                                    {{ $p->vigente_hasta ? $p->vigente_hasta->format('d/m/Y') : '—' }}
+                                    Desde {{ $p->vigente_desde ? $p->vigente_desde->format('d/m/Y') : '—' }}
+                                    ·
+                                    Hasta {{ $p->vigente_hasta ? $p->vigente_hasta->format('d/m/Y') : 'Sin fin' }}
                                 </td>
                                 <td class="py-3 text-right">
                                     <form method="POST" action="{{ route('panel.grupos.programaciones.destroy', [$grupo, $p]) }}">
