@@ -24,6 +24,11 @@ class GrupoProgramacionController extends Controller
     {
         $data = $request->validated();
 
+        // Si no ponen vigencia, empieza hoy
+        if (empty($data['vigente_desde'])) {
+            $data['vigente_desde'] = now()->toDateString();
+        }
+
         // Comprobación simple: fin > inicio
         if ($data['hora_fin'] <= $data['hora_inicio']) {
             return back()->withErrors(['hora_fin' => 'La hora fin debe ser mayor que la hora inicio.']);
@@ -37,6 +42,10 @@ class GrupoProgramacionController extends Controller
     public function update(UpdateGrupoProgramacionRequest $request, Grupo $grupo, GrupoProgramacion $programacion)
     {
         $data = $request->validated();
+
+        if (empty($data['vigente_desde'])) {
+            $data['vigente_desde'] = now()->toDateString();
+        }
 
         if ($data['hora_fin'] <= $data['hora_inicio']) {
             return back()->withErrors(['hora_fin' => 'La hora fin debe ser mayor que la hora inicio.']);
