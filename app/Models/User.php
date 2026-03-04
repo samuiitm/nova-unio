@@ -19,7 +19,10 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'last_name',
         'email',
+        'phone',
+        'avatar_path',
         'password',
         'role',
         'is_active',
@@ -50,45 +53,28 @@ class User extends Authenticatable
         ];
     }
 
-    // Aliases "español" (sin romper Laravel)
-    public function getNombreAttribute(): ?string
+    // Helpers en español (para UI / panel)
+    public function getNombreCompletoAttribute(): string
     {
-        return $this->name;
+        return trim(($this->name ?? '') . ' ' . ($this->last_name ?? ''));
     }
 
-    public function setNombreAttribute(?string $value): void
+    public function getTelefonoAttribute(): ?string
     {
-        $this->attributes['name'] = $value;
+        return $this->phone;
     }
 
-    public function getPasswordHashAttribute(): ?string
+    public function setTelefonoAttribute(?string $value): void
     {
-        return $this->password; // hash
+        $this->attributes['phone'] = $value;
     }
 
-    public function setPasswordHashAttribute(?string $value): void
+    public function getFotoPerfilAttribute(): ?string
     {
-        // Si asignas aquí, ya debe venir hasheado.
-        $this->attributes['password'] = $value;
+        return $this->avatar_path;
     }
 
-    public function getRolAttribute(): mixed
+    public function setFotoPerfilAttribute(?string $value): void
     {
-        return $this->role; // RolUsuario (por el cast) o string
+        $this->attributes['avatar_path'] = $value;
     }
-
-    public function setRolAttribute(mixed $value): void
-    {
-        $this->attributes['role'] = $value instanceof RolUsuario ? $value->value : $value;
-    }
-
-    public function getActivoAttribute(): bool
-    {
-        return (bool) $this->is_active;
-    }
-
-    public function setActivoAttribute(bool $value): void
-    {
-        $this->attributes['is_active'] = $value;
-    }
-}
