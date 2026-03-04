@@ -63,20 +63,23 @@ Route::prefix('panel')
     ->middleware(['auth', 'panel.access'])
     ->group(function () {
 
-        // Rutas propias del panel
+        // Rutas del panel (con nombre panel.*)
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
+
+            Route::patch('alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\AlumnoController::class, 'baja'])
+                ->name('alumnos.baja');
+
+            Route::patch('alumnos/{alumno}/activar', [\App\Http\Controllers\Panel\AlumnoController::class, 'activar'])
+                ->name('alumnos.activar');
+
+            Route::resource('alumnos', \App\Http\Controllers\Panel\AlumnoController::class);
         });
 
-        // "Dashboard" de Breeze, pero dentro del panel (compatibilidad)
-        Route::get('/dashboard', function () {
-            return redirect()->route('panel.home');
-        })->name('dashboard');
-
-        // Perfil de Breeze, pero dentro del panel
-        Route::get('/perfil',   [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/perfil',[ProfileController::class, 'destroy'])->name('profile.destroy');
+        // Perfil dentro de /panel pero con nombres de Breeze (profile.*)
+        Route::get('/perfil',   [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/perfil', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/perfil',[\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
 require __DIR__.'/auth.php';
