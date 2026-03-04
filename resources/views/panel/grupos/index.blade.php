@@ -81,15 +81,11 @@
                             </div>
                         </div>
 
-                        <!-- Acciones (siempre visibles sin desplegar) -->
+                        <!-- Acciones -->
                         <div class="flex items-center gap-2 shrink-0">
+                            {{-- Editar = abrir ficha (donde se edita todo) --}}
                             <a class="panel-icon-btn px-4 py-2"
                                href="{{ route('panel.grupos.show', $g) }}">
-                                Ver
-                            </a>
-
-                            <a class="panel-icon-btn px-4 py-2"
-                               href="{{ route('panel.grupos.edit', $g) }}">
                                 Editar
                             </a>
 
@@ -137,13 +133,6 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <div class="mt-3">
-                                <a href="{{ route('panel.grupos.show', $g) }}"
-                                   class="text-sm panel-muted hover:text-white">
-                                    Gestionar horarios dentro del grupo →
-                                </a>
                             </div>
                         @endif
                     </div>

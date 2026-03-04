@@ -65,7 +65,6 @@ class GrupoController extends Controller
             'alumnosActivos' => fn($q) => $q->orderBy('apellidos')->orderBy('nombre'),
         ]);
 
-        // Para el selector de “asignar alumno”
         $alumnosDisponibles = Alumno::where('activo', 1)
             ->orderBy('apellidos')->orderBy('nombre')
             ->get(['id', 'nombre', 'apellidos']);
@@ -73,9 +72,10 @@ class GrupoController extends Controller
         return view('panel.grupos.show', compact('grupo', 'alumnosDisponibles'));
     }
 
+    // Ya no usamos una pantalla aparte: si alguien entra aquí, lo mandamos a la ficha
     public function edit(Grupo $grupo)
     {
-        return view('panel.grupos.edit', compact('grupo'));
+        return redirect()->route('panel.grupos.show', $grupo);
     }
 
     public function update(UpdateGrupoRequest $request, Grupo $grupo)
@@ -85,10 +85,9 @@ class GrupoController extends Controller
 
         $grupo->update($data);
 
-        return redirect()->route('panel.grupos.show', $grupo)->with('ok', 'Grupo actualizado.');
+        return back()->with('ok', 'Grupo actualizado.');
     }
 
-    // Asignar alumno a grupo
     public function asignarAlumno(Request $request, Grupo $grupo)
     {
         $data = $request->validate([
@@ -96,7 +95,6 @@ class GrupoController extends Controller
             'fecha_alta' => ['nullable', 'date'],
         ]);
 
-        // Evitar duplicado activo
         $yaEsta = $grupo->alumnos()
             ->where('alumnos.id', $data['alumno_id'])
             ->wherePivotNull('fecha_baja')
@@ -114,7 +112,6 @@ class GrupoController extends Controller
         return back()->with('ok', 'Alumno asignado al grupo.');
     }
 
-    // Dar de baja alumno del grupo
     public function bajaAlumno(Grupo $grupo, Alumno $alumno)
     {
         $grupo->alumnos()->updateExistingPivot($alumno->id, [
@@ -124,7 +121,6 @@ class GrupoController extends Controller
         return back()->with('ok', 'Alumno dado de baja del grupo.');
     }
 
-    // Reactivar alumno en el grupo (crea alta nueva)
     public function activarAlumno(Grupo $grupo, Alumno $alumno)
     {
         $yaEsta = $grupo->alumnos()
@@ -146,7 +142,6 @@ class GrupoController extends Controller
 
     public function destroy(Grupo $grupo)
     {
-        // Si hay alumnos asignados, no dejamos borrar (para no liar datos)
         $tieneAlumnos = $grupo->alumnosActivos()->exists();
 
         if ($tieneAlumnos) {

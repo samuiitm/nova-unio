@@ -13,13 +13,10 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <h1 class="text-2xl font-semibold">{{ $grupo->nombre }}</h1>
-            <p class="mt-1 panel-muted">Gestión del grupo: alumnos y horarios.</p>
+            <p class="mt-1 panel-muted">Gestiona el grupo: nombre, alumnos y horarios.</p>
         </div>
 
-        <div class="flex gap-2">
-            <a href="{{ route('panel.grupos.edit', $grupo) }}" class="panel-btn px-5 py-3">Editar</a>
-            <a href="{{ route('panel.grupos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
-        </div>
+        <a href="{{ route('panel.grupos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
     </div>
 
     @if(session('ok'))
@@ -39,7 +36,40 @@
         </div>
     @endif
 
-    <div class="mt-5 grid gap-4 lg:grid-cols-2">
+    <div class="mt-5 grid gap-4">
+        <!-- DATOS DEL GRUPO (EDITABLE) -->
+        <div class="panel-card p-6">
+            <h2 class="text-lg font-semibold">Datos del grupo</h2>
+            <p class="mt-1 text-sm panel-muted">Cambia el nombre y el estado aquí.</p>
+
+            <form class="mt-4 grid gap-4" method="POST" action="{{ route('panel.grupos.update', $grupo) }}">
+                @csrf
+                @method('PATCH')
+
+                <div>
+                    <label class="text-sm font-medium">Nombre *</label>
+                    <input name="nombre"
+                           value="{{ old('nombre', $grupo->nombre) }}"
+                           class="mt-1 w-full panel-input px-4 py-3"
+                           required>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    @php
+                        $checked = old('activo', $grupo->activo) ? 'checked' : '';
+                    @endphp
+                    <input type="checkbox" name="activo" value="1" class="h-5 w-5" {{ $checked }}>
+                    <span class="text-sm">Grupo activo</span>
+                </div>
+
+                <div>
+                    <button class="panel-btn px-6 py-3">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
         <!-- Alumnos -->
         <div class="panel-card p-6">
             <h2 class="text-lg font-semibold">Alumnos del grupo</h2>
@@ -119,8 +149,8 @@
                 <div>
                     <label class="text-sm font-medium">Vigente desde</label>
                     <input type="date" name="vigente_desde"
-                            class="mt-1 w-full panel-input px-4 py-3"
-                            value="{{ old('vigente_desde', now()->format('Y-m-d')) }}">
+                           class="mt-1 w-full panel-input px-4 py-3"
+                           value="{{ old('vigente_desde', now()->format('Y-m-d')) }}">
                 </div>
 
                 <div>
