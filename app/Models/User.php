@@ -10,24 +10,24 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
+
+    // Tu tabla renombrada
     protected $table = 'usuarios';
 
-    /**
-     * Campos asignables (columnas en inglés).
-     */
+    // Columnas reales (las tuyas)
     protected $fillable = [
-        'name',
-        'last_name',
+        'nombre',
+        'apellidos',
         'email',
-        'phone',
-        'avatar_path',
-        'password',
-        'role',
-        'is_active',
+        'telefono',
+        'foto_perfil',
+        'password_hash',
+        'rol',
+        'activo',
     ];
 
     protected $hidden = [
-        'password',
+        'password_hash',
         'remember_token',
     ];
 
@@ -35,68 +35,94 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'role' => RolUsuario::class,
-            'is_active' => 'boolean',
+            'password_hash' => 'hashed',   // hashea automáticamente si asignas texto plano
+            'rol' => RolUsuario::class,     // enum (si lo estás usando)
+            'activo' => 'boolean',
         ];
     }
 
     // -------------------------
-    // Helpers / aliases en español
+    // Auth: contraseña en password_hash
+    // -------------------------
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
+    public function getAuthPassword(): string
+    {
+        return (string) $this->password_hash;
+    }
+
+    // Permite hacer $user->password = '1234' (y se guarda en password_hash)
+    public function setPasswordAttribute($value): void
+    {
+        $this->attributes['password_hash'] = $value;
+    }
+
+    // -------------------------
+    // Compatibilidad Laravel/Breeze
     // -------------------------
 
-    public function getNombreAttribute(): ?string
+    // name <-> nombre
+    public function getNameAttribute(): ?string
     {
-        return $this->name;
+        return $this->nombre;
     }
 
-    public function setNombreAttribute(?string $value): void
+    public function setNameAttribute(?string $value): void
     {
-        $this->attributes['name'] = $value;
+        $this->attributes['nombre'] = $value;
     }
 
-    public function getApellidosAttribute(): ?string
+    // role <-> rol
+    public function getRoleAttribute(): mixed
     {
-        return $this->last_name;
+        return $this->rol;
     }
 
-    public function setApellidosAttribute(?string $value): void
+    public function setRoleAttribute(mixed $value): void
     {
-        $this->attributes['last_name'] = $value;
+        $this->attributes['rol'] = $value instanceof RolUsuario ? $value->value : $value;
     }
 
-    public function getTelefonoAttribute(): ?string
+    // is_active <-> activo
+    public function getIsActiveAttribute(): bool
     {
-        return $this->phone;
+        return (bool) $this->activo;
     }
 
-    public function setTelefonoAttribute(?string $value): void
+    public function setIsActiveAttribute(bool $value): void
     {
-        $this->attributes['phone'] = $value;
+        $this->attributes['activo'] = $value;
     }
 
-    public function getFotoPerfilAttribute(): ?string
-    {
-        return $this->avatar_path;
-    }
-
-    public function setFotoPerfilAttribute(?string $value): void
-    {
-        $this->attributes['avatar_path'] = $value;
-    }
-
+    // -------------------------
+    // Helpers en español (para UI)
+    // -------------------------
     public function getNombreCompletoAttribute(): string
     {
-        return trim(($this->name ?? '') . ' ' . ($this->last_name ?? ''));
+        return trim(($this->nombre ?? '') . ' ' . ($this->apellidos ?? ''));
     }
 
-    public function getRolAttribute(): mixed
+    // alias opcional en inglés por si alguna parte del panel lo usa
+    public function getPhoneAttribute(): ?string
     {
-        return $this->role; // enum (cast) o string
+        return $this->telefono;
     }
 
-    public function getActivoAttribute(): bool
+    public function setPhoneAttribute(?string $value): void
     {
-        return (bool) $this->is_active;
+        $this->attributes['telefono'] = $value;
+    }
+
+    public function getAvatarPathAttribute(): ?string
+    {
+        return $this->foto_perfil;
+    }
+
+    public function setAvatarPathAttribute(?string $value): void
+    {
+        $this->attributes['foto_perfil'] = $value;
     }
 }
