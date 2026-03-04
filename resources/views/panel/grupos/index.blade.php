@@ -39,6 +39,7 @@
                 <thead class="text-left panel-muted">
                     <tr>
                         <th class="py-2">Grupo</th>
+                        <th class="py-2">Alumnos</th>
                         <th class="py-2">Estado</th>
                         <th class="py-2 text-right">Acciones</th>
                     </tr>
@@ -50,6 +51,11 @@
                                 <div class="font-medium">{{ $g->nombre }}</div>
                                 <div class="text-xs panel-muted">ID: {{ $g->id }}</div>
                             </td>
+
+                            <td class="py-3">
+                                <span class="text-sm">{{ $g->alumnos_count ?? 0 }}</span>
+                            </td>
+
                             <td class="py-3">
                                 @if($g->activo)
                                     <span class="text-xs px-3 py-1 rounded-full"
@@ -63,17 +69,28 @@
                                     </span>
                                 @endif
                             </td>
+
                             <td class="py-3 text-right whitespace-nowrap">
                                 <a class="panel-icon-btn px-4 py-2 inline-flex items-center"
                                    href="{{ route('panel.grupos.show', $g) }}">Ver</a>
 
                                 <a class="panel-icon-btn px-4 py-2 inline-flex items-center ml-2"
                                    href="{{ route('panel.grupos.edit', $g) }}">Editar</a>
+
+                                <form method="POST" action="{{ route('panel.grupos.destroy', $g) }}" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            class="panel-icon-btn px-4 py-2 inline-flex items-center ml-2"
+                                            onclick="return confirm('¿Seguro que quieres borrar este grupo? Se borrarán también sus horarios.')">
+                                        Borrar
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="py-6 panel-muted">No hay grupos.</td>
+                            <td colspan="4" class="py-6 panel-muted">No hay grupos.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -25,7 +25,12 @@ class GrupoController extends Controller
         if ($estado === 'activos') $query->where('activo', 1);
         if ($estado === 'inactivos') $query->where('activo', 0);
 
-        $grupos = $query->orderByDesc('activo')->orderBy('nombre')->paginate(10)->withQueryString();
+        $grupos = $grupos = $query
+                    ->withCount(['alumnosActivos as alumnos_count'])
+                    ->orderByDesc('activo')
+                    ->orderBy('nombre')
+                    ->paginate(10)
+                    ->withQueryString();
 
         return view('panel.grupos.index', compact('grupos', 'q', 'estado'));
     }
@@ -129,5 +134,19 @@ class GrupoController extends Controller
         ]);
 
         return back()->with('ok', 'Alumno activado en el grupo.');
+    }
+
+    public function destroy(Grupo $grupo)
+    {
+        // Si hay alumnos asignados, no dejamos borrar (para no liar datos)
+        $tieneAlumnos = $grupo->alumnosActivos()->exists();
+
+        if ($tieneAlumnos) {
+            return back()->with('ok', 'No se puede borrar: el grupo tiene alumnos asignados.');
+        }
+
+        $grupo->delete();
+
+        return redirect()->route('panel.grupos.index')->with('ok', 'Grupo borrado.');
     }
 }
