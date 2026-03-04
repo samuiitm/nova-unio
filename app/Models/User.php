@@ -2,20 +2,18 @@
 
 namespace App\Models;
 
+use App\Enums\RolUsuario;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Enums\RolUsuario;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+    protected $table = 'usuarios';
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Campos asignables (columnas en inglés).
      */
     protected $fillable = [
         'name',
@@ -28,21 +26,11 @@ class User extends Authenticatable
         'is_active',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -53,10 +41,28 @@ class User extends Authenticatable
         ];
     }
 
-    // Helpers en español (para UI / panel)
-    public function getNombreCompletoAttribute(): string
+    // -------------------------
+    // Helpers / aliases en español
+    // -------------------------
+
+    public function getNombreAttribute(): ?string
     {
-        return trim(($this->name ?? '') . ' ' . ($this->last_name ?? ''));
+        return $this->name;
+    }
+
+    public function setNombreAttribute(?string $value): void
+    {
+        $this->attributes['name'] = $value;
+    }
+
+    public function getApellidosAttribute(): ?string
+    {
+        return $this->last_name;
+    }
+
+    public function setApellidosAttribute(?string $value): void
+    {
+        $this->attributes['last_name'] = $value;
     }
 
     public function getTelefonoAttribute(): ?string
@@ -78,3 +84,19 @@ class User extends Authenticatable
     {
         $this->attributes['avatar_path'] = $value;
     }
+
+    public function getNombreCompletoAttribute(): string
+    {
+        return trim(($this->name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
+    public function getRolAttribute(): mixed
+    {
+        return $this->role; // enum (cast) o string
+    }
+
+    public function getActivoAttribute(): bool
+    {
+        return (bool) $this->is_active;
+    }
+}
