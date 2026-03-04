@@ -5,7 +5,6 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PreinscripcionController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Http\Request;
 
 // -- Parte Pública
 Route::get('/', [PublicController::class, 'home'])->name('public.home');
@@ -19,26 +18,27 @@ Route::get('/preinscripcion', [PublicController::class, 'preinscripcion'])->name
 Route::get('/aviso-legal', [PublicController::class, 'avisoLegal'])->name('public.aviso-legal');
 Route::get('/politica-privacidad', [PublicController::class, 'politicaPrivacidad'])->name('public.politica-privacidad');
 Route::get('/politica-cookies', [PublicController::class, 'politicaCookies'])->name('public.politica-cookies');
+
 Route::post('/contacto', [ContactController::class, 'store'])->name('public.contacto.enviar');
 Route::post('/preinscripcion', [PreinscripcionController::class, 'store'])
-  ->name('public.preinscripcion.enviar')
-  ->middleware('throttle:10,1');
+    ->name('public.preinscripcion.enviar')
+    ->middleware('throttle:10,1');
 
 Route::get('/sitemap.xml', function () {
     $today = now()->toDateString();
 
     $urls = [
-        ['loc' => route('public.home'),               'changefreq' => 'weekly',  'priority' => '1.0'],
-        ['loc' => route('public.elclub'),             'changefreq' => 'monthly', 'priority' => '0.8'],
-        ['loc' => route('public.planes'),             'changefreq' => 'monthly', 'priority' => '0.8'],
-        ['loc' => route('public.horarios'),           'changefreq' => 'weekly',  'priority' => '0.8'],
-        ['loc' => route('public.profesores'),         'changefreq' => 'monthly', 'priority' => '0.7'],
-        ['loc' => route('public.faq'),                'changefreq' => 'monthly', 'priority' => '0.6'],
-        ['loc' => route('public.contacto'),           'changefreq' => 'yearly',  'priority' => '0.5'],
-        ['loc' => route('public.preinscripcion'),     'changefreq' => 'yearly',  'priority' => '0.6'],
-        ['loc' => route('public.aviso-legal'),        'changefreq' => 'yearly',  'priority' => '0.2'],
-        ['loc' => route('public.politica-privacidad'),'changefreq' => 'yearly',  'priority' => '0.2'],
-        ['loc' => route('public.politica-cookies'),   'changefreq' => 'yearly',  'priority' => '0.2'],
+        ['loc' => route('public.home'),                 'changefreq' => 'weekly',  'priority' => '1.0'],
+        ['loc' => route('public.elclub'),               'changefreq' => 'monthly', 'priority' => '0.8'],
+        ['loc' => route('public.planes'),               'changefreq' => 'monthly', 'priority' => '0.8'],
+        ['loc' => route('public.horarios'),             'changefreq' => 'weekly',  'priority' => '0.8'],
+        ['loc' => route('public.profesores'),           'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => route('public.faq'),                  'changefreq' => 'monthly', 'priority' => '0.6'],
+        ['loc' => route('public.contacto'),             'changefreq' => 'yearly',  'priority' => '0.5'],
+        ['loc' => route('public.preinscripcion'),       'changefreq' => 'yearly',  'priority' => '0.6'],
+        ['loc' => route('public.aviso-legal'),          'changefreq' => 'yearly',  'priority' => '0.2'],
+        ['loc' => route('public.politica-privacidad'),  'changefreq' => 'yearly',  'priority' => '0.2'],
+        ['loc' => route('public.politica-cookies'),     'changefreq' => 'yearly',  'priority' => '0.2'],
     ];
 
     $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -58,34 +58,25 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200)->header('Content-Type', 'application/xml');
 })->name('seo.sitemap');
 
-// -- Parte Privada
-Route::middleware('auth')->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
-
-    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-// ^ Breeze (perfil)
-Route::middleware('auth')->group(function () {
-    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-// ^ Dashboard legacy -> panel
-Route::get('/dashboard', function () {
-    return redirect()->route('panel.home');
-})->middleware('auth')->name('dashboard');
-
-// ^ Panel privado para admin y entrenadores
+// -- Parte Privada (TODO cuelga de /panel)
 Route::prefix('panel')
-    ->name('panel.')
     ->middleware(['auth', 'panel.access'])
     ->group(function () {
-        Route::view('/', 'panel.dashboard')->name('home');
-    });
 
+        // Rutas propias del panel
+        Route::name('panel.')->group(function () {
+            Route::view('/', 'panel.dashboard')->name('home');
+        });
+
+        // "Dashboard" de Breeze, pero dentro del panel (compatibilidad)
+        Route::get('/dashboard', function () {
+            return redirect()->route('panel.home');
+        })->name('dashboard');
+
+        // Perfil de Breeze, pero dentro del panel
+        Route::get('/perfil',   [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/perfil',[ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 
 require __DIR__.'/auth.php';
