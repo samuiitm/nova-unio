@@ -77,9 +77,6 @@ Route::prefix('panel')
             Route::resource('alumnos', \App\Http\Controllers\Panel\AlumnoController::class);
 
             // Grupos y programación
-            Route::get('grupos/horarios', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'index'])
-                ->name('grupos.horarios');
-
             Route::post('grupos/{grupo}/programaciones', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'store'])
                 ->name('grupos.programaciones.store');
 

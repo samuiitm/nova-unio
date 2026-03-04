@@ -10,16 +10,6 @@ use App\Models\GrupoProgramacion;
 
 class GrupoProgramacionController extends Controller
 {
-    public function index()
-    {
-        $programaciones = GrupoProgramacion::with('grupo')
-            ->orderBy('dia_semana')
-            ->orderBy('hora_inicio')
-            ->paginate(15);
-
-        return view('panel.grupos.horarios', compact('programaciones'));
-    }
-
     public function store(StoreGrupoProgramacionRequest $request, Grupo $grupo)
     {
         $data = $request->validated();
@@ -43,6 +33,7 @@ class GrupoProgramacionController extends Controller
     {
         $data = $request->validated();
 
+        // Si lo dejan vacío, ponemos hoy
         if (empty($data['vigente_desde'])) {
             $data['vigente_desde'] = now()->toDateString();
         }
@@ -51,7 +42,7 @@ class GrupoProgramacionController extends Controller
             return back()->withErrors(['hora_fin' => 'La hora fin debe ser mayor que la hora inicio.']);
         }
 
-        // Seguridad: que pertenezca al grupo
+        // Para asegurar que es del mismo grupo
         if ($programacion->grupo_id !== $grupo->id) {
             abort(404);
         }

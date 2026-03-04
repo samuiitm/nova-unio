@@ -182,12 +182,6 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-4">
-                <a href="{{ route('panel.grupos.horarios') }}" class="text-sm panel-muted hover:text-white">
-                    Ver todos los horarios →
-                </a>
-            </div>
         </div>
     </div>
 @endsection

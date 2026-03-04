@@ -202,10 +202,6 @@
                    class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.create') ? 'panel-subitem-active' : '' }}">
                     Crear grupo
                 </a>
-                <a href="{{ $r('panel.grupos.horarios') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.horarios') ? 'panel-subitem-active' : '' }}">
-                    Horarios (programaciones)
-                </a>
             </div>
 
             <!-- Calendario (suelto) -->
