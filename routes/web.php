@@ -67,6 +67,7 @@ Route::prefix('panel')
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
 
+            // Alumnos
             Route::patch('alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\AlumnoController::class, 'baja'])
                 ->name('alumnos.baja');
 
@@ -74,6 +75,30 @@ Route::prefix('panel')
                 ->name('alumnos.activar');
 
             Route::resource('alumnos', \App\Http\Controllers\Panel\AlumnoController::class);
+
+            // Grupos y programación
+            Route::get('grupos/horarios', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'index'])
+                ->name('grupos.horarios');
+
+            Route::post('grupos/{grupo}/programaciones', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'store'])
+                ->name('grupos.programaciones.store');
+
+            Route::patch('grupos/{grupo}/programaciones/{programacion}', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'update'])
+                ->name('grupos.programaciones.update');
+
+            Route::delete('grupos/{grupo}/programaciones/{programacion}', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'destroy'])
+                ->name('grupos.programaciones.destroy');
+
+            Route::post('grupos/{grupo}/alumnos', [\App\Http\Controllers\Panel\GrupoController::class, 'asignarAlumno'])
+                ->name('grupos.alumnos.asignar');
+
+            Route::patch('grupos/{grupo}/alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\GrupoController::class, 'bajaAlumno'])
+                ->name('grupos.alumnos.baja');
+
+            Route::patch('grupos/{grupo}/alumnos/{alumno}/activar', [\App\Http\Controllers\Panel\GrupoController::class, 'activarAlumno'])
+                ->name('grupos.alumnos.activar');
+
+            Route::resource('grupos', \App\Http\Controllers\Panel\GrupoController::class);
         });
 
         // Perfil dentro de /panel pero con nombres de Breeze (profile.*)

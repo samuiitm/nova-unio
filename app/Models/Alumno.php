@@ -31,4 +31,16 @@ class Alumno extends Model
         'fecha_inicio_actividad' => 'date',
         'activo' => 'boolean',
     ];
+
+    public function grupos()
+    {
+        return $this->belongsToMany(\App\Models\Grupo::class, 'alumno_grupo', 'alumno_id', 'grupo_id')
+            ->withPivot(['fecha_alta', 'fecha_baja'])
+            ->withTimestamps();
+    }
+
+    public function gruposActivos()
+    {
+        return $this->grupos()->wherePivotNull('fecha_baja');
+    }
 }

@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Http\Controllers\Panel;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreGrupoProgramacionRequest;
+use App\Http\Requests\UpdateGrupoProgramacionRequest;
+use App\Models\Grupo;
+use App\Models\GrupoProgramacion;
+
+class GrupoProgramacionController extends Controller
+{
+    public function index()
+    {
+        $programaciones = GrupoProgramacion::with('grupo')
+            ->orderBy('dia_semana')
+            ->orderBy('hora_inicio')
+            ->paginate(15);
+
+        return view('panel.grupos.horarios', compact('programaciones'));
+    }
+
+    public function store(StoreGrupoProgramacionRequest $request, Grupo $grupo)
+    {
+        $data = $request->validated();
+
+        // Comprobación simple: fin > inicio
+        if ($data['hora_fin'] <= $data['hora_inicio']) {
+            return back()->withErrors(['hora_fin' => 'La hora fin debe ser mayor que la hora inicio.']);
+        }
+
+        $grupo->programaciones()->create($data);
+
+        return back()->with('ok', 'Horario añadido.');
+    }
+
+    public function update(UpdateGrupoProgramacionRequest $request, Grupo $grupo, GrupoProgramacion $programacion)
+    {
+        $data = $request->validated();
+
+        if ($data['hora_fin'] <= $data['hora_inicio']) {
+            return back()->withErrors(['hora_fin' => 'La hora fin debe ser mayor que la hora inicio.']);
+        }
+
+        // Seguridad: que pertenezca al grupo
+        if ($programacion->grupo_id !== $grupo->id) {
+            abort(404);
+        }
+
+        $programacion->update($data);
+
+        return back()->with('ok', 'Horario actualizado.');
+    }
+
+    public function destroy(Grupo $grupo, GrupoProgramacion $programacion)
+    {
+        if ($programacion->grupo_id !== $grupo->id) {
+            abort(404);
+        }
+
+        $programacion->delete();
+
+        return back()->with('ok', 'Horario borrado.');
+    }
+}
