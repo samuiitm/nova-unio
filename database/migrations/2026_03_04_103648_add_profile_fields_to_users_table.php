@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('usuarios', function (Blueprint $table) {
-            $table->string('apellidos', 120)->nullable()->after('nombre');
-            $table->string('phone', 30)->nullable()->after('email')->index();
-            $table->string('telefono', 255)->nullable()->after('phone')->index();
+            $table->string('last_name', 120)->nullable()->after('nombre');
+            $table->string('telefono', 30)->nullable()->after('email')->index();
+            $table->string('avatar_path', 255)->nullable()->after('telefono')->index();
         });
     }
 
     public function down(): void
     {
         Schema::table('usuarios', function (Blueprint $table) {
-            $table->dropColumn(['apellidos', 'phone', 'telefono']);
+            $table->dropColumn(['last_name', 'telefono', 'avatar_path']);
         });
     }
 };
