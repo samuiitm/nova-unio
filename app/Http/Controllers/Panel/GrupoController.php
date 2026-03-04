@@ -25,12 +25,20 @@ class GrupoController extends Controller
         if ($estado === 'activos') $query->where('activo', 1);
         if ($estado === 'inactivos') $query->where('activo', 0);
 
-        $grupos = $grupos = $query
-                    ->withCount(['alumnosActivos as alumnos_count'])
-                    ->orderByDesc('activo')
-                    ->orderBy('nombre')
-                    ->paginate(10)
-                    ->withQueryString();
+        $grupos = $query
+            ->with([
+                'programaciones' => function ($q) {
+                    $q->orderBy('dia_semana')->orderBy('hora_inicio');
+                }
+            ])
+            ->withCount([
+                'alumnosActivos as alumnos_count',
+                'programaciones as horarios_count',
+            ])
+            ->orderByDesc('activo')
+            ->orderBy('nombre')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('panel.grupos.index', compact('grupos', 'q', 'estado'));
     }
