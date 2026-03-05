@@ -1,6 +1,6 @@
 @extends('layouts.panel')
 
-@section('title', 'Clase | Nova Unió')
+@section('title', 'Pasar lista | Nova Unió')
 
 @section('content')
 @php
@@ -43,7 +43,7 @@
     <div class="flex items-center justify-between gap-3">
         <div>
             <div class="text-lg font-semibold">Alumnos</div>
-            <div class="text-sm panel-muted">Marca presente o ausente y guarda.</div>
+            <div class="text-sm panel-muted">Por defecto quedan como ausentes. Marca presentes y guarda.</div>
         </div>
 
         @if($clase->estado === 'cancelada')
@@ -54,9 +54,8 @@
         @endif
 
         @if($clase->asistencia_cerrada)
-            <span class="text-xs px-3 py-1 rounded-full"
-                  style="background: rgb(var(--p-surface) / .10); border: 1px solid rgb(var(--p-border) / .18);"
-                  class="panel-muted">
+            <span class="text-xs px-3 py-1 rounded-full panel-muted"
+                  style="background: rgb(var(--p-surface) / .10); border: 1px solid rgb(var(--p-border) / .18);">
                 Asistencia cerrada
             </span>
         @endif
@@ -72,14 +71,14 @@
                 <thead class="text-left panel-muted">
                     <tr>
                         <th class="py-2">Alumno</th>
-                        <th class="py-2">Estado</th>
+                        <th class="py-2">Asistencia</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($alumnos as $alumno)
                         @php
-                            $valor = $asistencias[$alumno->id] ?? 'presente';
+                            $estado = $asistencias[$alumno->id] ?? 'ausente';
                         @endphp
 
                         <tr class="border-t panel-border">
@@ -90,18 +89,31 @@
                             </td>
 
                             <td class="py-3">
-                                <select name="asistencias[{{ $alumno->id }}]"
-                                        class="panel-input px-4 py-2"
-                                        @disabled($clase->asistencia_cerrada)>
-                                    <option value="presente" @selected($valor==='presente')>Presente</option>
-                                    <option value="ausente" @selected($valor==='ausente')>Ausente</option>
-                                </select>
+                                <div class="flex items-center gap-4">
+                                    <label class="inline-flex items-center gap-2">
+                                        <input type="radio"
+                                               name="asistencias[{{ $alumno->id }}]"
+                                               value="presente"
+                                               @checked($estado === 'presente')
+                                               @disabled($clase->asistencia_cerrada)>
+                                        <span>Presente</span>
+                                    </label>
+
+                                    <label class="inline-flex items-center gap-2">
+                                        <input type="radio"
+                                               name="asistencias[{{ $alumno->id }}]"
+                                               value="ausente"
+                                               @checked($estado === 'ausente')
+                                               @disabled($clase->asistencia_cerrada)>
+                                        <span>Ausente</span>
+                                    </label>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="2" class="py-6 panel-muted">
-                                Este grupo no tiene alumnos activos.
+                                Este grupo no tiene alumnos en esta fecha.
                             </td>
                         </tr>
                     @endforelse
