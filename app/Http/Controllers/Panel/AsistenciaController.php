@@ -21,9 +21,8 @@ class AsistenciaController extends Controller
         $desde = (string) $request->query('desde', '');
         $hasta = (string) $request->query('hasta', '');
 
-        // query base con joins para poder ordenar/filtrar por fecha y grupo
+        // Query base SIN select, para poder reutilizarlo sin liarla con COUNT/SUM
         $baseQuery = Asistencia::query()
-            ->select('asistencias.*')
             ->join('clases', 'clases.id', '=', 'asistencias.clase_id')
             ->join('grupos', 'grupos.id', '=', 'clases.grupo_id')
             ->join('alumnos', 'alumnos.id', '=', 'asistencias.alumno_id');
@@ -57,7 +56,7 @@ class AsistenciaController extends Controller
             $baseQuery->whereDate('clases.fecha', '<=', $hasta);
         }
 
-        // resumen (para mostrar totales arriba)
+        // totales (solo agregados)
         $totales = (clone $baseQuery)
             ->selectRaw("
                 COUNT(*) as total,
@@ -66,8 +65,9 @@ class AsistenciaController extends Controller
             ")
             ->first();
 
-        // listado
-        $asistencias = $baseQuery
+        // listado (aquí sí seleccionamos asistencias.* para hidratar el modelo)
+        $asistencias = (clone $baseQuery)
+            ->select('asistencias.*')
             ->with(['clase.grupo', 'alumno'])
             ->orderBy('clases.fecha', 'desc')
             ->orderBy('clases.hora_inicio', 'desc')
@@ -101,7 +101,6 @@ class AsistenciaController extends Controller
         $hasta = (string) $request->query('hasta', '');
 
         $baseQuery = Asistencia::query()
-            ->select('asistencias.*')
             ->join('clases', 'clases.id', '=', 'asistencias.clase_id')
             ->join('grupos', 'grupos.id', '=', 'clases.grupo_id')
             ->where('asistencias.alumno_id', $alumno->id);
@@ -132,7 +131,8 @@ class AsistenciaController extends Controller
             ")
             ->first();
 
-        $asistencias = $baseQuery
+        $asistencias = (clone $baseQuery)
+            ->select('asistencias.*')
             ->with(['clase.grupo'])
             ->orderBy('clases.fecha', 'desc')
             ->orderBy('clases.hora_inicio', 'desc')
