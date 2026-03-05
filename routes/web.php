@@ -67,6 +67,13 @@ Route::prefix('panel')
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
 
+            // Asistencias (historial)
+            Route::get('asistencias', [\App\Http\Controllers\Panel\AsistenciaController::class, 'index'])
+                ->name('asistencias.index');
+
+            Route::get('asistencias/alumno/{alumno}', [\App\Http\Controllers\Panel\AsistenciaController::class, 'alumno'])
+                ->name('asistencias.alumno');
+
             // Calendario
             Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])
                 ->name('calendario');
