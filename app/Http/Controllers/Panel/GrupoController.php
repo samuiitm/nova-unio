@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGrupoRequest;
 use App\Http\Requests\UpdateGrupoRequest;
+use App\Models\Clase;
+use Carbon\Carbon;
 use App\Models\Alumno;
 use App\Models\Grupo;
 use Illuminate\Http\Request;
@@ -151,5 +153,34 @@ class GrupoController extends Controller
         $grupo->delete();
 
         return redirect()->route('panel.grupos.index')->with('ok', 'Grupo borrado.');
+    }
+
+    public function generarClases(Grupo $grupo)
+{
+    $programaciones = $grupo->programaciones;
+
+    $inicio = now()->startOfWeek()->copy();
+    $fin = now()->addWeeks(8);
+
+    foreach ($programaciones as $p) {
+
+        $fecha = $inicio->copy();
+
+        while ($fecha <= $fin) {
+
+            if ($fecha->dayOfWeek == $p->dia_semana) {
+
+                Clase::firstOrCreate([
+                    'grupo_id' => $grupo->id,
+                    'fecha' => $fecha->toDateString(),
+                    'hora_inicio' => $p->hora_inicio,
+                    'hora_fin' => $p->hora_fin,
+                ]);
+            }
+
+            $fecha->addDay();
+        }
+    }
+    return back()->with('success', 'Clases generadas correctamente');
     }
 }

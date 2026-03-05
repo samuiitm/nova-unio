@@ -19,9 +19,9 @@ class Grupo extends Model
         'activo' => 'boolean',
     ];
 
-    public function programaciones(): HasMany
+    public function programaciones()
     {
-        return $this->hasMany(GrupoProgramacion::class, 'grupo_id');
+        return $this->hasMany(GrupoProgramacion::class);
     }
 
     public function alumnos(): BelongsToMany
@@ -34,5 +34,10 @@ class Grupo extends Model
     public function alumnosActivos(): BelongsToMany
     {
         return $this->alumnos()->wherePivotNull('fecha_baja');
+    }
+
+    public function clases()
+    {
+        return $this->hasMany(Clase::class);
     }
 }

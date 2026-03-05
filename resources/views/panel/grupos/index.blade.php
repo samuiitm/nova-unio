@@ -83,7 +83,6 @@
 
                         <!-- Acciones -->
                         <div class="flex items-center gap-2 shrink-0">
-                            {{-- Editar = abrir ficha (donde se edita todo) --}}
                             <a class="panel-icon-btn px-4 py-2"
                                href="{{ route('panel.grupos.show', $g) }}">
                                 Editar
@@ -96,6 +95,13 @@
                                         class="panel-icon-btn px-4 py-2"
                                         onclick="return confirm('¿Seguro que quieres borrar este grupo? Se borrarán también sus horarios.')">
                                     Borrar
+                                </button>
+                            </form>
+                            
+                            <form method="POST" action="{{ route('panel.grupos.generar-clases', $g) }}">
+                                @csrf
+                                <button class="panel-icon-btn px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700">
+                                    Generar próximas 8 semanas
                                 </button>
                             </form>
                         </div>

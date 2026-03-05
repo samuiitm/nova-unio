@@ -94,14 +94,20 @@ Route::prefix('panel')
 
             Route::patch('grupos/{grupo}/alumnos/{alumno}/activar', [\App\Http\Controllers\Panel\GrupoController::class, 'activarAlumno'])
                 ->name('grupos.alumnos.activar');
-
+    
             Route::resource('grupos', \App\Http\Controllers\Panel\GrupoController::class);
+
+            // Clases
+            Route::post('grupos/{grupo}/generar-clases', [\App\Http\Controllers\Panel\GrupoController::class, 'generarClases'])
+                ->name('grupos.generar-clases');
         });
 
         // Perfil dentro de /panel pero con nombres de Breeze (profile.*)
         Route::get('/perfil',   [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/perfil', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/perfil',[\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+
+        
     });
 
 require __DIR__.'/auth.php';
