@@ -15,11 +15,17 @@ class Pago extends Model
         'importe',
         'metodo',
         'notas',
+
+        'tipo_cuota_id',
+        'tipo_cuota_nombre',
+        'vigencia_inicio',
+        'vigencia_fin',
     ];
 
     protected $casts = [
         'fecha_pago' => 'date',
-        'importe' => 'decimal:2',
+        'vigencia_inicio' => 'date',
+        'vigencia_fin' => 'date',
     ];
 
     public function alumno()
@@ -30,5 +36,10 @@ class Pago extends Model
     public function cuota()
     {
         return $this->belongsTo(Cuota::class);
+    }
+
+    public function tipoCuota()
+    {
+        return $this->belongsTo(TipoCuota::class, 'tipo_cuota_id');
     }
 }

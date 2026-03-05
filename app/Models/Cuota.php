@@ -20,7 +20,6 @@ class Cuota extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
-        'importe' => 'decimal:2',
     ];
 
     public function alumno()
@@ -33,8 +32,18 @@ class Cuota extends Model
         return $this->belongsTo(TipoCuota::class, 'tipo_cuota_id');
     }
 
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
+    }
+
     public function pago()
     {
-        return $this->hasOne(Pago::class);
+        return $this->hasOne(\App\Models\Pago::class)->latestOfMany('fecha_pago');
+    }
+
+    public function ultimoPago()
+    {
+        return $this->hasOne(Pago::class)->latestOfMany('fecha_pago');
     }
 }

@@ -97,15 +97,6 @@
                                 <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.alumnos.show', $c->alumno) }}">
                                     Ver alumno
                                 </a>
-
-                                <form method="POST" action="{{ route('panel.pagos.cuotas.anular', $c) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="panel-icon-btn px-4 py-2"
-                                            onclick="return confirm('¿Anular esta cuota?')">
-                                        Anular
-                                    </button>
-                                </form>
                             </div>
                         </td>
                     </tr>

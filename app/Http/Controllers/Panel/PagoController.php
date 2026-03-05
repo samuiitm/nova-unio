@@ -17,11 +17,13 @@ class PagoController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $grupo_id = (string) $request->query('grupo_id', '');
-        $incluirSinGrupo = (bool) $request->boolean('incluir_sin_grupo', false);
+
+        // ✅ la vista lo usa, así que lo mantenemos (por defecto true)
+        $incluirSinGrupo = (bool) $request->boolean('incluir_sin_grupo', true);
 
         $grupos = Grupo::orderBy('nombre')->get(['id', 'nombre']);
 
-        // Cuotas pendientes
+        // ✅ Cuotas pendientes: siempre se muestran
         $cuotasPendientes = Cuota::query()
             ->with(['alumno.gruposActivos', 'tipoCuota'])
             ->where('estado', 'pendiente')
@@ -38,6 +40,7 @@ class PagoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // ✅ Alumnos sin cuota (A): sin cuotas no anuladas
         $alumnosSinCuota = Alumno::query()
             ->where('activo', 1)
             ->with('gruposActivos')
@@ -50,6 +53,7 @@ class PagoController extends Controller
             ->when($grupo_id !== '', function ($query) use ($grupo_id) {
                 $query->whereHas('gruposActivos', fn($g) => $g->where('grupos.id', $grupo_id));
             })
+            // si el usuario NO quiere incluir sin grupo, filtramos (solo para esta lista)
             ->when(!$incluirSinGrupo, function ($query) {
                 $query->whereHas('gruposActivos');
             })
@@ -58,7 +62,7 @@ class PagoController extends Controller
             })
             ->orderBy('apellidos')
             ->orderBy('nombre')
-            ->limit(60)
+            ->limit(80)
             ->get();
 
         return view('panel.pagos.pendientes', compact(
