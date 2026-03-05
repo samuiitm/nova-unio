@@ -8,33 +8,26 @@ use Illuminate\Http\Request;
 
 class ClaseController extends Controller
 {
-    /**
-     * Mostrar clase para pasar lista
-     */
     public function show(Clase $clase)
     {
-        // alumnos activos del grupo
+        // alumnos del grupo que estaban activos en la fecha de la clase (más correcto para historial)
         $alumnos = $clase->grupo
             ->alumnos()
-            ->wherePivotNull('fecha_baja')
+            ->wherePivot('fecha_alta', '<=', $clase->fecha)
+            ->where(function ($q) use ($clase) {
+                $q->wherePivotNull('fecha_baja')
+                  ->orWherePivot('fecha_baja', '>=', $clase->fecha);
+            })
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get();
 
-        // asistencias ya guardadas
         $asistencias = $clase->asistencias()
             ->pluck('estado', 'alumno_id');
 
-        return view('panel.clases.show', [
-            'clase' => $clase,
-            'alumnos' => $alumnos,
-            'asistencias' => $asistencias
-        ]);
+        return view('panel.clases.show', compact('clase', 'alumnos', 'asistencias'));
     }
 
-    /**
-     * Guardar asistencias
-     */
     public function guardarAsistencia(Request $request, Clase $clase)
     {
         if ($clase->asistencia_cerrada) {
@@ -46,12 +39,16 @@ class ClaseController extends Controller
             'asistencias.*' => ['required', 'in:presente,ausente'],
         ]);
 
-        // solo alumnos activos del grupo (para evitar ids raros)
+        // Solo ids válidos del grupo en esa fecha (evita ids inventados)
         $idsPermitidos = $clase->grupo
             ->alumnos()
-            ->wherePivotNull('fecha_baja')
+            ->wherePivot('fecha_alta', '<=', $clase->fecha)
+            ->where(function ($q) use ($clase) {
+                $q->wherePivotNull('fecha_baja')
+                  ->orWherePivot('fecha_baja', '>=', $clase->fecha);
+            })
             ->pluck('alumnos.id')
-            ->map(fn($id) => (int) $id)
+            ->map(fn ($id) => (int) $id)
             ->all();
 
         foreach ($data['asistencias'] as $alumno_id => $estado) {
