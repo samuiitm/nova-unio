@@ -10,16 +10,16 @@ class ClaseController extends Controller
 {
     public function show(Clase $clase)
     {
-        // alumnos del grupo que estaban activos en la fecha de la clase (más correcto para historial)
+        // alumnos del grupo activos en la fecha de la clase (histórico correcto)
         $alumnos = $clase->grupo
             ->alumnos()
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
-                $q->wherePivotNull('fecha_baja')
-                  ->orWherePivot('fecha_baja', '>=', $clase->fecha);
+                $q->whereNull('alumno_grupo.fecha_baja')
+                  ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
-            ->orderBy('apellidos')
-            ->orderBy('nombre')
+            ->orderBy('alumnos.apellidos')
+            ->orderBy('alumnos.nombre')
             ->get();
 
         $asistencias = $clase->asistencias()
@@ -39,20 +39,19 @@ class ClaseController extends Controller
             'asistencias.*' => ['required', 'in:presente,ausente'],
         ]);
 
-        // Solo ids válidos del grupo en esa fecha (evita ids inventados)
+        // ids permitidos (alumnos del grupo activos en esa fecha)
         $idsPermitidos = $clase->grupo
             ->alumnos()
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
-                $q->wherePivotNull('fecha_baja')
-                  ->orWherePivot('fecha_baja', '>=', $clase->fecha);
+                $q->whereNull('alumno_grupo.fecha_baja')
+                  ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
             ->pluck('alumnos.id')
             ->map(fn ($id) => (int) $id)
             ->all();
 
         foreach ($data['asistencias'] as $alumno_id => $estado) {
-
             $alumno_id = (int) $alumno_id;
 
             if (!in_array($alumno_id, $idsPermitidos, true)) {
