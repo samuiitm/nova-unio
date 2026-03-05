@@ -12,7 +12,6 @@ class StoreCuotaAlumnoRequest extends FormRequest
     {
         return [
             'tipo_cuota_id' => ['required', 'exists:tipos_cuota,id'],
-            'fecha_inicio' => ['required', 'date'],
             'estado' => ['required', 'in:pendiente,pagada'],
 
             'metodo' => ['required_if:estado,pagada', 'in:efectivo,bizum,tarjeta,transferencia,otro'],

@@ -14,92 +14,100 @@ use Illuminate\Support\Facades\DB;
 
 class CuotaController extends Controller
 {
+    private function alumnoTieneCuotaAsignada(\App\Models\Alumno $alumno): bool
+    {
+        $hoy = now()->toDateString();
+
+        return \App\Models\Cuota::where('alumno_id', $alumno->id)
+            ->where('estado', '!=', 'anulada')
+            ->where(function ($q) use ($hoy) {
+                $q->where('estado', 'pendiente')
+                ->orWhere(function ($w) use ($hoy) {
+                    $w->where('estado', 'pagada')
+                        ->whereDate('fecha_fin', '>=', $hoy);
+                });
+            })
+            ->exists();
+    }
+
     public function create(Alumno $alumno)
     {
-        $tipos = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
+        // Si ya tiene una cuota asignada (pendiente o pagada vigente), no dejamos crear otra
+        if ($this->alumnoTieneCuotaAsignada($alumno)) {
+            return redirect()
+                ->route('panel.alumnos.show', $alumno)
+                ->with('ok', 'Este alumno ya tiene una cuota asignada (pendiente o vigente).');
+        }
 
-        $ultimaPagada = Cuota::where('alumno_id', $alumno->id)
-            ->where('estado', 'pagada')
-            ->orderByDesc('fecha_fin')
-            ->first();
+        $tipos = \App\Models\TipoCuota::where('activo', 1)
+            ->orderBy('nombre')
+            ->get();
 
-        $fechaInicio = $ultimaPagada
-            ? Carbon::parse($ultimaPagada->fecha_fin)->addDay()->toDateString()
-            : now()->toDateString();
+        // Fecha de pago sugerida (hoy). La cuota entra en vigor al pagar.
+        $fechaPagoSugerida = now()->toDateString();
 
-        return view('panel.pagos.cuotas.crear', compact('alumno', 'tipos', 'fechaInicio'));
+        return view('panel.pagos.cuotas.crear', compact('alumno', 'tipos', 'fechaPagoSugerida'));
     }
 
     public function store(StoreCuotaAlumnoRequest $request, Alumno $alumno)
     {
-        $data = $request->validated();
-
-        $tipo = null;
-        if (!empty($data['tipo_cuota_id'])) {
-            $tipo = TipoCuota::find($data['tipo_cuota_id']);
-        }
-
-        $inicio = Carbon::parse($data['fecha_inicio']);
-
-        // Si hay tipo, calculamos fin e importe por defecto
-        $fin = null;
-        if ($tipo) {
-            $fin = $inicio->copy()->addMonthsNoOverflow((int) $tipo->duracion_meses);
-            $importe = $tipo->importe;
-        } else {
-            if (empty($data['fecha_fin'])) {
-                return back()->withErrors(['fecha_fin' => 'La fecha fin es obligatoria si no eliges tipo de cuota.'])->withInput();
-            }
-            if (empty($data['importe'])) {
-                return back()->withErrors(['importe' => 'El importe es obligatorio si no eliges tipo de cuota.'])->withInput();
-            }
-            $fin = Carbon::parse($data['fecha_fin']);
-            $importe = $data['importe'];
-        }
-
-        // solape de cuotas (evita líos)
-        $solapa = Cuota::where('alumno_id', $alumno->id)
-            ->where('estado', '!=', 'anulada')
-            ->whereDate('fecha_inicio', '<=', $fin->toDateString())
-            ->whereDate('fecha_fin', '>=', $inicio->toDateString())
-            ->exists();
-
-        if ($solapa) {
+        if ($this->alumnoTieneCuotaAsignada($alumno)) {
             return back()->withErrors([
-                'fecha_inicio' => 'Este periodo se solapa con otra cuota del alumno.',
+                'tipo_cuota_id' => 'Este alumno ya tiene una cuota asignada (pendiente o vigente).',
             ])->withInput();
         }
 
-        DB::transaction(function () use ($data, $alumno, $tipo, $inicio, $fin, $importe) {
+        $data = $request->validated();
+        $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
+
+        DB::transaction(function () use ($data, $alumno, $tipo) {
+
+            // cuota pendiente: NO está en vigor, se activará al cobrar
+            if ($data['estado'] === 'pendiente') {
+                Cuota::create([
+                    'alumno_id' => $alumno->id,
+                    'tipo_cuota_id' => $tipo->id,
+                    // placeholder (no se usa hasta cobrar)
+                    'fecha_inicio' => now()->toDateString(),
+                    'fecha_fin' => now()->toDateString(),
+                    'importe' => $tipo->importe,
+                    'estado' => 'pendiente',
+                ]);
+
+                return;
+            }
+
+            // cuota pagada: entra en vigor hoy (fecha_pago <= hoy)
+            $fechaPago = Carbon::parse($data['fecha_pago']);
+            $inicio = $fechaPago->copy();
+            $fin = $fechaPago->copy()->addMonthsNoOverflow((int) $tipo->duracion_meses);
 
             $cuota = Cuota::create([
                 'alumno_id' => $alumno->id,
-                'tipo_cuota_id' => $tipo?->id,
+                'tipo_cuota_id' => $tipo->id,
                 'fecha_inicio' => $inicio->toDateString(),
                 'fecha_fin' => $fin->toDateString(),
-                'importe' => $importe,
-                'estado' => $data['estado'],
+                'importe' => $tipo->importe,
+                'estado' => 'pagada',
             ]);
 
-            if ($data['estado'] === 'pagada') {
-                Pago::create([
-                    'cuota_id' => $cuota->id,
-                    'alumno_id' => $alumno->id,
-                    'fecha_pago' => $data['fecha_pago'],
-                    'importe' => $importe,
-                    'metodo' => $data['metodo'],
-                    'notas' => $data['notas'] ?? null,
-                ]);
-            }
+            Pago::create([
+                'cuota_id' => $cuota->id,
+                'alumno_id' => $alumno->id,
+                'fecha_pago' => $fechaPago->toDateString(),
+                'importe' => $tipo->importe,
+                'metodo' => $data['metodo'],
+                'notas' => $data['notas'] ?? null,
+            ]);
         });
 
-        return redirect()->route('panel.alumnos.show', $alumno)->with('ok', 'Cuota creada.');
+        return redirect()->route('panel.alumnos.show', $alumno)->with('ok', 'Cuota asignada.');
     }
 
     public function cobrar(Cuota $cuota)
     {
         if ($cuota->estado !== 'pendiente') {
-            return back()->with('ok', 'Esta cuota no se puede cobrar.');
+            return back()->with('ok', 'Solo se pueden cobrar cuotas pendientes.');
         }
 
         $cuota->load(['alumno', 'tipoCuota']);
@@ -110,34 +118,96 @@ class CuotaController extends Controller
     public function guardarCobro(CobrarCuotaRequest $request, Cuota $cuota)
     {
         if ($cuota->estado !== 'pendiente') {
-            return back()->with('ok', 'Esta cuota no se puede cobrar.');
+            return back()->with('ok', 'Solo se pueden cobrar cuotas pendientes.');
         }
 
         $data = $request->validated();
+        $cuota->load('tipoCuota');
 
         DB::transaction(function () use ($cuota, $data) {
+            $fechaPago = Carbon::parse($data['fecha_pago']);
+            $inicio = $fechaPago->copy();
+            $fin = $fechaPago->copy()->addMonthsNoOverflow((int) $cuota->tipoCuota->duracion_meses);
+
             Pago::create([
                 'cuota_id' => $cuota->id,
                 'alumno_id' => $cuota->alumno_id,
-                'fecha_pago' => $data['fecha_pago'],
-                'importe' => $data['importe'],
+                'fecha_pago' => $fechaPago->toDateString(),
+                'importe' => $cuota->tipoCuota->importe,
                 'metodo' => $data['metodo'],
                 'notas' => $data['notas'] ?? null,
             ]);
 
-            $cuota->update(['estado' => 'pagada']);
+            $cuota->update([
+                'estado' => 'pagada',
+                'fecha_inicio' => $inicio->toDateString(),
+                'fecha_fin' => $fin->toDateString(),
+                'importe' => $cuota->tipoCuota->importe,
+            ]);
         });
 
-        return redirect()->route('panel.pagos.historial')->with('ok', 'Pago registrado.');
+        return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Pago registrado. Cuota activa.');
     }
 
-    public function anular(Cuota $cuota)
+    // Editar SOLO si está pendiente (sin pago)
+    public function edit(Cuota $cuota)
     {
-        if ($cuota->estado === 'pagada') {
-            return back()->with('ok', 'No se puede anular una cuota ya pagada.');
+        if ($cuota->estado !== 'pendiente') {
+            return back()->with('ok', 'Solo se pueden editar cuotas pendientes.');
         }
 
-        $cuota->update(['estado' => 'anulada']);
+        $cuota->load('alumno');
+        $tipos = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
+
+        return view('panel.pagos.cuotas.editar', compact('cuota', 'tipos'));
+    }
+
+    public function update(StoreCuotaAlumnoRequest $request, Cuota $cuota)
+    {
+        if ($cuota->estado !== 'pendiente') {
+            return back()->with('ok', 'Solo se pueden editar cuotas pendientes.');
+        }
+
+        // reutilizamos validación, pero aquí forzamos estado pendiente
+        $data = $request->validated();
+        $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
+
+        $cuota->update([
+            'tipo_cuota_id' => $tipo->id,
+            'importe' => $tipo->importe,
+            // placeholder
+            'fecha_inicio' => now()->toDateString(),
+            'fecha_fin' => now()->toDateString(),
+            'estado' => 'pendiente',
+        ]);
+
+        return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Cuota pendiente actualizada.');
+    }
+
+    // Eliminar SOLO si está pendiente y sin pago
+    public function destroy(Cuota $cuota)
+    {
+        if ($cuota->estado !== 'pendiente') {
+            return back()->with('ok', 'Solo se pueden eliminar cuotas pendientes.');
+        }
+
+        $tienePago = $cuota->pago()->exists();
+        if ($tienePago) {
+            return back()->with('ok', 'No se puede eliminar: tiene pago. Borra el pago primero.');
+        }
+
+        $cuota->delete();
+
+        return back()->with('ok', 'Cuota eliminada.');
+    }
+
+    // Anular: deja rastro. Si tenía pago, lo borramos para no contar dinero
+    public function anular(Cuota $cuota)
+    {
+        DB::transaction(function () use ($cuota) {
+            $cuota->pago()->delete();
+            $cuota->update(['estado' => 'anulada']);
+        });
 
         return back()->with('ok', 'Cuota anulada.');
     }

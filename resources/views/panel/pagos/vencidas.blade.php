@@ -6,7 +6,7 @@
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Cuotas vencidas</h1>
-        <p class="mt-1 panel-muted">Cuotas pendientes cuyo periodo ya terminó.</p>
+        <p class="mt-1 panel-muted">Alumnos cuya última cuota pagada ya ha vencido y deben renovar.</p>
     </div>
 
     <a href="{{ route('panel.pagos.vencidas') }}" class="panel-icon-btn px-5 py-3">Limpiar</a>
@@ -47,43 +47,56 @@
             <thead class="text-left panel-muted">
                 <tr>
                     <th class="py-2">Alumno</th>
-                    <th class="py-2">Periodo</th>
+                    <th class="py-2">Grupo</th>
+                    <th class="py-2">Última cuota</th>
+                    <th class="py-2">Fin</th>
                     <th class="py-2">Importe</th>
-                    <th class="py-2">Tipo</th>
                     <th class="py-2 text-right">Acciones</th>
                 </tr>
             </thead>
+
             <tbody>
-                @forelse($cuotasVencidas as $c)
+                @forelse($alumnosVencidos as $a)
+                    @php
+                        $grupo = $a->gruposActivos->first();
+                        $u = $a->ultimaCuotaPagada;
+                    @endphp
+
                     <tr class="border-t panel-border">
-                        <td class="py-3">{{ $c->alumno->apellidos }}, {{ $c->alumno->nombre }}</td>
+                        <td class="py-3">{{ $a->apellidos }}, {{ $a->nombre }}</td>
+                        <td class="py-3">{{ $grupo?->nombre ?? '—' }}</td>
+
                         <td class="py-3">
-                            {{ $c->fecha_inicio?->format('d/m/Y') }} - {{ $c->fecha_fin?->format('d/m/Y') }}
+                            {{ $u?->tipoCuota?->nombre ?? '—' }}
+                            @if($u)
+                                <div class="text-xs panel-muted">
+                                    {{ $u->fecha_inicio?->format('d/m/Y') }} - {{ $u->fecha_fin?->format('d/m/Y') }}
+                                </div>
+                            @endif
                         </td>
-                        <td class="py-3">{{ number_format((float)$c->importe, 2, ',', '.') }} €</td>
-                        <td class="py-3">{{ $c->tipoCuota?->nombre ?? '—' }}</td>
+
+                        <td class="py-3">
+                            {{ $u?->fecha_fin?->format('d/m/Y') ?? '—' }}
+                        </td>
+
+                        <td class="py-3">
+                            {{ $u ? number_format((float)$u->importe, 2, ',', '.') . ' €' : '—' }}
+                        </td>
+
                         <td class="py-3 text-right">
                             <div class="inline-flex gap-2">
-                                <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.cuotas.cobrar', $c) }}">
-                                    Cobrar
+                                <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.cuotas.crear', $a) }}">
+                                    Renovar
                                 </a>
-                                <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.alumnos.show', $c->alumno) }}">
+                                <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.alumnos.show', $a) }}">
                                     Ver alumno
                                 </a>
-                                <form method="POST" action="{{ route('panel.pagos.cuotas.anular', $c) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="panel-icon-btn px-4 py-2"
-                                            onclick="return confirm('¿Anular esta cuota?')">
-                                        Anular
-                                    </button>
-                                </form>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="py-6 panel-muted">No hay cuotas vencidas.</td>
+                        <td colspan="6" class="py-6 panel-muted">No hay cuotas vencidas.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -91,7 +104,7 @@
     </div>
 
     <div class="mt-4">
-        {{ $cuotasVencidas->links() }}
+        {{ $alumnosVencidos->links() }}
     </div>
 </div>
 @endsection

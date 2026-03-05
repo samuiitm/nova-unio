@@ -58,6 +58,7 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200)->header('Content-Type', 'application/xml');
 })->name('seo.sitemap');
 
+
 // -- Parte Privada (TODO cuelga de /panel)
 Route::prefix('panel')
     ->middleware(['auth', 'panel.access'])
@@ -67,65 +68,9 @@ Route::prefix('panel')
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
 
-            // Pagos y cuotas
-            Route::get('pagos/cuotas-vencidas', [\App\Http\Controllers\Panel\PagoController::class, 'vencidas'])
-                ->name('pagos.vencidas');
-
-            Route::get('pagos/pendientes', [\App\Http\Controllers\Panel\PagoController::class, 'pendientes'])
-                ->name('pagos.pendientes');
-
-            Route::get('pagos/historial', [\App\Http\Controllers\Panel\PagoController::class, 'historial'])
-                ->name('pagos.historial');
-
-            // Tipos de cuota
-            Route::get('pagos/tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'index'])
-                ->name('pagos.tipos');
-
-            Route::post('pagos/tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'store'])
-                ->name('pagos.tipos.store');
-
-            Route::patch('pagos/tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'update'])
-                ->name('pagos.tipos.update');
-
-            Route::delete('pagos/tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'destroy'])
-                ->name('pagos.tipos.destroy');
-
-            // Crear cuota a un alumno
-            Route::get('pagos/alumno/{alumno}/cuotas/crear', [\App\Http\Controllers\Panel\CuotaController::class, 'create'])
-                ->name('pagos.cuotas.crear');
-
-            Route::post('pagos/alumno/{alumno}/cuotas', [\App\Http\Controllers\Panel\CuotaController::class, 'store'])
-                ->name('pagos.cuotas.store');
-
-            // Cobrar / anular cuota
-            Route::get('pagos/cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'cobrar'])
-                ->name('pagos.cuotas.cobrar');
-
-            Route::post('pagos/cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'guardarCobro'])
-                ->name('pagos.cuotas.cobrar.guardar');
-
-            Route::patch('pagos/cuotas/{cuota}/anular', [\App\Http\Controllers\Panel\CuotaController::class, 'anular'])
-                ->name('pagos.cuotas.anular');
-
-            // Asistencias (historial)
-            Route::get('asistencias', [\App\Http\Controllers\Panel\AsistenciaController::class, 'index'])
-                ->name('asistencias.index');
-
-            Route::get('asistencias/alumno/{alumno}', [\App\Http\Controllers\Panel\AsistenciaController::class, 'alumno'])
-                ->name('asistencias.alumno');
-
-            // Calendario
-            Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])
-                ->name('calendario');
-
-            // Clases (entrar a una clase y pasar lista)
-            Route::get('clases/{clase}', [\App\Http\Controllers\Panel\ClaseController::class, 'show'])
-                ->name('clases.show');
-
-            Route::post('clases/{clase}/asistencia', [\App\Http\Controllers\Panel\ClaseController::class, 'guardarAsistencia'])
-                ->name('clases.asistencia');
-
-            // Alumnos
+            // =========================
+            // ALUMNOS
+            // =========================
             Route::patch('alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\AlumnoController::class, 'baja'])
                 ->name('alumnos.baja');
 
@@ -134,7 +79,9 @@ Route::prefix('panel')
 
             Route::resource('alumnos', \App\Http\Controllers\Panel\AlumnoController::class);
 
-            // Grupos y programación
+            // =========================
+            // GRUPOS Y PROGRAMACIÓN
+            // =========================
             Route::post('grupos/{grupo}/programaciones', [\App\Http\Controllers\Panel\GrupoProgramacionController::class, 'store'])
                 ->name('grupos.programaciones.store');
 
@@ -155,9 +102,86 @@ Route::prefix('panel')
 
             Route::resource('grupos', \App\Http\Controllers\Panel\GrupoController::class);
 
-            // Clases (generación)
+            // =========================
+            // CLASES
+            // =========================
             Route::post('grupos/{grupo}/generar-clases', [\App\Http\Controllers\Panel\GrupoController::class, 'generarClases'])
                 ->name('grupos.generar-clases');
+
+            // Calendario
+            Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])
+                ->name('calendario');
+
+            // Ver clase / pasar lista
+            Route::get('clases/{clase}', [\App\Http\Controllers\Panel\ClaseController::class, 'show'])
+                ->name('clases.show');
+
+            // Guardar asistencia (pasar lista)
+            Route::post('clases/{clase}/asistencia', [\App\Http\Controllers\Panel\ClaseController::class, 'guardarAsistencia'])
+                ->name('clases.asistencia');
+
+            // =========================
+            // PAGOS Y CUOTAS
+            // =========================
+            Route::prefix('pagos')->name('pagos.')->group(function () {
+
+                // Secciones principales
+                Route::get('vencidas', [\App\Http\Controllers\Panel\PagoController::class, 'vencidas'])
+                    ->name('vencidas');
+
+                Route::get('pendientes', [\App\Http\Controllers\Panel\PagoController::class, 'pendientes'])
+                    ->name('pendientes');
+
+                Route::get('historial', [\App\Http\Controllers\Panel\PagoController::class, 'historial'])
+                    ->name('historial');
+
+                // TIPOS DE CUOTA
+                Route::get('tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'index'])
+                    ->name('tipos');
+
+                Route::post('tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'store'])
+                    ->name('tipos.store');
+
+                Route::patch('tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'update'])
+                    ->name('tipos.update');
+
+                Route::delete('tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'destroy'])
+                    ->name('tipos.destroy');
+
+                // ---- Cuotas (asignar/cobrar/editar/anular/eliminar) ----
+
+                // Asignar cuota a un alumno
+                Route::get('cuotas/{alumno}/crear', [\App\Http\Controllers\Panel\CuotaController::class, 'create'])
+                    ->name('cuotas.crear');
+
+                Route::post('cuotas/{alumno}', [\App\Http\Controllers\Panel\CuotaController::class, 'store'])
+                    ->name('cuotas.store');
+
+                // Cobrar cuota pendiente
+                Route::get('cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'cobrar'])
+                    ->name('cuotas.cobrar');
+
+                Route::post('cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'guardarCobro'])
+                    ->name('cuotas.cobrar.guardar');
+
+                // Editar cuota (solo pendiente)
+                Route::get('cuotas/{cuota}/editar', [\App\Http\Controllers\Panel\CuotaController::class, 'edit'])
+                    ->name('cuotas.edit');
+
+                Route::patch('cuotas/{cuota}', [\App\Http\Controllers\Panel\CuotaController::class, 'update'])
+                    ->name('cuotas.update');
+
+                // Anular / eliminar
+                Route::patch('cuotas/{cuota}/anular', [\App\Http\Controllers\Panel\CuotaController::class, 'anular'])
+                    ->name('cuotas.anular');
+
+                Route::delete('cuotas/{cuota}', [\App\Http\Controllers\Panel\CuotaController::class, 'destroy'])
+                    ->name('cuotas.destroy');
+
+                // Borrar un pago (ojo: siempre al final para que no choque con /vencidas, /tipos, etc)
+                Route::delete('{pago}', [\App\Http\Controllers\Panel\PagoController::class, 'destroy'])
+                    ->name('destroy');
+            });
         });
 
         // Perfil dentro de /panel pero con nombres de Breeze (profile.*)
