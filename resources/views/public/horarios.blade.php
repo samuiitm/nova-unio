@@ -22,7 +22,7 @@ $filas = [
 [
 'nombre' => 'Sambo Kids',
 'edad' => '3–12 años',
-'dias' => ['LUN', 'MIÉ'],
+'dias' => ['LUN', 'MIÉ', 'VIE'],
 'hora' => '17:30 · 18:30',
 ],
 [
