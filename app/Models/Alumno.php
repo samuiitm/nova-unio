@@ -23,6 +23,7 @@ class Alumno extends Model
         'activo',
         'fecha_baja',
         'fecha_inicio_actividad',
+        'notas',
     ];
 
     protected $casts = [
@@ -54,8 +55,17 @@ class Alumno extends Model
         return $this->hasMany(\App\Models\Pago::class);
     }
 
-    public function ultimaCuota()
+    public function ultimaCuotaPagada()
     {
-        return $this->hasOne(\App\Models\Cuota::class)->latestOfMany('fecha_fin');
+        return $this->hasOne(\App\Models\Cuota::class)
+            ->where('estado', 'pagada')
+            ->latestOfMany('fecha_fin');
+    }
+
+    public function cuotaPendiente()
+    {
+        return $this->hasOne(\App\Models\Cuota::class)
+            ->where('estado', 'pendiente')
+            ->latestOfMany('created_at');
     }
 }

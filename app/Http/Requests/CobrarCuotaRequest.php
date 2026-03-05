@@ -11,7 +11,7 @@ class CobrarCuotaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'fecha_pago' => ['required', 'date'],
+            'fecha_pago' => ['required', 'date', 'before_or_equal:today'],
             'importe' => ['required', 'numeric', 'min:0'],
             'metodo' => ['required', 'in:efectivo,bizum,tarjeta,transferencia,otro'],
             'notas' => ['nullable', 'string', 'max:255'],
