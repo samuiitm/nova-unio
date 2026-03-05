@@ -67,6 +67,17 @@ Route::prefix('panel')
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
 
+            // Calendario
+            Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])
+                ->name('calendario');
+
+            // Clases (entrar a una clase y pasar lista)
+            Route::get('clases/{clase}', [\App\Http\Controllers\Panel\ClaseController::class, 'show'])
+                ->name('clases.show');
+
+            Route::post('clases/{clase}/asistencia', [\App\Http\Controllers\Panel\ClaseController::class, 'guardarAsistencia'])
+                ->name('clases.asistencia');
+
             // Alumnos
             Route::patch('alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\AlumnoController::class, 'baja'])
                 ->name('alumnos.baja');
@@ -94,10 +105,10 @@ Route::prefix('panel')
 
             Route::patch('grupos/{grupo}/alumnos/{alumno}/activar', [\App\Http\Controllers\Panel\GrupoController::class, 'activarAlumno'])
                 ->name('grupos.alumnos.activar');
-    
+
             Route::resource('grupos', \App\Http\Controllers\Panel\GrupoController::class);
 
-            // Clases
+            // Clases (generación)
             Route::post('grupos/{grupo}/generar-clases', [\App\Http\Controllers\Panel\GrupoController::class, 'generarClases'])
                 ->name('grupos.generar-clases');
         });
@@ -106,8 +117,6 @@ Route::prefix('panel')
         Route::get('/perfil',   [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/perfil', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/perfil',[\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
-
-        
     });
 
 require __DIR__.'/auth.php';
