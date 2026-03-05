@@ -11,6 +11,7 @@
 
         <div class="flex gap-2">
             <a href="{{ route('panel.alumnos.edit', $alumno) }}" class="panel-btn px-5 py-3">Editar</a>
+            <a href="{{ route('panel.asistencias.alumno', $alumno) }}" class="panel-icon-btn px-5 py-3">Asistencias</a>
             <a href="{{ route('panel.alumnos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
         </div>
     </div>
