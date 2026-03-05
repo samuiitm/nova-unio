@@ -156,31 +156,35 @@ class GrupoController extends Controller
     }
 
     public function generarClases(Grupo $grupo)
-{
-    $programaciones = $grupo->programaciones;
+    {
+        $programaciones = $grupo->programaciones;
 
-    $inicio = now()->startOfWeek()->copy();
-    $fin = now()->addWeeks(8);
+        // semana empieza en lunes (como tu dia_semana: 1=lunes..7=domingo)
+        $inicio = now()->startOfWeek(Carbon::MONDAY)->copy();
+        $fin = now()->copy()->addWeeks(8);
 
-    foreach ($programaciones as $p) {
+        foreach ($programaciones as $p) {
 
-        $fecha = $inicio->copy();
+            $fecha = $inicio->copy();
 
-        while ($fecha <= $fin) {
+            while ($fecha <= $fin) {
 
-            if ($fecha->dayOfWeek == $p->dia_semana) {
+                // IMPORTANTE: ISO = 1..7
+                if ($fecha->dayOfWeekIso == (int) $p->dia_semana) {
 
-                Clase::firstOrCreate([
-                    'grupo_id' => $grupo->id,
-                    'fecha' => $fecha->toDateString(),
-                    'hora_inicio' => $p->hora_inicio,
-                    'hora_fin' => $p->hora_fin,
-                ]);
+                    Clase::firstOrCreate([
+                        'grupo_id' => $grupo->id,
+                        'fecha' => $fecha->toDateString(),
+                        'hora_inicio' => $p->hora_inicio,
+                        'hora_fin' => $p->hora_fin,
+                    ]);
+                }
+
+                $fecha->addDay();
             }
-
-            $fecha->addDay();
         }
-    }
-    return back()->with('success', 'Clases generadas correctamente');
+
+        // en tus vistas del panel sueles mostrar session('ok')
+        return back()->with('ok', 'Clases generadas correctamente.');
     }
 }
