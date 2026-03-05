@@ -67,6 +67,46 @@ Route::prefix('panel')
         Route::name('panel.')->group(function () {
             Route::view('/', 'panel.dashboard')->name('home');
 
+            // Pagos y cuotas
+            Route::get('pagos/cuotas-vencidas', [\App\Http\Controllers\Panel\PagoController::class, 'vencidas'])
+                ->name('pagos.vencidas');
+
+            Route::get('pagos/pendientes', [\App\Http\Controllers\Panel\PagoController::class, 'pendientes'])
+                ->name('pagos.pendientes');
+
+            Route::get('pagos/historial', [\App\Http\Controllers\Panel\PagoController::class, 'historial'])
+                ->name('pagos.historial');
+
+            // Tipos de cuota
+            Route::get('pagos/tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'index'])
+                ->name('pagos.tipos');
+
+            Route::post('pagos/tipos', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'store'])
+                ->name('pagos.tipos.store');
+
+            Route::patch('pagos/tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'update'])
+                ->name('pagos.tipos.update');
+
+            Route::delete('pagos/tipos/{tipoCuota}', [\App\Http\Controllers\Panel\TipoCuotaController::class, 'destroy'])
+                ->name('pagos.tipos.destroy');
+
+            // Crear cuota a un alumno
+            Route::get('pagos/alumno/{alumno}/cuotas/crear', [\App\Http\Controllers\Panel\CuotaController::class, 'create'])
+                ->name('pagos.cuotas.crear');
+
+            Route::post('pagos/alumno/{alumno}/cuotas', [\App\Http\Controllers\Panel\CuotaController::class, 'store'])
+                ->name('pagos.cuotas.store');
+
+            // Cobrar / anular cuota
+            Route::get('pagos/cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'cobrar'])
+                ->name('pagos.cuotas.cobrar');
+
+            Route::post('pagos/cuotas/{cuota}/cobrar', [\App\Http\Controllers\Panel\CuotaController::class, 'guardarCobro'])
+                ->name('pagos.cuotas.cobrar.guardar');
+
+            Route::patch('pagos/cuotas/{cuota}/anular', [\App\Http\Controllers\Panel\CuotaController::class, 'anular'])
+                ->name('pagos.cuotas.anular');
+
             // Asistencias (historial)
             Route::get('asistencias', [\App\Http\Controllers\Panel\AsistenciaController::class, 'index'])
                 ->name('asistencias.index');
