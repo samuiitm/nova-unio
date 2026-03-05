@@ -43,4 +43,19 @@ class Alumno extends Model
     {
         return $this->grupos()->wherePivotNull('fecha_baja');
     }
+
+    public function cuotas()
+    {
+        return $this->hasMany(\App\Models\Cuota::class);
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(\App\Models\Pago::class);
+    }
+
+    public function ultimaCuota()
+    {
+        return $this->hasOne(\App\Models\Cuota::class)->latestOfMany('fecha_fin');
+    }
 }
