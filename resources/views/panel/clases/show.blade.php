@@ -1,25 +1,31 @@
 @extends('layouts.panel')
 
-@section('title', 'Pasar lista | Nova Unió')
+@section('title', 'Clase | Nova Unió')
 
 @section('content')
 @php
-    $mesVolver = request('mes', now()->format('Y-m'));
+    $mesVolver = $mesVolver ?? null;
+
+    $fechaFmt = \Carbon\Carbon::parse($clase->fecha)->format('d/m/Y');
+    $horaIni = $clase->hora_inicio ? substr($clase->hora_inicio,0,5) : '—';
+    $horaFin = $clase->hora_fin ? substr($clase->hora_fin,0,5) : '—';
 @endphp
 
 <div class="flex items-start justify-between gap-4">
     <div>
-        <h1 class="text-2xl font-semibold">Pasar lista</h1>
+        <h1 class="text-2xl font-semibold">Clase</h1>
         <p class="mt-1 panel-muted">
-            {{ \Carbon\Carbon::parse($clase->fecha)->format('d/m/Y') }}
-            · {{ substr($clase->hora_inicio,0,5) }} - {{ substr($clase->hora_fin,0,5) }}
-            · {{ $clase->grupo->nombre }}
+            {{ $clase->grupo->nombre }} · {{ $fechaFmt }} · {{ $horaIni }}-{{ $horaFin }}
         </p>
     </div>
 
-    <a href="{{ route('panel.calendario', ['mes' => $mesVolver]) }}" class="panel-icon-btn px-5 py-3">
-        Volver
-    </a>
+    <div class="flex gap-2">
+        @if($mesVolver)
+            <a href="{{ route('panel.calendario', ['mes' => $mesVolver]) }}" class="panel-icon-btn px-5 py-3">Volver</a>
+        @else
+            <a href="{{ route('panel.calendario') }}" class="panel-icon-btn px-5 py-3">Volver</a>
+        @endif
+    </div>
 </div>
 
 @if(session('ok'))
@@ -40,30 +46,76 @@
 @endif
 
 <div class="mt-5 panel-card p-6">
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <div class="text-lg font-semibold">Alumnos</div>
-            <div class="text-sm panel-muted">Por defecto quedan como ausentes. Marca presentes y guarda.</div>
+            <div class="text-lg font-semibold">Lista</div>
+            <div class="text-sm panel-muted">
+                Marca los presentes. Los que queden sin marcar se guardan como ausentes.
+            </div>
         </div>
 
-        @if($clase->estado === 'cancelada')
-            <span class="text-xs px-3 py-1 rounded-full"
-                  style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
-                Clase cancelada
-            </span>
-        @endif
-
-        @if($clase->asistencia_cerrada)
-            <span class="text-xs px-3 py-1 rounded-full panel-muted"
-                  style="background: rgb(var(--p-surface) / .10); border: 1px solid rgb(var(--p-border) / .18);">
-                Asistencia cerrada
-            </span>
-        @endif
+        <div class="flex items-center gap-2">
+            @if($estadoVisual === 'cancelada')
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                    Cancelada
+                </span>
+            @elseif($estadoVisual === 'cerrada')
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
+                    Cerrada
+                </span>
+            @elseif($estadoVisual === 'sin_lista_bloqueada')
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(255 180 80 / .08); color: rgb(255 205 140 / .85); border: 1px solid rgb(255 180 80 / .18); opacity:.85;">
+                    Sin lista (bloq.)
+                </span>
+            @elseif($estadoVisual === 'sin_lista')
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                    Sin lista
+                </span>
+            @elseif($estadoVisual === 'pasada')
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
+                    Pasada
+                </span>
+            @else
+                <span class="text-xs px-3 py-1 rounded-full"
+                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                    Abierta
+                </span>
+            @endif
+        </div>
     </div>
 
-    <form class="mt-5"
-          method="POST"
-          action="{{ route('panel.clases.asistencia', $clase) }}">
+    @if($bloqueada)
+        <div class="mt-4 panel-card p-4">
+            <div class="text-sm">
+                Esta clase está <span class="font-semibold">bloqueada</span> y no se puede modificar la asistencia.
+            </div>
+            <div class="mt-1 text-sm panel-muted">
+                @if($estadoVisual === 'sin_lista_bloqueada')
+                    Han pasado 2 días sin pasar lista.
+                @elseif($estadoVisual === 'cerrada')
+                    La asistencia está cerrada.
+                @elseif($estadoVisual === 'cancelada')
+                    La clase está cancelada.
+                @endif
+            </div>
+        </div>
+    @elseif($estadoVisual === 'sin_lista')
+        <div class="mt-4 panel-card p-4">
+            <div class="text-sm">
+                Aviso: esta clase ya es de hace 1 día y aún no se ha pasado lista.
+            </div>
+            <div class="mt-1 text-sm panel-muted">
+                Si pasan 2 días sin lista, se bloqueará.
+            </div>
+        </div>
+    @endif
+
+    <form class="mt-5" method="POST" action="{{ route('panel.clases.asistencia', $clase) }}">
         @csrf
 
         <div class="overflow-x-auto">
@@ -71,28 +123,27 @@
                 <thead class="text-left panel-muted">
                     <tr>
                         <th class="py-2">Alumno</th>
-                        <th class="py-2">Asistencia</th>
+                        <th class="py-2">Presente</th>
+                        <th class="py-2">Estado actual</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                    @forelse($alumnos as $alumno)
+                    @forelse($alumnos as $a)
                         @php
-                            $estado = $asistencias[$alumno->id] ?? 'ausente';
+                            $as = $asistencias->get($a->id);
+                            $estado = $as?->estado; // presente/ausente/null
+                            $checked = ($estado === null || $estado === 'presente');
                         @endphp
-
                         <tr class="border-t panel-border">
                             <td class="py-3">
-                                <div class="font-medium">
-                                    {{ $alumno->apellidos }}, {{ $alumno->nombre }}
-                                </div>
+                                <div class="font-medium">{{ $a->apellidos }}, {{ $a->nombre }}</div>
                             </td>
 
                             <td class="py-3">
                                 <div class="flex items-center gap-4">
                                     <label class="inline-flex items-center gap-2">
                                         <input type="radio"
-                                               name="asistencias[{{ $alumno->id }}]"
+                                               name="asistencias[{{ $a->id }}]"
                                                value="presente"
                                                @checked($estado === 'presente')
                                                @disabled($clase->asistencia_cerrada)>
@@ -101,7 +152,7 @@
 
                                     <label class="inline-flex items-center gap-2">
                                         <input type="radio"
-                                               name="asistencias[{{ $alumno->id }}]"
+                                               name="asistencias[{{ $a->id }}]"
                                                value="ausente"
                                                @checked($estado === 'ausente')
                                                @disabled($clase->asistencia_cerrada)>
@@ -109,23 +160,38 @@
                                     </label>
                                 </div>
                             </td>
+
+                            <td class="py-3 panel-muted">
+                                @if($estado === 'presente')
+                                    Presente
+                                @elseif($estado === 'ausente')
+                                    Ausente
+                                @else
+                                    Sin guardar
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="py-6 panel-muted">
-                                Este grupo no tiene alumnos en esta fecha.
-                            </td>
+                            <td colspan="3" class="py-4 panel-muted">No hay alumnos para esta clase.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        <div class="mt-5">
-            <button class="panel-btn px-6 py-3"
-                    @disabled($clase->asistencia_cerrada || $alumnos->count() === 0)>
-                Guardar asistencia
-            </button>
+        <div class="mt-5 flex items-center justify-between gap-3">
+            <div class="text-xs panel-muted">
+                Alumnos: {{ $alumnos->count() }} · Guardadas: {{ (int)$totalAsistencias }}
+            </div>
+
+            <div class="flex gap-2">
+                @if(!$bloqueada)
+                    <button class="panel-btn px-6 py-3">
+                        Guardar asistencia
+                    </button>
+                @endif
+            </div>
         </div>
     </form>
 </div>

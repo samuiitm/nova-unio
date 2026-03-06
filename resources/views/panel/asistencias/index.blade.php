@@ -3,10 +3,15 @@
 @section('title', 'Asistencias | Nova Unió')
 
 @section('content')
+@php
+    $limiteSinLista = now()->subDay()->startOfDay();   // ayer
+    $limiteBloqueo  = now()->subDays(2)->startOfDay(); // hace 2 días
+@endphp
+
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Asistencias</h1>
-        <p class="mt-1 panel-muted">Historial por clases.</p>
+        <p class="mt-1 panel-muted">Historial por clases. Se ve si falta pasar lista o si está bloqueada.</p>
     </div>
 </div>
 
@@ -56,24 +61,24 @@
             <tbody class="align-top">
                 @forelse($clases as $c)
                     @php
-                        $fecha = \Carbon\Carbon::parse($c->fecha);
-                        $fechaFmt = $fecha->format('d/m/Y');
+                        $fecha = \Carbon\Carbon::parse($c->fecha)->startOfDay();
                         $horaIni = $c->hora_inicio ? substr($c->hora_inicio,0,5) : '—';
                         $horaFin = $c->hora_fin ? substr($c->hora_fin,0,5) : '—';
 
                         $total = (int) $c->total;
-                        $esAntigua = $fecha->lte(now()->subDay()->startOfDay());
 
+                        $esCancelada = ($c->estado ?? null) === 'cancelada';
                         $cerradaManual = (bool) ($c->asistencia_cerrada ?? false);
 
-                        $sinLista = !$cerradaManual && $esAntigua && $total === 0;
-                        $pasada = !$cerradaManual && $total > 0;
-                        $abierta = !$cerradaManual && !$sinLista && !$pasada;
+                        $bloqueadaSinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteBloqueo) && $total === 0;
+                        $sinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteSinLista) && $total === 0 && !$bloqueadaSinLista;
+
+                        $pasada = !$esCancelada && !$cerradaManual && $total > 0;
                     @endphp
 
                     <tr class="border-t panel-border">
                         <td class="py-3">
-                            <div class="font-medium">{{ $fechaFmt }}</div>
+                            <div class="font-medium">{{ $fecha->format('d/m/Y') }}</div>
                         </td>
 
                         <td class="py-3">
@@ -94,15 +99,25 @@
                         </td>
 
                         <td class="py-3">
-                            @if($sinLista)
+                            @if($esCancelada)
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
-                                    Sin pasar lista
+                                      style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                    Cancelada
                                 </span>
                             @elseif($cerradaManual)
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                      style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
                                     Cerrada
+                                </span>
+                            @elseif($bloqueadaSinLista)
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(255 180 80 / .08); color: rgb(255 205 140 / .85); border: 1px solid rgb(255 180 80 / .18); opacity:.85;">
+                                    Sin lista (bloq.)
+                                </span>
+                            @elseif($sinLista)
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                    Sin lista
                                 </span>
                             @elseif($pasada)
                                 <span class="text-xs px-3 py-1 rounded-full"
@@ -111,7 +126,7 @@
                                 </span>
                             @else
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
                                     Abierta
                                 </span>
                             @endif

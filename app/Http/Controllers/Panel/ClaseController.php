@@ -3,66 +3,116 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asistencia;
 use App\Models\Clase;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClaseController extends Controller
 {
-    public function show(Clase $clase)
+    private function alumnosDelGrupoEnFecha(Clase $clase)
     {
-        // alumnos del grupo activos en la fecha de la clase (histórico correcto)
-        $alumnos = $clase->grupo
-            ->alumnos()
+        return $clase->grupo->alumnos()
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
                 $q->whereNull('alumno_grupo.fecha_baja')
                   ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
-            ->orderBy('alumnos.apellidos')
-            ->orderBy('alumnos.nombre')
+            ->orderBy('apellidos')
+            ->orderBy('nombre')
             ->get();
+    }
 
-        $asistencias = $clase->asistencias()
-            ->pluck('estado', 'alumno_id');
+    private function estadoVisual(Clase $clase, int $totalAsistencias): array
+    {
+        $fecha = Carbon::parse($clase->fecha)->startOfDay();
 
-        return view('panel.clases.show', compact('clase', 'alumnos', 'asistencias'));
+        $limiteSinLista = now()->subDay()->startOfDay();    // ayer
+        $limiteBloqueo  = now()->subDays(2)->startOfDay();  // hace 2 días
+
+        $esCancelada = ($clase->estado ?? null) === 'cancelada';
+        $cerradaManual = (bool) ($clase->asistencia_cerrada ?? false);
+
+        $bloqueadaSinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteBloqueo) && $totalAsistencias === 0;
+        $sinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteSinLista) && $totalAsistencias === 0 && !$bloqueadaSinLista;
+
+        if ($esCancelada) return ['cancelada', true];
+        if ($cerradaManual) return ['cerrada', true];
+        if ($bloqueadaSinLista) return ['sin_lista_bloqueada', true];
+        if ($sinLista) return ['sin_lista', false];
+        if ($totalAsistencias > 0) return ['pasada', false];
+
+        return ['abierta', false];
+    }
+
+    public function show(Request $request, Clase $clase)
+    {
+        $clase->load('grupo');
+
+        $alumnos = $this->alumnosDelGrupoEnFecha($clase);
+
+        $asistencias = Asistencia::where('clase_id', $clase->id)
+            ->get()
+            ->keyBy('alumno_id');
+
+        $totalAsistencias = $asistencias->count();
+
+        [$estadoVisual, $bloqueada] = $this->estadoVisual($clase, $totalAsistencias);
+
+        $mesVolver = $request->query('mes');
+
+        return view('panel.clases.show', compact(
+            'clase',
+            'alumnos',
+            'asistencias',
+            'totalAsistencias',
+            'estadoVisual',
+            'bloqueada',
+            'mesVolver'
+        ));
     }
 
     public function guardarAsistencia(Request $request, Clase $clase)
     {
-        if ($clase->asistencia_cerrada) {
-            return back()->with('ok', 'La asistencia está cerrada y no se puede modificar.');
+        $clase->load('grupo');
+
+        $alumnos = $this->alumnosDelGrupoEnFecha($clase);
+        $alumnoIds = $alumnos->pluck('id');
+
+        $totalExistentes = Asistencia::where('clase_id', $clase->id)->count();
+        [$estadoVisual, $bloqueada] = $this->estadoVisual($clase, $totalExistentes);
+
+        if ($bloqueada) {
+            return back()->with('ok', 'No se puede guardar: la clase está bloqueada.');
         }
 
         $data = $request->validate([
-            'asistencias' => ['required', 'array'],
-            'asistencias.*' => ['required', 'in:presente,ausente'],
+            'presentes' => ['nullable', 'array'],
+            'presentes.*' => ['integer'],
         ]);
 
-        // ids permitidos (alumnos del grupo activos en esa fecha)
-        $idsPermitidos = $clase->grupo
-            ->alumnos()
-            ->wherePivot('fecha_alta', '<=', $clase->fecha)
-            ->where(function ($q) use ($clase) {
-                $q->whereNull('alumno_grupo.fecha_baja')
-                  ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
-            })
-            ->pluck('alumnos.id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+        $presentes = collect($data['presentes'] ?? [])
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($id) => $alumnoIds->contains($id))
+            ->values();
 
-        foreach ($data['asistencias'] as $alumno_id => $estado) {
-            $alumno_id = (int) $alumno_id;
+        DB::transaction(function () use ($clase, $alumnoIds, $presentes) {
 
-            if (!in_array($alumno_id, $idsPermitidos, true)) {
-                continue;
+            // por si acaso: borrar asistencias de alumnos que ya no tocan
+            Asistencia::where('clase_id', $clase->id)
+                ->whereNotIn('alumno_id', $alumnoIds)
+                ->delete();
+
+            foreach ($alumnoIds as $alumnoId) {
+                $estado = $presentes->contains((int) $alumnoId) ? 'presente' : 'ausente';
+
+                Asistencia::updateOrCreate(
+                    ['clase_id' => $clase->id, 'alumno_id' => (int) $alumnoId],
+                    ['estado' => $estado]
+                );
             }
-
-            $clase->asistencias()->updateOrCreate(
-                ['alumno_id' => $alumno_id],
-                ['estado' => $estado]
-            );
-        }
+        });
 
         return back()->with('ok', 'Asistencia guardada.');
     }

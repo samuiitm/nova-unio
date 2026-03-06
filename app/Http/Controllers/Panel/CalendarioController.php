@@ -16,20 +16,28 @@ class CalendarioController extends Controller
         try {
             $base = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
         } catch (\Throwable $e) {
-            $base = now()->startOfMonth();
-            $mes = $base->format('Y-m');
+            $mes = now()->format('Y-m');
+            $base = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
         }
 
         $inicio = $base->copy()->startOfMonth();
         $fin = $base->copy()->endOfMonth();
 
-        $clases = Clase::with('grupo')
-            ->whereBetween('fecha', [$inicio->toDateString(), $fin->toDateString()])
+        // Para que el calendario pinte semanas completas
+        $inicioCal = $inicio->copy()->startOfWeek(Carbon::MONDAY);
+        $finCal = $fin->copy()->endOfWeek(Carbon::SUNDAY);
+
+        $clases = Clase::query()
+            ->with(['grupo:id,nombre'])
+            ->whereBetween('fecha', [$inicioCal->toDateString(), $finCal->toDateString()])
+            ->withCount([
+                'asistencias as asistencias_total'
+            ])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get()
             ->groupBy('fecha');
 
-        return view('panel.calendario.index', compact('clases', 'inicio', 'fin', 'mes'));
+        return view('panel.calendario.index', compact('mes', 'inicio', 'fin', 'clases'));
     }
 }
