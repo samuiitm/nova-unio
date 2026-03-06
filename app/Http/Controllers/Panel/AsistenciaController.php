@@ -3,155 +3,59 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Asistencia;
-use App\Models\Alumno;
+use App\Models\Clase;
 use App\Models\Grupo;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AsistenciaController extends Controller
 {
-    /**
-     * Historial general de asistencias (últimas asistencias con filtros)
-     */
     public function index(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        $estado = (string) $request->query('estado', '');
         $grupo_id = (string) $request->query('grupo_id', '');
-        $desde = (string) $request->query('desde', '');
-        $hasta = (string) $request->query('hasta', '');
 
-        // Query base SIN select, para poder reutilizarlo sin liarla con COUNT/SUM
-        $baseQuery = Asistencia::query()
-            ->join('clases', 'clases.id', '=', 'asistencias.clase_id')
-            ->join('grupos', 'grupos.id', '=', 'clases.grupo_id')
-            ->join('alumnos', 'alumnos.id', '=', 'asistencias.alumno_id');
+        $desde = $request->query('desde');
+        $hasta = $request->query('hasta');
 
-        // filtro por alumno (nombre/apellidos)
-        if ($q !== '') {
-            $baseQuery->where(function ($w) use ($q) {
-                $w->where('alumnos.nombre', 'like', '%' . $q . '%')
-                  ->orWhere('alumnos.apellidos', 'like', '%' . $q . '%');
-            });
+        $base = now();
+
+        $desdeC = $desde
+            ? Carbon::parse($desde)->startOfDay()
+            : $base->copy()->startOfMonth();
+
+        $hastaC = $hasta
+            ? Carbon::parse($hasta)->endOfDay()
+            : $base->copy()->endOfMonth();
+
+        if ($desdeC->gt($hastaC)) {
+            [$desdeC, $hastaC] = [$hastaC, $desdeC];
         }
 
-        // filtro por estado
-        if (in_array($estado, ['presente', 'ausente'], true)) {
-            $baseQuery->where('asistencias.estado', $estado);
-        } else {
-            $estado = '';
-        }
+        $desdeStr = $desdeC->toDateString();
+        $hastaStr = $hastaC->toDateString();
 
-        // filtro por grupo
-        if ($grupo_id !== '') {
-            $baseQuery->where('clases.grupo_id', $grupo_id);
-        }
+        $grupos = Grupo::orderBy('nombre')->get(['id', 'nombre']);
 
-        // filtro por fechas
-        if ($desde !== '') {
-            $baseQuery->whereDate('clases.fecha', '>=', $desde);
-        }
-
-        if ($hasta !== '') {
-            $baseQuery->whereDate('clases.fecha', '<=', $hasta);
-        }
-
-        // totales (solo agregados)
-        $totales = (clone $baseQuery)
-            ->selectRaw("
-                COUNT(*) as total,
-                SUM(asistencias.estado = 'presente') as presentes,
-                SUM(asistencias.estado = 'ausente') as ausentes
-            ")
-            ->first();
-
-        // listado (aquí sí seleccionamos asistencias.* para hidratar el modelo)
-        $asistencias = (clone $baseQuery)
-            ->select('asistencias.*')
-            ->with(['clase.grupo', 'alumno'])
-            ->orderBy('clases.fecha', 'desc')
-            ->orderBy('clases.hora_inicio', 'desc')
-            ->paginate(30)
+        $clases = Clase::query()
+            ->with(['grupo:id,nombre'])
+            ->whereBetween('fecha', [$desdeStr, $hastaStr])
+            ->when($grupo_id !== '', fn ($q) => $q->where('grupo_id', $grupo_id))
+            ->withCount([
+                'asistencias as total' => fn ($q) => $q,
+                'asistencias as presentes' => fn ($q) => $q->where('estado', 'presente'),
+                'asistencias as ausentes' => fn ($q) => $q->where('estado', 'ausente'),
+            ])
+            ->orderByDesc('fecha')
+            ->orderByDesc('hora_inicio')
+            ->paginate(20)
             ->withQueryString();
-
-        $grupos = Grupo::query()
-            ->orderBy('nombre')
-            ->get(['id', 'nombre']);
 
         return view('panel.asistencias.index', compact(
-            'asistencias',
+            'clases',
             'grupos',
-            'q',
-            'estado',
             'grupo_id',
-            'desde',
-            'hasta',
-            'totales'
-        ));
-    }
-
-    /**
-     * Historial de asistencias de un alumno
-     */
-    public function alumno(Request $request, Alumno $alumno)
-    {
-        $estado = (string) $request->query('estado', '');
-        $grupo_id = (string) $request->query('grupo_id', '');
-        $desde = (string) $request->query('desde', '');
-        $hasta = (string) $request->query('hasta', '');
-
-        $baseQuery = Asistencia::query()
-            ->join('clases', 'clases.id', '=', 'asistencias.clase_id')
-            ->join('grupos', 'grupos.id', '=', 'clases.grupo_id')
-            ->where('asistencias.alumno_id', $alumno->id);
-
-        if (in_array($estado, ['presente', 'ausente'], true)) {
-            $baseQuery->where('asistencias.estado', $estado);
-        } else {
-            $estado = '';
-        }
-
-        if ($grupo_id !== '') {
-            $baseQuery->where('clases.grupo_id', $grupo_id);
-        }
-
-        if ($desde !== '') {
-            $baseQuery->whereDate('clases.fecha', '>=', $desde);
-        }
-
-        if ($hasta !== '') {
-            $baseQuery->whereDate('clases.fecha', '<=', $hasta);
-        }
-
-        $totales = (clone $baseQuery)
-            ->selectRaw("
-                COUNT(*) as total,
-                SUM(asistencias.estado = 'presente') as presentes,
-                SUM(asistencias.estado = 'ausente') as ausentes
-            ")
-            ->first();
-
-        $asistencias = (clone $baseQuery)
-            ->select('asistencias.*')
-            ->with(['clase.grupo'])
-            ->orderBy('clases.fecha', 'desc')
-            ->orderBy('clases.hora_inicio', 'desc')
-            ->paginate(30)
-            ->withQueryString();
-
-        $grupos = Grupo::query()
-            ->orderBy('nombre')
-            ->get(['id', 'nombre']);
-
-        return view('panel.asistencias.alumno', compact(
-            'alumno',
-            'asistencias',
-            'grupos',
-            'estado',
-            'grupo_id',
-            'desde',
-            'hasta',
-            'totales'
+            'desdeStr',
+            'hastaStr',
         ));
     }
 }
