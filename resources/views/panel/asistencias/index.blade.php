@@ -6,7 +6,7 @@
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Asistencias</h1>
-        <p class="mt-1 panel-muted">Historial por clases. Muestra si está cerrada o si falta pasar lista.</p>
+        <p class="mt-1 panel-muted">Historial por clases. Si ya hay asistencias: “Pasada”.</p>
     </div>
 </div>
 
@@ -61,15 +61,17 @@
                         $horaIni = $c->hora_inicio ? substr($c->hora_inicio,0,5) : '—';
                         $horaFin = $c->hora_fin ? substr($c->hora_fin,0,5) : '—';
 
-                        // ✅ regla: si la clase es <= ayer
-                        $esAntigua = $fecha->lte(now()->subDay()->startOfDay());
-
                         $total = (int) $c->total;
 
-                        $sinLista = $esAntigua && $total === 0;
+                        // ✅ regla de "1 día entero": si la clase es <= ayer
+                        $esAntigua = $fecha->lte(now()->subDay()->startOfDay());
 
-                        // si hay asistencias en una clase antigua, se considera cerrada
-                        $cerrada = (bool) $c->asistencia_cerrada || ($esAntigua && $total > 0);
+                        $cerradaManual = (bool) ($c->asistencia_cerrada ?? false);
+
+                        // ✅ estados visuales
+                        $sinLista = !$cerradaManual && $esAntigua && $total === 0;
+                        $pasada = !$cerradaManual && $total > 0;
+                        $abierta = !$cerradaManual && !$sinLista && !$pasada;
                     @endphp
 
                     <tr class="border-t panel-border">
@@ -95,15 +97,20 @@
                         </td>
 
                         <td class="py-3">
-                            @if($sinLista)
+                            @if($cerradaManual)
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                    Cerrada
+                                </span>
+                            @elseif($sinLista)
                                 <span class="text-xs px-3 py-1 rounded-full"
                                       style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
                                     Sin pasar lista
                                 </span>
-                            @elseif($cerrada)
+                            @elseif($pasada)
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
-                                    Cerrada
+                                      style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
+                                    Pasada
                                 </span>
                             @else
                                 <span class="text-xs px-3 py-1 rounded-full"
