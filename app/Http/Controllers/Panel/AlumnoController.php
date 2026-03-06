@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAlumnoRequest;
 use App\Http\Requests\UpdateAlumnoRequest;
 use App\Models\Alumno;
+use App\Models\Cuota;
+use App\Models\Pago;
 use Illuminate\Http\Request;
 
 class AlumnoController extends Controller
@@ -13,14 +15,10 @@ class AlumnoController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
-        $estado = $request->query('estado', 'todos'); // todos | activos | inactivos
-        $orden = $request->query('orden', 'reciente'); // reciente | nombre
+        $estado = $request->query('estado', 'todos');
+        $orden = $request->query('orden', 'reciente');
 
-        $query = Alumno::query()
-            ->with([
-                'gruposActivos',
-                'cuotaActual.tipoCuota',
-            ]);
+        $query = Alumno::query();
 
         if ($q !== '') {
             $query->where(function ($w) use ($q) {
@@ -50,8 +48,6 @@ class AlumnoController extends Controller
         }
 
         $alumnos = $query->paginate(10)->withQueryString();
-
-        // alumnos nuevos este mes
         $nuevosMes = Alumno::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
 
         return view('panel.alumnos.index', compact('alumnos', 'q', 'estado', 'orden', 'nuevosMes'));
@@ -66,7 +62,6 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
-        // Esto no se toca en el formulario
         $data['activo'] = true;
         $data['fecha_baja'] = null;
         $data['fecha_inicio_actividad'] = null;
@@ -80,7 +75,67 @@ class AlumnoController extends Controller
 
     public function show(Alumno $alumno)
     {
-        return view('panel.alumnos.show', compact('alumno'));
+        $alumno->load([
+            'gruposActivos',
+        ]);
+
+        $hoy = now()->toDateString();
+
+        // Cuota vigente (pagada y fecha_fin >= hoy)
+        $cuotaVigente = $alumno->cuotas()
+            ->with(['tipoCuota', 'pago'])
+            ->where('estado', 'pagada')
+            ->whereDate('fecha_fin', '>=', $hoy)
+            ->orderByDesc('fecha_fin')
+            ->first();
+
+        // Cuota pendiente (si existe)
+        $cuotaPendiente = $alumno->cuotas()
+            ->with(['tipoCuota'])
+            ->where('estado', 'pendiente')
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Última cuota pagada (sirve para mostrar “vencida”)
+        $ultimaPagada = $alumno->cuotas()
+            ->with(['tipoCuota', 'pago'])
+            ->where('estado', 'pagada')
+            ->orderByDesc('fecha_fin')
+            ->first();
+
+        // Estado principal de la cuota del alumno (lo que usas arriba del ticket)
+        $estadoCuota = 'sin_cuota';
+
+        if ($cuotaVigente) {
+            $estadoCuota = 'vigente';
+        } elseif ($cuotaPendiente) {
+            $estadoCuota = 'pendiente';
+        } elseif ($ultimaPagada && $ultimaPagada->fecha_fin && $ultimaPagada->fecha_fin->toDateString() < $hoy) {
+            $estadoCuota = 'vencida';
+        }
+
+        // Historial de cuotas (todas, incluyendo anuladas si las hubiera)
+        $cuotas = $alumno->cuotas()
+            ->with(['tipoCuota', 'pago'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Historial de pagos (por alumno)
+        $pagos = Pago::query()
+            ->where('alumno_id', $alumno->id)
+            ->with(['cuota.tipoCuota'])
+            ->orderByDesc('fecha_pago')
+            ->get();
+
+        return view('panel.alumnos.show', compact(
+            'alumno',
+            'estadoCuota',
+            'cuotaVigente',
+            'cuotaPendiente',
+            'ultimaPagada',
+            'cuotas',
+            'pagos'
+        ));
     }
 
     public function edit(Alumno $alumno)
@@ -92,7 +147,6 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
-        // No cambiamos activo/fechas aquí
         $alumno->update($data);
 
         return redirect()
@@ -102,7 +156,6 @@ class AlumnoController extends Controller
 
     public function baja(Alumno $alumno)
     {
-        // Dar de baja
         $alumno->update([
             'activo' => false,
             'fecha_baja' => now()->toDateString(),
@@ -113,7 +166,6 @@ class AlumnoController extends Controller
 
     public function activar(Alumno $alumno)
     {
-        // Activar
         $alumno->update([
             'activo' => true,
             'fecha_baja' => null,

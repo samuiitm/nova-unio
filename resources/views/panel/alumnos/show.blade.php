@@ -4,6 +4,8 @@
 
 @section('content')
 @php
+
+$hoy = now()->toDateString();
     $tituloCuota =
         $estadoCuota === 'vigente' ? ($cuotaVigente->tipoCuota->nombre ?? 'Cuota') :
         ($estadoCuota === 'pendiente' ? ($cuotaPendiente->tipoCuota->nombre ?? 'Cuota pendiente') :
@@ -79,6 +81,23 @@
             </div>
 
             <div><span class="panel-muted">Estado:</span> {{ $alumno->activo ? 'Activo' : 'Inactivo' }}</div>
+
+            <div class="sm:col-span-2">
+                <div class="panel-muted">Grupos activos:</div>
+
+                @if($alumno->gruposActivos->isEmpty())
+                    <div class="mt-2 text-sm panel-muted">Sin grupo asignado.</div>
+                @else
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach($alumno->gruposActivos as $grupo)
+                            <span class="text-xs px-3 py-1 rounded-full"
+                                  style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .80); border: 1px solid rgb(255 255 255 / .10);">
+                                {{ $grupo->nombre }}
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div class="mt-5 flex gap-2">

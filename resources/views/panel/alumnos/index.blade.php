@@ -89,15 +89,38 @@
                         <th class="py-2">Grupo</th>
                         <th class="py-2">Teléfono</th>
                         <th class="py-2">Estado</th>
-                        <th class="py-2">Cuota mensual</th>
-                        <th class="py-2">Pagos</th>
+                        <th class="py-2">Cuota</th>
+                        <th class="py-2">Estado cuota</th>
                         <th class="py-2 text-right">Acciones</th>
                     </tr>
                 </thead>
 
-                <tbody class="align-top">
+                <tbody>
                     @forelse($alumnos as $a)
-                        <tr class="border-t panel-border">
+                        @php
+                            $grupos = $a->gruposActivos ?? collect();
+                            $cuota = $a->cuotaActual;
+
+                            $hoy = now()->toDateString();
+
+                            $tituloCuota = $cuota?->tipoCuota?->nombre ?? '—';
+
+                            $estadoCuota = 'sin_cuota';
+
+                            if ($cuota) {
+                                if ($cuota->estado === 'pendiente') {
+                                    $estadoCuota = 'pendiente';
+                                } elseif ($cuota->estado === 'pagada') {
+                                    if ($cuota->fecha_fin && $cuota->fecha_fin->toDateString() < $hoy) {
+                                        $estadoCuota = 'vencida';
+                                    } else {
+                                        $estadoCuota = 'vigente';
+                                    }
+                                }
+                            }
+                        @endphp
+
+                        <tr class="border-t panel-border items-center">
                             <td class="py-3">
                                 <div class="font-medium">{{ $a->nombre }} {{ $a->apellidos }}</div>
                                 <div class="text-xs panel-muted">
@@ -105,7 +128,20 @@
                                 </div>
                             </td>
 
-                            <td class="py-3 panel-muted">—</td>
+                            <td class="py-3">
+                                @if($grupos->isEmpty())
+                                    <span class="panel-muted">—</span>
+                                @else
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($grupos as $g)
+                                            <span class="text-xs px-3 py-1 rounded-full"
+                                                  style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
+                                                {{ $g->nombre }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </td>
 
                             <td class="py-3">
                                 {{ $a->telefono ?: '—' }}
@@ -125,9 +161,33 @@
                                 @endif
                             </td>
 
-                            <td class="py-3 panel-muted">—</td>
+                            <td class="py-3">
+                                <span class="panel-muted">{{ $tituloCuota }}</span>
+                            </td>
 
-                            <td class="py-3 panel-muted">—</td>
+                            <td class="py-3">
+                                @if($estadoCuota === 'vigente')
+                                    <span class="text-xs px-3 py-1 rounded-full"
+                                          style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                        Vigente
+                                    </span>
+                                @elseif($estadoCuota === 'pendiente')
+                                    <span class="text-xs px-3 py-1 rounded-full"
+                                          style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                        Pendiente
+                                    </span>
+                                @elseif($estadoCuota === 'vencida')
+                                    <span class="text-xs px-3 py-1 rounded-full"
+                                          style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                        Vencida
+                                    </span>
+                                @else
+                                    <span class="text-xs px-3 py-1 rounded-full"
+                                          style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
+                                        Sin cuota
+                                    </span>
+                                @endif
+                            </td>
 
                             <td class="py-3 text-right whitespace-nowrap">
                                 <a class="panel-icon-btn px-4 py-2 inline-flex items-center"
