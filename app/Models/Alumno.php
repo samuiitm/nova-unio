@@ -23,7 +23,6 @@ class Alumno extends Model
         'activo',
         'fecha_baja',
         'fecha_inicio_actividad',
-        'notas',
     ];
 
     protected $casts = [
@@ -45,27 +44,17 @@ class Alumno extends Model
         return $this->grupos()->wherePivotNull('fecha_baja');
     }
 
+    // Cuotas del alumno
     public function cuotas()
     {
-        return $this->hasMany(\App\Models\Cuota::class);
+        return $this->hasMany(\App\Models\Cuota::class, 'alumno_id');
     }
 
-    public function pagos()
+    // Cuota “actual” (la última que no esté anulada)
+    public function cuotaActual()
     {
-        return $this->hasMany(\App\Models\Pago::class);
-    }
-
-    public function ultimaCuotaPagada()
-    {
-        return $this->hasOne(\App\Models\Cuota::class)
-            ->where('estado', 'pagada')
-            ->latestOfMany('fecha_fin');
-    }
-
-    public function cuotaPendiente()
-    {
-        return $this->hasOne(\App\Models\Cuota::class)
-            ->where('estado', 'pendiente')
-            ->latestOfMany('created_at');
+        return $this->hasOne(\App\Models\Cuota::class, 'alumno_id')
+            ->where('estado', '!=', 'anulada')
+            ->latestOfMany();
     }
 }
