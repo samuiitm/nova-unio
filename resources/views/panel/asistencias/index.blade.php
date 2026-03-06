@@ -6,7 +6,7 @@
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Asistencias</h1>
-        <p class="mt-1 panel-muted">Historial por clases. Si ya hay asistencias: “Pasada”.</p>
+        <p class="mt-1 panel-muted">Historial por clases.</p>
     </div>
 </div>
 
@@ -62,13 +62,10 @@
                         $horaFin = $c->hora_fin ? substr($c->hora_fin,0,5) : '—';
 
                         $total = (int) $c->total;
-
-                        // ✅ regla de "1 día entero": si la clase es <= ayer
                         $esAntigua = $fecha->lte(now()->subDay()->startOfDay());
 
                         $cerradaManual = (bool) ($c->asistencia_cerrada ?? false);
 
-                        // ✅ estados visuales
                         $sinLista = !$cerradaManual && $esAntigua && $total === 0;
                         $pasada = !$cerradaManual && $total > 0;
                         $abierta = !$cerradaManual && !$sinLista && !$pasada;
@@ -97,15 +94,15 @@
                         </td>
 
                         <td class="py-3">
-                            @if($cerradaManual)
-                                <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
-                                    Cerrada
-                                </span>
-                            @elseif($sinLista)
+                            @if($sinLista)
                                 <span class="text-xs px-3 py-1 rounded-full"
                                       style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
                                     Sin pasar lista
+                                </span>
+                            @elseif($cerradaManual)
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                    Cerrada
                                 </span>
                             @elseif($pasada)
                                 <span class="text-xs px-3 py-1 rounded-full"
