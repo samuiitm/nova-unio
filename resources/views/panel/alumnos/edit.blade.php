@@ -26,17 +26,20 @@
         </div>
     @endif
 
-    <div class="mt-5 panel-card p-6">
-        <form method="POST" action="{{ route('panel.alumnos.update', $alumno) }}">
-            @csrf
-            @method('PATCH')
+    <form method="POST" action="{{ route('panel.alumnos.update', $alumno) }}" class="mt-5">
+        @csrf
+        @method('PATCH')
 
-            @include('panel.alumnos._form', ['alumno' => $alumno])
+        @include('panel.alumnos._form', [
+            'modo' => 'edit',
+            'alumno' => $alumno,
+            'grupos' => $grupos,
+            'gruposSeleccionados' => old('grupos', $gruposSeleccionados),
+        ])
 
-            <div class="mt-6 flex gap-3">
-                <button class="panel-btn px-6 py-3">Guardar cambios</button>
-                <a href="{{ route('panel.alumnos.show', $alumno) }}" class="panel-icon-btn px-6 py-3">Cancelar</a>
-            </div>
-        </form>
-    </div>
+        <div class="mt-6 flex gap-3">
+            <button class="panel-btn px-6 py-3">Guardar cambios</button>
+            <a href="{{ route('panel.alumnos.show', $alumno) }}" class="panel-icon-btn px-6 py-3">Cancelar</a>
+        </div>
+    </form>
 @endsection

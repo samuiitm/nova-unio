@@ -6,7 +6,7 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <h1 class="text-2xl font-semibold">Crear alumno</h1>
-            <p class="mt-1 panel-muted">Datos básicos del alumno. El pago y los grupos se harán después.</p>
+            <p class="mt-1 panel-muted">Puedes asignarle grupos y cuota desde aquí.</p>
         </div>
 
         <a href="{{ route('panel.alumnos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
@@ -23,16 +23,19 @@
         </div>
     @endif
 
-    <div class="mt-5 panel-card p-6">
-        <form method="POST" action="{{ route('panel.alumnos.store') }}">
-            @csrf
+    <form method="POST" action="{{ route('panel.alumnos.store') }}" class="mt-5">
+        @csrf
 
-            @include('panel.alumnos._form')
+        @include('panel.alumnos._form', [
+            'modo' => 'create',
+            'grupos' => $grupos,
+            'tiposCuota' => $tiposCuota,
+            'gruposSeleccionados' => old('grupos', []),
+        ])
 
-            <div class="mt-6 flex gap-3">
-                <button class="panel-btn px-6 py-3">Guardar</button>
-                <a href="{{ route('panel.alumnos.index') }}" class="panel-icon-btn px-6 py-3">Cancelar</a>
-            </div>
-        </form>
-    </div>
+        <div class="mt-6 flex gap-3">
+            <button class="panel-btn px-6 py-3">Guardar</button>
+            <a href="{{ route('panel.alumnos.index') }}" class="panel-icon-btn px-6 py-3">Cancelar</a>
+        </div>
+    </form>
 @endsection

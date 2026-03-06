@@ -34,6 +34,10 @@ class UpdateAlumnoRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:190', 'unique:alumnos,email,' . $id],
 
             'notas' => ['nullable', 'string'],
+
+            // ✅ permitir añadir/quitar grupos en editar
+            'grupos' => ['nullable', 'array'],
+            'grupos.*' => ['integer', 'exists:grupos,id'],
         ];
     }
 }

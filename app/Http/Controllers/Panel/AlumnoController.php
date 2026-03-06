@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAlumnoRequest;
 use App\Models\Alumno;
 use App\Models\Cuota;
 use App\Models\Pago;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 
 class AlumnoController extends Controller
@@ -15,8 +16,8 @@ class AlumnoController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
-        $estado = $request->query('estado', 'todos');
-        $orden = $request->query('orden', 'reciente');
+        $estado = $request->query('estado', 'todos'); // todos | activos | inactivos
+        $orden = $request->query('orden', 'reciente'); // reciente | nombre
 
         $query = Alumno::query();
 
@@ -48,6 +49,7 @@ class AlumnoController extends Controller
         }
 
         $alumnos = $query->paginate(10)->withQueryString();
+
         $nuevosMes = Alumno::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
 
         return view('panel.alumnos.index', compact('alumnos', 'q', 'estado', 'orden', 'nuevosMes'));
@@ -55,7 +57,10 @@ class AlumnoController extends Controller
 
     public function create()
     {
-        return view('panel.alumnos.create');
+        $grupos = \App\Models\Grupo::where('activo', 1)->orderBy('nombre')->get();
+        $tiposCuota = \App\Models\TipoCuota::where('activo', 1)->orderBy('nombre')->get();
+
+        return view('panel.alumnos.create', compact('grupos', 'tiposCuota'));
     }
 
     public function store(StoreAlumnoRequest $request)
@@ -75,35 +80,43 @@ class AlumnoController extends Controller
 
     public function show(Alumno $alumno)
     {
-        $alumno->load([
-            'gruposActivos',
-        ]);
-
         $hoy = now()->toDateString();
 
-        // Cuota vigente (pagada y fecha_fin >= hoy)
-        $cuotaVigente = $alumno->cuotas()
-            ->with(['tipoCuota', 'pago'])
+        // Grupos activos (para mostrar en la ficha)
+        $gruposActivos = $alumno->gruposActivos()->orderBy('nombre')->get();
+
+        // Cuota vigente: pagada y no vencida (fecha_fin >= hoy) o sin fecha_fin
+        $cuotaVigente = Cuota::query()
+            ->where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
-            ->whereDate('fecha_fin', '>=', $hoy)
+            ->where(function ($q) use ($hoy) {
+                $q->whereNull('fecha_fin')
+                  ->orWhereDate('fecha_fin', '>=', $hoy);
+            })
+            ->with(['tipoCuota', 'pago'])
             ->orderByDesc('fecha_fin')
+            ->orderByDesc('id')
             ->first();
 
         // Cuota pendiente (si existe)
-        $cuotaPendiente = $alumno->cuotas()
-            ->with(['tipoCuota'])
+        $cuotaPendiente = Cuota::query()
+            ->where('alumno_id', $alumno->id)
             ->where('estado', 'pendiente')
+            ->with(['tipoCuota'])
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->first();
 
-        // Última cuota pagada (sirve para mostrar “vencida”)
-        $ultimaPagada = $alumno->cuotas()
-            ->with(['tipoCuota', 'pago'])
+        // Última pagada (para saber si está vencida)
+        $ultimaPagada = Cuota::query()
+            ->where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
+            ->with(['tipoCuota', 'pago'])
             ->orderByDesc('fecha_fin')
+            ->orderByDesc('id')
             ->first();
 
-        // Estado principal de la cuota del alumno (lo que usas arriba del ticket)
+        // Estado principal que usa tu "ticket"
         $estadoCuota = 'sin_cuota';
 
         if ($cuotaVigente) {
@@ -114,21 +127,25 @@ class AlumnoController extends Controller
             $estadoCuota = 'vencida';
         }
 
-        // Historial de cuotas (todas, incluyendo anuladas si las hubiera)
-        $cuotas = $alumno->cuotas()
+        // Historial de cuotas (para la tabla)
+        $cuotas = Cuota::query()
+            ->where('alumno_id', $alumno->id)
             ->with(['tipoCuota', 'pago'])
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
 
-        // Historial de pagos (por alumno)
+        // Historial de pagos (para la tabla)
         $pagos = Pago::query()
             ->where('alumno_id', $alumno->id)
             ->with(['cuota.tipoCuota'])
             ->orderByDesc('fecha_pago')
+            ->orderByDesc('id')
             ->get();
 
         return view('panel.alumnos.show', compact(
             'alumno',
+            'gruposActivos',
             'estadoCuota',
             'cuotaVigente',
             'cuotaPendiente',
@@ -140,7 +157,16 @@ class AlumnoController extends Controller
 
     public function edit(Alumno $alumno)
     {
-        return view('panel.alumnos.edit', compact('alumno'));
+        $grupos = Grupo::where('activo', 1)->orderBy('nombre')->get();
+
+        // grupos actuales del alumno (activos = fecha_baja null)
+        $gruposSeleccionados = $alumno->grupos()
+            ->wherePivotNull('fecha_baja')
+            ->pluck('grupos.id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        return view('panel.alumnos.edit', compact('alumno', 'grupos', 'gruposSeleccionados'));
     }
 
     public function update(UpdateAlumnoRequest $request, Alumno $alumno)
