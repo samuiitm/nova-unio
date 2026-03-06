@@ -3,14 +3,10 @@
 @section('title', 'Asistencias | Nova Unió')
 
 @section('content')
-@php
-    $qBase = ['grupo_id' => $grupo_id, 'desde' => $desdeStr, 'hasta' => $hastaStr];
-@endphp
-
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Asistencias</h1>
-        <p class="mt-1 panel-muted">Historial por clases. Pulsa en una clase para revisarla.</p>
+        <p class="mt-1 panel-muted">Historial por clases. Muestra si está cerrada o si falta pasar lista.</p>
     </div>
 </div>
 
@@ -60,10 +56,20 @@
             <tbody class="align-top">
                 @forelse($clases as $c)
                     @php
-                        $fechaFmt = \Carbon\Carbon::parse($c->fecha)->format('d/m/Y');
+                        $fecha = \Carbon\Carbon::parse($c->fecha);
+                        $fechaFmt = $fecha->format('d/m/Y');
                         $horaIni = $c->hora_inicio ? substr($c->hora_inicio,0,5) : '—';
                         $horaFin = $c->hora_fin ? substr($c->hora_fin,0,5) : '—';
-                        $cerrada = (bool) ($c->asistencia_cerrada ?? false);
+
+                        // ✅ regla: si la clase es <= ayer
+                        $esAntigua = $fecha->lte(now()->subDay()->startOfDay());
+
+                        $total = (int) $c->total;
+
+                        $sinLista = $esAntigua && $total === 0;
+
+                        // si hay asistencias en una clase antigua, se considera cerrada
+                        $cerrada = (bool) $c->asistencia_cerrada || ($esAntigua && $total > 0);
                     @endphp
 
                     <tr class="border-t panel-border">
@@ -81,7 +87,7 @@
 
                         <td class="py-3">
                             <span class="font-semibold">{{ (int)$c->presentes }}</span>
-                            <span class="panel-muted">/ {{ (int)$c->total }}</span>
+                            <span class="panel-muted">/ {{ $total }}</span>
                         </td>
 
                         <td class="py-3">
@@ -89,7 +95,12 @@
                         </td>
 
                         <td class="py-3">
-                            @if($cerrada)
+                            @if($sinLista)
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                    Sin pasar lista
+                                </span>
+                            @elseif($cerrada)
                                 <span class="text-xs px-3 py-1 rounded-full"
                                       style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
                                     Cerrada
@@ -103,14 +114,10 @@
                         </td>
 
                         <td class="py-3 text-right whitespace-nowrap">
-                            @if(\Illuminate\Support\Facades\Route::has('panel.clases.show'))
-                                <a class="panel-icon-btn px-4 py-2 inline-flex items-center"
-                                   href="{{ route('panel.clases.show', $c) }}">
-                                    Ver clase
-                                </a>
-                            @else
-                                <span class="panel-muted text-xs">Sin ruta</span>
-                            @endif
+                            <a class="panel-icon-btn px-4 py-2 inline-flex items-center"
+                               href="{{ route('panel.clases.show', $c) }}">
+                                Ver clase
+                            </a>
                         </td>
                     </tr>
                 @empty
