@@ -112,6 +112,9 @@ Route::prefix('panel')
             Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])
                 ->name('calendario');
 
+            Route::get('asistencias', [\App\Http\Controllers\Panel\AsistenciaController::class, 'index'])
+                ->name('asistencias.index');
+
             // Ver clase / pasar lista
             Route::get('clases/{clase}', [\App\Http\Controllers\Panel\ClaseController::class, 'show'])
                 ->name('clases.show');
