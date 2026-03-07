@@ -10,6 +10,7 @@ use App\Models\Cuota;
 use App\Models\Pago;
 use App\Models\Grupo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AlumnoController extends Controller
 {
@@ -67,11 +68,32 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
+        $grupoIds = collect($data['grupos'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        unset(
+            $data['grupos'],
+            $data['tipo_cuota_id'],
+            $data['cuota_estado'],
+            $data['fecha_pago'],
+            $data['metodo_pago'],
+            $data['notas_pago']
+        );
+
         $data['activo'] = true;
         $data['fecha_baja'] = null;
         $data['fecha_inicio_actividad'] = null;
 
-        $alumno = Alumno::create($data);
+        $alumno = DB::transaction(function () use ($data, $grupoIds) {
+            $alumno = Alumno::create($data);
+
+            $this->sincronizarGrupos($alumno, $grupoIds);
+
+            return $alumno;
+        });
 
         return redirect()
             ->route('panel.alumnos.show', $alumno)
@@ -159,7 +181,6 @@ class AlumnoController extends Controller
     {
         $grupos = Grupo::where('activo', 1)->orderBy('nombre')->get();
 
-        // grupos actuales del alumno (activos = fecha_baja null)
         $gruposSeleccionados = $alumno->grupos()
             ->wherePivotNull('fecha_baja')
             ->pluck('grupos.id')
@@ -173,7 +194,19 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
-        $alumno->update($data);
+        $grupoIds = collect($data['grupos'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        unset($data['grupos']);
+
+        DB::transaction(function () use ($alumno, $data, $grupoIds) {
+            $alumno->update($data);
+
+            $this->sincronizarGrupos($alumno, $grupoIds);
+        });
 
         return redirect()
             ->route('panel.alumnos.show', $alumno)
@@ -198,5 +231,48 @@ class AlumnoController extends Controller
         ]);
 
         return back()->with('ok', 'Alumno activado.');
+    }
+
+    private function sincronizarGrupos(Alumno $alumno, array $grupoIds): void
+    {
+        $ahora = now();
+        $hoy = $ahora->toDateString();
+
+        $grupoIds = collect($grupoIds)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $gruposActivosActuales = DB::table('alumno_grupo')
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('fecha_baja')
+            ->pluck('grupo_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $gruposParaAlta = array_values(array_diff($grupoIds, $gruposActivosActuales));
+        $gruposParaBaja = array_values(array_diff($gruposActivosActuales, $grupoIds));
+
+        foreach ($gruposParaAlta as $grupoId) {
+            $alumno->grupos()->attach($grupoId, [
+                'fecha_alta' => $hoy,
+                'fecha_baja' => null,
+                'created_at' => $ahora,
+                'updated_at' => $ahora,
+            ]);
+        }
+
+        if (!empty($gruposParaBaja)) {
+            DB::table('alumno_grupo')
+                ->where('alumno_id', $alumno->id)
+                ->whereIn('grupo_id', $gruposParaBaja)
+                ->whereNull('fecha_baja')
+                ->update([
+                    'fecha_baja' => $hoy,
+                    'updated_at' => $ahora,
+                ]);
+        }
     }
 }
