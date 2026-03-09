@@ -69,6 +69,17 @@ Route::prefix('panel')
             Route::view('/', 'panel.dashboard')->name('home');
 
             // =========================
+            // INFORMES
+            // =========================
+            Route::prefix('informes')->name('informes.')->group(function () {
+                Route::get('resumen-mensual', [\App\Http\Controllers\Panel\InformeController::class, 'resumen'])
+                    ->name('resumen');
+
+                Route::get('resumen-mensual/pdf', [\App\Http\Controllers\Panel\InformeController::class, 'resumenPdf'])
+                    ->name('resumen.pdf');
+            });
+            
+            // =========================
             // PREINSCRIPCIONES
             // =========================
             Route::get('preinscripciones', [\App\Http\Controllers\Panel\PreinscripcionController::class, 'index'])
