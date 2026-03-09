@@ -35,6 +35,7 @@
 
     // helper: si una ruta no existe aún, devuelve '#'
     $r = fn($name) => \Illuminate\Support\Facades\Route::has($name) ? route($name) : '#';
+    $esAdmin = auth()->check() && auth()->user()->esAdmin();
 
     // accordion: abre por defecto el grupo del route actual
     $initialOpen =
@@ -42,7 +43,7 @@
         ($aPagos    ? 'pagos'    :
         ($aGrupos   ? 'grupos'   :
         ($aInformes ? 'informes' :
-        ($aUsuarios ? 'usuarios' : null))));
+        (($esAdmin && $aUsuarios) ? 'usuarios' : null))));
 @endphp
 
 <body class="panel-body min-h-screen antialiased"
@@ -265,49 +266,43 @@
                    class="block px-3 py-2 panel-subitem {{ $is('panel.informes.resumen') ? 'panel-subitem-active' : '' }}">
                     Resumen mensual
                 </a>
-                <a href="{{ $r('panel.informes.asistencia') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.informes.asistencia') ? 'panel-subitem-active' : '' }}">
-                    Asistencia por grupo
-                </a>
-                <a href="{{ $r('panel.informes.exportaciones') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.informes.exportaciones') ? 'panel-subitem-active' : '' }}">
-                    Exportaciones (CSV)
-                </a>
             </div>
 
-            <!-- USUARIOS -->
-            <button type="button"
-                    class="mt-2 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
-                    :class="sidebarCollapsed ? 'justify-center' : ''"
-                    @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('usuarios')">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                </span>
-                <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Usuarios</span>
+            @if($esAdmin)
+                <!-- USUARIOS -->
+                <button type="button"
+                        class="mt-2 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        :class="sidebarCollapsed ? 'justify-center' : ''"
+                        @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('usuarios')">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Usuarios</span>
 
-                <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
-                    <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'usuarios' ? 'rotate-90' : ''"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                </span>
-            </button>
+                    <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
+                        <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'usuarios' ? 'rotate-90' : ''"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </span>
+                </button>
 
-            <div x-show="!sidebarCollapsed && openKey === 'usuarios'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
-                <a href="{{ $r('panel.usuarios.index') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.usuarios.index') ? 'panel-subitem-active' : '' }}">
-                    Listado
-                </a>
-                <a href="{{ $r('panel.usuarios.create') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.usuarios.create') ? 'panel-subitem-active' : '' }}">
-                    Crear usuario
-                </a>
-            </div>
+                <div x-show="!sidebarCollapsed && openKey === 'usuarios'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
+                    <a href="{{ $r('panel.usuarios.index') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.usuarios.index') ? 'panel-subitem-active' : '' }}">
+                        Listado
+                    </a>
+                    <a href="{{ $r('panel.usuarios.create') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.usuarios.create') ? 'panel-subitem-active' : '' }}">
+                        Crear usuario
+                    </a>
+                </div>
+            @endif
 
             <div class="pt-4 mt-4 border-t panel-border px-3">
                 <a href="{{ route('public.home') }}" @click="sidebarOpen=false"

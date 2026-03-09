@@ -69,6 +69,20 @@ Route::prefix('panel')
             Route::view('/', 'panel.dashboard')->name('home');
 
             // =========================
+            // USUARIOS (solo admin)
+            // =========================
+            Route::middleware('panel.admin')->group(function () {
+                Route::get('usuarios', [\App\Http\Controllers\Panel\UsuarioController::class, 'index'])
+                    ->name('usuarios.index');
+
+                Route::get('usuarios/crear', [\App\Http\Controllers\Panel\UsuarioController::class, 'create'])
+                    ->name('usuarios.create');
+
+                Route::post('usuarios', [\App\Http\Controllers\Panel\UsuarioController::class, 'store'])
+                    ->name('usuarios.store');
+            });
+
+            // =========================
             // INFORMES
             // =========================
             Route::prefix('informes')->name('informes.')->group(function () {

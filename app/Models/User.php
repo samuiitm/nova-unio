@@ -11,10 +11,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Tu tabla renombrada
     protected $table = 'usuarios';
 
-    // Columnas reales (las tuyas)
     protected $fillable = [
         'nombre',
         'apellidos',
@@ -35,15 +33,12 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password_hash' => 'hashed',   // hashea automáticamente si asignas texto plano
-            'rol' => RolUsuario::class,     // enum (si lo estás usando)
+            'password_hash' => 'hashed',
+            'rol' => RolUsuario::class,
             'activo' => 'boolean',
         ];
     }
 
-    // -------------------------
-    // Auth: contraseña en password_hash
-    // -------------------------
     public function getAuthPasswordName(): string
     {
         return 'password_hash';
@@ -54,17 +49,11 @@ class User extends Authenticatable
         return (string) $this->password_hash;
     }
 
-    // Permite hacer $user->password = '1234' (y se guarda en password_hash)
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password_hash'] = $value;
     }
 
-    // -------------------------
-    // Compatibilidad Laravel/Breeze
-    // -------------------------
-
-    // name <-> nombre
     public function getNameAttribute(): ?string
     {
         return $this->nombre;
@@ -75,7 +64,6 @@ class User extends Authenticatable
         $this->attributes['nombre'] = $value;
     }
 
-    // role <-> rol
     public function getRoleAttribute(): mixed
     {
         return $this->rol;
@@ -86,7 +74,6 @@ class User extends Authenticatable
         $this->attributes['rol'] = $value instanceof RolUsuario ? $value->value : $value;
     }
 
-    // is_active <-> activo
     public function getIsActiveAttribute(): bool
     {
         return (bool) $this->activo;
@@ -97,15 +84,11 @@ class User extends Authenticatable
         $this->attributes['activo'] = $value;
     }
 
-    // -------------------------
-    // Helpers en español (para UI)
-    // -------------------------
     public function getNombreCompletoAttribute(): string
     {
         return trim(($this->nombre ?? '') . ' ' . ($this->apellidos ?? ''));
     }
 
-    // alias opcional en inglés por si alguna parte del panel lo usa
     public function getPhoneAttribute(): ?string
     {
         return $this->telefono;
@@ -124,5 +107,19 @@ class User extends Authenticatable
     public function setAvatarPathAttribute(?string $value): void
     {
         $this->attributes['foto_perfil'] = $value;
+    }
+
+    public function esAdmin(): bool
+    {
+        $rol = $this->rol instanceof RolUsuario ? $this->rol->value : $this->rol;
+
+        return $rol === RolUsuario::Admin->value;
+    }
+
+    public function esEntrenador(): bool
+    {
+        $rol = $this->rol instanceof RolUsuario ? $this->rol->value : $this->rol;
+
+        return $rol === RolUsuario::Entrenador->value;
     }
 }
