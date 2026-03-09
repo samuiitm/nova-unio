@@ -33,15 +33,14 @@ class StoreAlumnoRequest extends FormRequest
 
             'notas' => ['nullable', 'string'],
 
-            // grupos (opcional)
+            'preinscripcion_id' => ['nullable', 'integer', 'exists:preinscripciones,id'],
+
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],
 
-            // cuota (opcional)
             'tipo_cuota_id' => ['nullable', 'integer', 'exists:tipos_cuota,id'],
             'cuota_estado' => ['nullable', 'required_with:tipo_cuota_id', 'in:pendiente,pagada'],
 
-            // si marca "pagada"
             'fecha_pago' => ['nullable', 'required_if:cuota_estado,pagada', 'date', 'before_or_equal:today'],
             'metodo_pago' => ['nullable', 'required_if:cuota_estado,pagada', 'in:efectivo,bizum,tarjeta,transferencia'],
             'notas_pago' => ['nullable', 'string', 'max:255'],

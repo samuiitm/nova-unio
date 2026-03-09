@@ -7,10 +7,14 @@ use App\Http\Requests\StoreAlumnoRequest;
 use App\Http\Requests\UpdateAlumnoRequest;
 use App\Models\Alumno;
 use App\Models\Cuota;
-use App\Models\Pago;
 use App\Models\Grupo;
+use App\Models\Pago;
+use App\Models\Preinscripcion;
+use App\Models\TipoCuota;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AlumnoController extends Controller
 {
@@ -56,12 +60,32 @@ class AlumnoController extends Controller
         return view('panel.alumnos.index', compact('alumnos', 'q', 'estado', 'orden', 'nuevosMes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $grupos = \App\Models\Grupo::where('activo', 1)->orderBy('nombre')->get();
-        $tiposCuota = \App\Models\TipoCuota::where('activo', 1)->orderBy('nombre')->get();
+        $grupos = Grupo::where('activo', 1)->orderBy('nombre')->get();
+        $tiposCuota = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
 
-        return view('panel.alumnos.create', compact('grupos', 'tiposCuota'));
+        $preinscripcion = null;
+        $alumno = null;
+
+        if ($request->filled('preinscripcion')) {
+            $preinscripcion = Preinscripcion::findOrFail($request->integer('preinscripcion'));
+
+            if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
+                return redirect()
+                    ->route('panel.alumnos.show', $preinscripcion->alumno_id)
+                    ->with('ok', 'Esta preinscripción ya está resuelta y vinculada a un alumno.');
+            }
+
+            $alumno = new Alumno([
+                'nombre' => $preinscripcion->nombre,
+                'apellidos' => $preinscripcion->apellidos,
+                'email' => $preinscripcion->email,
+                'telefono' => $preinscripcion->telefono,
+            ]);
+        }
+
+        return view('panel.alumnos.create', compact('grupos', 'tiposCuota', 'preinscripcion', 'alumno'));
     }
 
     public function store(StoreAlumnoRequest $request)
@@ -74,8 +98,16 @@ class AlumnoController extends Controller
             ->values()
             ->all();
 
+        $preinscripcionId = $data['preinscripcion_id'] ?? null;
+        $tipoCuotaId = $data['tipo_cuota_id'] ?? null;
+        $cuotaEstado = $data['cuota_estado'] ?? null;
+        $fechaPago = $data['fecha_pago'] ?? null;
+        $metodoPago = $data['metodo_pago'] ?? null;
+        $notasPago = $data['notas_pago'] ?? null;
+
         unset(
             $data['grupos'],
+            $data['preinscripcion_id'],
             $data['tipo_cuota_id'],
             $data['cuota_estado'],
             $data['fecha_pago'],
@@ -87,10 +119,50 @@ class AlumnoController extends Controller
         $data['fecha_baja'] = null;
         $data['fecha_inicio_actividad'] = null;
 
-        $alumno = DB::transaction(function () use ($data, $grupoIds) {
+        $alumno = DB::transaction(function () use (
+            $data,
+            $grupoIds,
+            $preinscripcionId,
+            $tipoCuotaId,
+            $cuotaEstado,
+            $fechaPago,
+            $metodoPago,
+            $notasPago
+        ) {
+            $preinscripcion = null;
+
+            if ($preinscripcionId) {
+                $preinscripcion = Preinscripcion::lockForUpdate()->findOrFail($preinscripcionId);
+
+                if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
+                    throw ValidationException::withMessages([
+                        'preinscripcion_id' => 'Esta preinscripción ya fue convertida en alumno.',
+                    ]);
+                }
+            }
+
             $alumno = Alumno::create($data);
 
             $this->sincronizarGrupos($alumno, $grupoIds);
+
+            if ($tipoCuotaId && $cuotaEstado) {
+                $this->crearCuotaInicial(
+                    alumno: $alumno,
+                    tipoCuotaId: (int) $tipoCuotaId,
+                    estado: $cuotaEstado,
+                    fechaPago: $fechaPago,
+                    metodoPago: $metodoPago,
+                    notasPago: $notasPago,
+                );
+            }
+
+            if ($preinscripcion) {
+                $preinscripcion->update([
+                    'estado' => 'resuelta',
+                    'alumno_id' => $alumno->id,
+                    'resuelta_at' => now(),
+                ]);
+            }
 
             return $alumno;
         });
@@ -104,23 +176,20 @@ class AlumnoController extends Controller
     {
         $hoy = now()->toDateString();
 
-        // Grupos activos (para mostrar en la ficha)
         $gruposActivos = $alumno->gruposActivos()->orderBy('nombre')->get();
 
-        // Cuota vigente: pagada y no vencida (fecha_fin >= hoy) o sin fecha_fin
         $cuotaVigente = Cuota::query()
             ->where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
             ->where(function ($q) use ($hoy) {
                 $q->whereNull('fecha_fin')
-                  ->orWhereDate('fecha_fin', '>=', $hoy);
+                    ->orWhereDate('fecha_fin', '>=', $hoy);
             })
             ->with(['tipoCuota', 'pago'])
             ->orderByDesc('fecha_fin')
             ->orderByDesc('id')
             ->first();
 
-        // Cuota pendiente (si existe)
         $cuotaPendiente = Cuota::query()
             ->where('alumno_id', $alumno->id)
             ->where('estado', 'pendiente')
@@ -129,7 +198,6 @@ class AlumnoController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        // Última pagada (para saber si está vencida)
         $ultimaPagada = Cuota::query()
             ->where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
@@ -138,7 +206,6 @@ class AlumnoController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        // Estado principal que usa tu "ticket"
         $estadoCuota = 'sin_cuota';
 
         if ($cuotaVigente) {
@@ -149,7 +216,6 @@ class AlumnoController extends Controller
             $estadoCuota = 'vencida';
         }
 
-        // Historial de cuotas (para la tabla)
         $cuotas = Cuota::query()
             ->where('alumno_id', $alumno->id)
             ->with(['tipoCuota', 'pago'])
@@ -157,7 +223,6 @@ class AlumnoController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        // Historial de pagos (para la tabla)
         $pagos = Pago::query()
             ->where('alumno_id', $alumno->id)
             ->with(['cuota.tipoCuota'])
@@ -204,7 +269,6 @@ class AlumnoController extends Controller
 
         DB::transaction(function () use ($alumno, $data, $grupoIds) {
             $alumno->update($data);
-
             $this->sincronizarGrupos($alumno, $grupoIds);
         });
 
@@ -274,5 +338,56 @@ class AlumnoController extends Controller
                     'updated_at' => $ahora,
                 ]);
         }
+    }
+
+    private function crearCuotaInicial(
+        Alumno $alumno,
+        int $tipoCuotaId,
+        string $estado,
+        ?string $fechaPago,
+        ?string $metodoPago,
+        ?string $notasPago
+    ): void {
+        $tipo = TipoCuota::findOrFail($tipoCuotaId);
+
+        if ($estado === 'pendiente') {
+            Cuota::create([
+                'alumno_id' => $alumno->id,
+                'tipo_cuota_id' => $tipo->id,
+                'fecha_inicio' => now()->toDateString(),
+                'fecha_fin' => now()->toDateString(),
+                'importe' => $tipo->importe,
+                'estado' => 'pendiente',
+            ]);
+
+            return;
+        }
+
+        $fecha = Carbon::parse($fechaPago ?: now()->toDateString());
+        $inicio = $fecha->copy();
+        $fin = $fecha->copy()->addMonthsNoOverflow(max(1, (int) ($tipo->duracion_meses ?? 1)));
+
+        $cuota = Cuota::create([
+            'alumno_id' => $alumno->id,
+            'tipo_cuota_id' => $tipo->id,
+            'fecha_inicio' => $inicio->toDateString(),
+            'fecha_fin' => $fin->toDateString(),
+            'importe' => $tipo->importe,
+            'estado' => 'pagada',
+        ]);
+
+        Pago::create([
+            'cuota_id' => $cuota->id,
+            'alumno_id' => $alumno->id,
+            'fecha_pago' => $fecha->toDateString(),
+            'importe' => $tipo->importe,
+            'metodo' => $metodoPago ?: 'efectivo',
+            'notas' => $notasPago,
+
+            'tipo_cuota_id' => $tipo->id,
+            'tipo_cuota_nombre' => $tipo->nombre,
+            'vigencia_inicio' => $inicio->toDateString(),
+            'vigencia_fin' => $fin->toDateString(),
+        ]);
     }
 }

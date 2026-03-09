@@ -69,6 +69,18 @@ Route::prefix('panel')
             Route::view('/', 'panel.dashboard')->name('home');
 
             // =========================
+            // PREINSCRIPCIONES
+            // =========================
+            Route::get('preinscripciones', [\App\Http\Controllers\Panel\PreinscripcionController::class, 'index'])
+                ->name('preinscripciones.index');
+
+            Route::get('preinscripciones/{preinscripcion}', [\App\Http\Controllers\Panel\PreinscripcionController::class, 'show'])
+                ->name('preinscripciones.show');
+
+            Route::get('preinscripciones/{preinscripcion}/convertir', [\App\Http\Controllers\Panel\PreinscripcionController::class, 'convertir'])
+                ->name('preinscripciones.convertir');
+
+            // =========================
             // ALUMNOS
             // =========================
             Route::patch('alumnos/{alumno}/baja', [\App\Http\Controllers\Panel\AlumnoController::class, 'baja'])
