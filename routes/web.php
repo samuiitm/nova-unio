@@ -65,7 +65,8 @@ Route::prefix('panel')
     ->group(function () {
 
         Route::name('panel.')->group(function () {
-            Route::view('/', 'panel.dashboard')->name('home');
+            Route::get('/', [\App\Http\Controllers\Panel\DashboardController::class, 'index'])
+                ->name('home');
 
             // =========================
             // ACCESO PARA LOS 3 ROLES
