@@ -20,7 +20,13 @@
     </div>
 @endif
 
-<div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+@if(session('error'))
+    <div class="mt-5 panel-card p-4">
+        <div class="text-sm">{{ session('error') }}</div>
+    </div>
+@endif
+
+<div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
     <div class="panel-card p-5">
         <div class="text-sm panel-muted">Total</div>
         <div class="mt-2 text-3xl font-semibold">{{ $stats['total'] }}</div>
@@ -28,6 +34,10 @@
     <div class="panel-card p-5">
         <div class="text-sm panel-muted">Admins</div>
         <div class="mt-2 text-3xl font-semibold">{{ $stats['admins'] }}</div>
+    </div>
+    <div class="panel-card p-5">
+        <div class="text-sm panel-muted">Entrenador admin</div>
+        <div class="mt-2 text-3xl font-semibold">{{ $stats['entrenadores_admin'] }}</div>
     </div>
     <div class="panel-card p-5">
         <div class="text-sm panel-muted">Entrenadores</div>
@@ -46,6 +56,7 @@
         <select name="rol" class="panel-input px-4 py-3">
             <option value="todos" @selected($rol === 'todos')>Todos los roles</option>
             <option value="admin" @selected($rol === 'admin')>Admin</option>
+            <option value="entrenador_admin" @selected($rol === 'entrenador_admin')>Entrenador admin</option>
             <option value="entrenador" @selected($rol === 'entrenador')>Entrenador</option>
         </select>
 
@@ -70,6 +81,7 @@
                     <th class="py-2">Rol</th>
                     <th class="py-2">Estado</th>
                     <th class="py-2">Alta</th>
+                    <th class="py-2 text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,12 +96,17 @@
                             @if($u->esAdmin())
                                 <span class="text-xs px-3 py-1 rounded-full"
                                       style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
-                                    Admin
+                                    {{ $u->rol_label }}
+                                </span>
+                            @elseif($u->esEntrenadorAdmin())
+                                <span class="text-xs px-3 py-1 rounded-full"
+                                      style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
+                                    {{ $u->rol_label }}
                                 </span>
                             @else
                                 <span class="text-xs px-3 py-1 rounded-full"
                                       style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
-                                    Entrenador
+                                    {{ $u->rol_label }}
                                 </span>
                             @endif
                         </td>
@@ -107,10 +124,28 @@
                             @endif
                         </td>
                         <td class="py-3">{{ optional($u->created_at)->format('d/m/Y') ?: '—' }}</td>
+                        <td class="py-3">
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route('panel.usuarios.edit', $u) }}" class="panel-icon-btn px-4 py-2">
+                                    Editar
+                                </a>
+
+                                <form method="POST"
+                                      action="{{ route('panel.usuarios.destroy', $u) }}"
+                                      onsubmit="return confirm('¿Seguro que quieres eliminar este usuario?');">
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button class="panel-icon-btn px-4 py-2">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="py-4 panel-muted">No hay usuarios con esos filtros.</td>
+                        <td colspan="7" class="py-4 panel-muted">No hay usuarios con esos filtros.</td>
                     </tr>
                 @endforelse
             </tbody>

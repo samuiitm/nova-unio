@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\RolUsuario;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -12,13 +11,9 @@ class EnsureAdmin
     {
         $user = $request->user();
 
-        if (!$user || !$user->is_active) {
+        if (!$user || !$user->is_active || !$user->esAdmin()) {
             abort(403);
         }
-
-        $rol = $user->role instanceof RolUsuario ? $user->role->value : $user->role;
-
-        abort_unless($rol === 'admin', 403);
 
         return $next($request);
     }

@@ -18,6 +18,11 @@
 </head>
 
 @php
+    $authUser = auth()->user();
+
+    $puedeGestionClub = $authUser?->puedeGestionarClub() ?? false;
+    $puedeGestionarUsuarios = $authUser?->puedeGestionarUsuarios() ?? false;
+
     $is = fn($pattern) => request()->routeIs($pattern);
 
     $aDashboard = $is('panel.home');
@@ -39,11 +44,11 @@
 
     // accordion: abre por defecto el grupo del route actual
     $initialOpen =
-        $aAlumnos   ? 'alumnos'  :
-        ($aPagos    ? 'pagos'    :
-        ($aGrupos   ? 'grupos'   :
-        ($aInformes ? 'informes' :
-        (($esAdmin && $aUsuarios) ? 'usuarios' : null))));
+        ($puedeGestionClub && $aAlumnos) ? 'alumnos' :
+        (($puedeGestionClub && $aPagos) ? 'pagos' :
+        (($puedeGestionClub && $aGrupos) ? 'grupos' :
+        (($puedeGestionClub && $aInformes) ? 'informes' :
+        (($puedeGestionarUsuarios && $aUsuarios) ? 'usuarios' : null))));
 @endphp
 
 <body class="panel-body min-h-screen antialiased"
@@ -88,122 +93,130 @@
                  x-show="!sidebarCollapsed" x-cloak>
                 Menú
             </div>
-
+            
             <!-- Dashboard -->
-            <a href="{{ $r('panel.home') }}" @click="sidebarOpen=false"
-               class="flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aDashboard ? 'panel-nav-item-active' : '' }}"
-               :class="sidebarCollapsed ? 'justify-center' : ''">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-8h8V3h-8v10z"/>
-                    </svg>
-                </span>
-                <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Dashboard</span>
-            </a>
+            @if($puedeGestionarUsuarios)
+                <a href="{{ $r('panel.home') }}" @click="sidebarOpen=false"
+                class="flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aDashboard ? 'panel-nav-item-active' : '' }}"
+                :class="sidebarCollapsed ? 'justify-center' : ''">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-8h8V3h-8v10z"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Dashboard</span>
+                </a>
+            @endif
 
             <!-- ALUMNOS -->
-            <button type="button"
-                    class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
-                    :class="sidebarCollapsed ? 'justify-center' : ''"
-                    @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('alumnos')">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                </span>
-                <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Alumnos</span>
+            @if($puedeGestionClub) 
+                <button type="button"
+                        class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        :class="sidebarCollapsed ? 'justify-center' : ''"
+                        @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('alumnos')">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Alumnos</span>
 
-                <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
-                    <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'alumnos' ? 'rotate-90' : ''"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                </span>
-            </button>
+                    <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
+                        <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'alumnos' ? 'rotate-90' : ''"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </span>
+                </button>
 
-            <div x-show="!sidebarCollapsed && openKey === 'alumnos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
-                <a href="{{ $r('panel.alumnos.index') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.alumnos.index') ? 'panel-subitem-active' : '' }}">
-                    Listado de alumnos
-                </a>
-                <a href="{{ $r('panel.alumnos.create') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.alumnos.create') ? 'panel-subitem-active' : '' }}">
-                    Crear alumno
-                </a>
-            </div>
+                <div x-show="!sidebarCollapsed && openKey === 'alumnos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
+                    <a href="{{ $r('panel.alumnos.index') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.alumnos.index') ? 'panel-subitem-active' : '' }}">
+                        Listado de alumnos
+                    </a>
+                    <a href="{{ $r('panel.alumnos.create') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.alumnos.create') ? 'panel-subitem-active' : '' }}">
+                        Crear alumno
+                    </a>
+                </div>
+            @endif
 
             <!-- PAGOS Y CUOTAS -->
-            <button type="button"
-                    class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
-                    :class="sidebarCollapsed ? 'justify-center' : ''"
-                    @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('pagos')">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                        <path d="M15 9h-3a2 2 0 1 0 0 4h1a2 2 0 1 1 0 4H9"/>
-                        <path d="M12 7v2m0 8v2"/>
-                    </svg>
-                </span>
-                <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Pagos y cuotas</span>
+            @if($puedeGestionClub)
+                <button type="button"
+                        class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        :class="sidebarCollapsed ? 'justify-center' : ''"
+                        @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('pagos')">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                            <path d="M15 9h-3a2 2 0 1 0 0 4h1a2 2 0 1 1 0 4H9"/>
+                            <path d="M12 7v2m0 8v2"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Pagos y cuotas</span>
 
-                <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
-                    <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'pagos' ? 'rotate-90' : ''"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                </span>
-            </button>
+                    <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
+                        <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'pagos' ? 'rotate-90' : ''"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </span>
+                </button>
 
-            <div x-show="!sidebarCollapsed && openKey === 'pagos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
-                <a href="{{ $r('panel.pagos.vencidas') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.vencidas') ? 'panel-subitem-active' : '' }}">
-                    Cuotas vencidas
-                </a>
-                <a href="{{ $r('panel.pagos.pendientes') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.pendientes') ? 'panel-subitem-active' : '' }}">
-                    Pendientes de pago
-                </a>
-                <a href="{{ $r('panel.pagos.historial') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.historial') ? 'panel-subitem-active' : '' }}">
-                    Historial de pagos
-                </a>
-                <a href="{{ $r('panel.pagos.tipos') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.tipos') ? 'panel-subitem-active' : '' }}">
-                    Tipos de cuota
-                </a>
-            </div>
+                <div x-show="!sidebarCollapsed && openKey === 'pagos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
+                    <a href="{{ $r('panel.pagos.vencidas') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.vencidas') ? 'panel-subitem-active' : '' }}">
+                        Cuotas vencidas
+                    </a>
+                    <a href="{{ $r('panel.pagos.pendientes') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.pendientes') ? 'panel-subitem-active' : '' }}">
+                        Pendientes de pago
+                    </a>
+                    <a href="{{ $r('panel.pagos.historial') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.historial') ? 'panel-subitem-active' : '' }}">
+                        Historial de pagos
+                    </a>
+                    <a href="{{ $r('panel.pagos.tipos') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.tipos') ? 'panel-subitem-active' : '' }}">
+                        Tipos de cuota
+                    </a>
+                </div>
+            @endif
 
             <!-- GRUPOS -->
-            <button type="button"
-                    class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
-                    :class="sidebarCollapsed ? 'justify-center' : ''"
-                    @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('grupos')">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 7h18M3 12h18M3 17h18"/>
-                    </svg>
-                </span>
-                <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Grupos</span>
+            @if($puedeGestionClub)
+                <button type="button"
+                        class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        :class="sidebarCollapsed ? 'justify-center' : ''"
+                        @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('grupos')">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 7h18M3 12h18M3 17h18"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Grupos</span>
 
-                <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
-                    <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'grupos' ? 'rotate-90' : ''"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                </span>
-            </button>
+                    <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
+                        <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'grupos' ? 'rotate-90' : ''"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </span>
+                </button>
 
-            <div x-show="!sidebarCollapsed && openKey === 'grupos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
-                <a href="{{ $r('panel.grupos.index') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.index') ? 'panel-subitem-active' : '' }}">
-                    Listado de grupos
-                </a>
-                <a href="{{ $r('panel.grupos.create') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.create') ? 'panel-subitem-active' : '' }}">
-                    Crear grupo
-                </a>
-            </div>
+                <div x-show="!sidebarCollapsed && openKey === 'grupos'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
+                    <a href="{{ $r('panel.grupos.index') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.index') ? 'panel-subitem-active' : '' }}">
+                        Listado de grupos
+                    </a>
+                    <a href="{{ $r('panel.grupos.create') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.grupos.create') ? 'panel-subitem-active' : '' }}">
+                        Crear grupo
+                    </a>
+                </div>
+            @endif
 
             <!-- Calendario (suelto) -->
             <a href="{{ $r('panel.calendario') }}" @click="sidebarOpen=false"
@@ -218,58 +231,64 @@
             </a>
 
             <!-- Asistencias (suelto) -->
-            <a href="{{ $r('panel.asistencias.index') }}" @click="sidebarOpen=false"
-               class="mt-1 flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aAsistencias ? 'panel-nav-item-active' : '' }}"
-               :class="sidebarCollapsed ? 'justify-center' : ''">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M8 17l4 4 4-4M12 3v18"/>
-                    </svg>
-                </span>
-                <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Asistencias</span>
-            </a>
+            @if($puedeGestionClub)
+                <a href="{{ $r('panel.asistencias.index') }}" @click="sidebarOpen=false"
+                class="mt-1 flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aAsistencias ? 'panel-nav-item-active' : '' }}"
+                :class="sidebarCollapsed ? 'justify-center' : ''">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 17l4 4 4-4M12 3v18"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Asistencias</span>
+                </a>
+            @endif
 
             <!-- Preinscripciones (suelto) -->
-            <a href="{{ $r('panel.preinscripciones.index') }}" @click="sidebarOpen=false"
-               class="mt-1 flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aPreinscripciones ? 'panel-nav-item-active' : '' }}"
-               :class="sidebarCollapsed ? 'justify-center' : ''">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10a4 4 0 0 1-4 4H8l-5 5V6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>
-                    </svg>
-                </span>
-                <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Preinscripciones</span>
-            </a>
+            @if($puedeGestionClub)
+                <a href="{{ $r('panel.preinscripciones.index') }}" @click="sidebarOpen=false"
+                class="mt-1 flex items-center gap-3 px-3 py-2 panel-nav-item {{ $aPreinscripciones ? 'panel-nav-item-active' : '' }}"
+                :class="sidebarCollapsed ? 'justify-center' : ''">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10a4 4 0 0 1-4 4H8l-5 5V6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Preinscripciones</span>
+                </a>
+            @endif
 
             <!-- INFORMES -->
-            <button type="button"
-                    class="mt-2 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
-                    :class="sidebarCollapsed ? 'justify-center' : ''"
-                    @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('informes')">
-                <span class="w-6 shrink-0 flex items-center justify-center">
-                    <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 19V5m4 14V9m4 10V3m4 16v-6m4 6V7"/>
-                    </svg>
-                </span>
-                <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Informes</span>
+            @if($puedeGestionClub)
+                <button type="button"
+                        class="mt-2 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        :class="sidebarCollapsed ? 'justify-center' : ''"
+                        @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('informes')">
+                    <span class="w-6 shrink-0 flex items-center justify-center">
+                        <svg class="h-5 w-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19V5m4 14V9m4 10V3m4 16v-6m4 6V7"/>
+                        </svg>
+                    </span>
+                    <span class="flex-1 text-left text-sm font-medium" x-show="!sidebarCollapsed" x-cloak>Informes</span>
 
-                <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
-                    <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'informes' ? 'rotate-90' : ''"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                </span>
-            </button>
+                    <span class="w-6 shrink-0 flex items-center justify-center" x-show="!sidebarCollapsed" x-cloak>
+                        <svg class="h-4 w-4 opacity-70 transition" :class="openKey === 'informes' ? 'rotate-90' : ''"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </span>
+                </button>
 
-            <div x-show="!sidebarCollapsed && openKey === 'informes'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
-                <a href="{{ $r('panel.informes.resumen') }}" @click="sidebarOpen=false"
-                   class="block px-3 py-2 panel-subitem {{ $is('panel.informes.resumen') ? 'panel-subitem-active' : '' }}">
-                    Resumen mensual
-                </a>
-            </div>
-
-            @if($esAdmin)
-                <!-- USUARIOS -->
+                <div x-show="!sidebarCollapsed && openKey === 'informes'" x-collapse class="pl-3 pr-1 mt-1 space-y-1">
+                    <a href="{{ $r('panel.informes.resumen') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.informes.resumen') ? 'panel-subitem-active' : '' }}">
+                        Resumen mensual
+                    </a>
+                </div>
+            @endif
+            
+            <!-- USUARIOS -->
+            @if($puedeGestionarUsuarios)
                 <button type="button"
                         class="mt-2 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
                         :class="sidebarCollapsed ? 'justify-center' : ''"

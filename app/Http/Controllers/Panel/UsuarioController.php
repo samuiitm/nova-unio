@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Panel;
 
+use App\Enums\RolUsuario;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUsuarioRequest;
+use App\Http\Requests\UpdateUsuarioRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class UsuarioController extends Controller
 {
@@ -37,7 +40,13 @@ class UsuarioController extends Controller
         }
 
         $usuarios = $query
-            ->orderByRaw("CASE WHEN rol = 'admin' THEN 0 ELSE 1 END")
+            ->orderByRaw("
+                CASE rol
+                    WHEN 'admin' THEN 0
+                    WHEN 'entrenador_admin' THEN 1
+                    ELSE 2
+                END
+            ")
             ->orderBy('nombre')
             ->orderBy('apellidos')
             ->paginate(12)
@@ -45,8 +54,9 @@ class UsuarioController extends Controller
 
         $stats = [
             'total' => User::count(),
-            'admins' => User::where('rol', 'admin')->count(),
-            'entrenadores' => User::where('rol', 'entrenador')->count(),
+            'admins' => User::where('rol', RolUsuario::Admin->value)->count(),
+            'entrenadores_admin' => User::where('rol', RolUsuario::EntrenadorAdmin->value)->count(),
+            'entrenadores' => User::where('rol', RolUsuario::Entrenador->value)->count(),
             'activos' => User::where('activo', 1)->count(),
         ];
 
@@ -75,5 +85,87 @@ class UsuarioController extends Controller
         return redirect()
             ->route('panel.usuarios.index')
             ->with('ok', 'Usuario creado correctamente.');
+    }
+
+    public function edit(User $usuario)
+    {
+        return view('panel.usuarios.edit', compact('usuario'));
+    }
+
+    public function update(UpdateUsuarioRequest $request, User $usuario)
+    {
+        $data = $request->validated();
+
+        $payload = [
+            'nombre' => $data['nombre'],
+            'apellidos' => $data['apellidos'] ?? null,
+            'email' => $data['email'],
+            'telefono' => $data['telefono'] ?? null,
+            'rol' => $data['rol'],
+            'activo' => $request->boolean('activo', false),
+        ];
+
+        if (!empty($data['password'])) {
+            $payload['password_hash'] = $data['password'];
+        }
+
+        $this->protegerAdminUnico($usuario, $payload);
+
+        $usuario->update($payload);
+
+        return redirect()
+            ->route('panel.usuarios.index')
+            ->with('ok', 'Usuario actualizado correctamente.');
+    }
+
+    public function destroy(Request $request, User $usuario)
+    {
+        if ((int) $request->user()->id === (int) $usuario->id) {
+            return back()->with('error', 'No puedes eliminar tu propio usuario.');
+        }
+
+        $this->protegerEliminacion($usuario);
+
+        $usuario->delete();
+
+        return redirect()
+            ->route('panel.usuarios.index')
+            ->with('ok', 'Usuario eliminado correctamente.');
+    }
+
+    private function protegerAdminUnico(User $usuario, array $payload): void
+    {
+        $rolDestino = $payload['rol'] ?? ($usuario->rolEnum()?->value ?? RolUsuario::Entrenador->value);
+        $activoDestino = array_key_exists('activo', $payload) ? (bool) $payload['activo'] : (bool) $usuario->activo;
+
+        $adminsActivos = User::query()
+            ->where('rol', RolUsuario::Admin->value)
+            ->where('activo', 1)
+            ->count();
+
+        if (
+            $usuario->esAdmin()
+            && $usuario->activo
+            && $adminsActivos <= 1
+            && ($rolDestino !== RolUsuario::Admin->value || !$activoDestino)
+        ) {
+            throw ValidationException::withMessages([
+                'rol' => 'No puedes dejar el sistema sin un admin activo.',
+            ]);
+        }
+    }
+
+    private function protegerEliminacion(User $usuario): void
+    {
+        $adminsActivos = User::query()
+            ->where('rol', RolUsuario::Admin->value)
+            ->where('activo', 1)
+            ->count();
+
+        if ($usuario->esAdmin() && $usuario->activo && $adminsActivos <= 1) {
+            throw ValidationException::withMessages([
+                'usuario' => 'No puedes eliminar al último admin activo.',
+            ]);
+        }
     }
 }

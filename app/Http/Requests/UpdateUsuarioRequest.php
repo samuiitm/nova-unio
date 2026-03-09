@@ -3,9 +3,10 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class StoreUsuarioRequest extends FormRequest
+class UpdateUsuarioRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,16 +15,18 @@ class StoreUsuarioRequest extends FormRequest
 
     public function rules(): array
     {
+        $id = $this->route('usuario')?->id ?? null;
+
         return [
             'nombre' => ['required', 'string', 'max:120'],
             'apellidos' => ['nullable', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:190', 'unique:usuarios,email'],
+            'email' => ['required', 'email', 'max:190', Rule::unique('usuarios', 'email')->ignore($id)],
             'telefono' => ['nullable', 'string', 'max:30'],
 
             'rol' => ['required', 'in:admin,entrenador_admin,entrenador'],
             'activo' => ['nullable', 'boolean'],
 
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
     }
 

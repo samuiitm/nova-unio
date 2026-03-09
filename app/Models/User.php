@@ -109,17 +109,40 @@ class User extends Authenticatable
         $this->attributes['foto_perfil'] = $value;
     }
 
+    public function rolEnum(): ?RolUsuario
+    {
+        return $this->rol instanceof RolUsuario
+            ? $this->rol
+            : RolUsuario::tryFrom((string) $this->rol);
+    }
+
     public function esAdmin(): bool
     {
-        $rol = $this->rol instanceof RolUsuario ? $this->rol->value : $this->rol;
+        return $this->rolEnum() === RolUsuario::Admin;
+    }
 
-        return $rol === RolUsuario::Admin->value;
+    public function esEntrenadorAdmin(): bool
+    {
+        return $this->rolEnum() === RolUsuario::EntrenadorAdmin;
     }
 
     public function esEntrenador(): bool
     {
-        $rol = $this->rol instanceof RolUsuario ? $this->rol->value : $this->rol;
+        return $this->rolEnum() === RolUsuario::Entrenador;
+    }
 
-        return $rol === RolUsuario::Entrenador->value;
+    public function puedeGestionarClub(): bool
+    {
+        return $this->rolEnum()?->puedeGestionarClub() ?? false;
+    }
+
+    public function puedeGestionarUsuarios(): bool
+    {
+        return $this->rolEnum()?->puedeGestionarUsuarios() ?? false;
+    }
+
+    public function getRolLabelAttribute(): string
+    {
+        return $this->rolEnum()?->label() ?? ucfirst((string) $this->rol);
     }
 }

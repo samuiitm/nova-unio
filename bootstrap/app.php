@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'panel.access' => \App\Http\Middleware\EnsurePanelAccess::class,
+            'panel.manage' => \App\Http\Middleware\EnsurePanelManagement::class,
             'panel.admin'  => \App\Http\Middleware\EnsureAdmin::class,
         ]);
     })
