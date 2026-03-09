@@ -17,7 +17,7 @@ class ClaseController extends Controller
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
                 $q->whereNull('alumno_grupo.fecha_baja')
-                  ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
+                    ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
             ->orderBy('apellidos')
             ->orderBy('nombre')
@@ -29,7 +29,7 @@ class ClaseController extends Controller
         $fecha = Carbon::parse($clase->fecha)->startOfDay();
 
         $limiteSinLista = now()->subDay()->startOfDay();    // ayer
-        $limiteBloqueo  = now()->subDays(2)->startOfDay();  // hace 2 días
+        $limiteBloqueo = now()->subDays(2)->startOfDay();   // hace 2 días
 
         $esCancelada = ($clase->estado ?? null) === 'cancelada';
         $cerradaManual = (bool) ($clase->asistencia_cerrada ?? false);
@@ -88,24 +88,24 @@ class ClaseController extends Controller
         }
 
         $data = $request->validate([
-            'presentes' => ['nullable', 'array'],
-            'presentes.*' => ['integer'],
+            'asistencias' => ['nullable', 'array'],
+            'asistencias.*' => ['nullable', 'in:presente,ausente'],
         ]);
 
-        $presentes = collect($data['presentes'] ?? [])
-            ->map(fn ($v) => (int) $v)
-            ->filter(fn ($id) => $alumnoIds->contains($id))
-            ->values();
+        $asistencias = collect($data['asistencias'] ?? []);
 
-        DB::transaction(function () use ($clase, $alumnoIds, $presentes) {
-
-            // por si acaso: borrar asistencias de alumnos que ya no tocan
+        DB::transaction(function () use ($clase, $alumnoIds, $asistencias) {
+            // borrar asistencias de alumnos que ya no tocan en esta clase
             Asistencia::where('clase_id', $clase->id)
                 ->whereNotIn('alumno_id', $alumnoIds)
                 ->delete();
 
             foreach ($alumnoIds as $alumnoId) {
-                $estado = $presentes->contains((int) $alumnoId) ? 'presente' : 'ausente';
+                $estado = $asistencias->get((string) $alumnoId, 'ausente');
+
+                if (!in_array($estado, ['presente', 'ausente'], true)) {
+                    $estado = 'ausente';
+                }
 
                 Asistencia::updateOrCreate(
                     ['clase_id' => $clase->id, 'alumno_id' => (int) $alumnoId],
@@ -115,5 +115,57 @@ class ClaseController extends Controller
         });
 
         return back()->with('ok', 'Asistencia guardada.');
+    }
+
+    public function cancelar(Request $request, Clase $clase)
+    {
+        if ($clase->estado === 'cancelada') {
+            return redirect()
+                ->route('panel.clases.show', array_filter([
+                    'clase' => $clase,
+                    'mes' => $request->query('mes'),
+                ], fn ($v) => $v !== null && $v !== ''))
+                ->with('ok', 'La clase ya estaba cancelada.');
+        }
+
+        DB::transaction(function () use ($clase) {
+            Asistencia::where('clase_id', $clase->id)->delete();
+
+            $clase->update([
+                'estado' => 'cancelada',
+                'asistencia_cerrada' => true,
+            ]);
+        });
+
+        return redirect()
+            ->route('panel.clases.show', array_filter([
+                'clase' => $clase,
+                'mes' => $request->query('mes'),
+            ], fn ($v) => $v !== null && $v !== ''))
+            ->with('ok', 'Clase cancelada correctamente.');
+    }
+
+    public function reactivar(Request $request, Clase $clase)
+    {
+        if ($clase->estado !== 'cancelada') {
+            return redirect()
+                ->route('panel.clases.show', array_filter([
+                    'clase' => $clase,
+                    'mes' => $request->query('mes'),
+                ], fn ($v) => $v !== null && $v !== ''))
+                ->with('ok', 'La clase ya estaba activa.');
+        }
+
+        $clase->update([
+            'estado' => 'programada',
+            'asistencia_cerrada' => false,
+        ]);
+
+        return redirect()
+            ->route('panel.clases.show', array_filter([
+                'clase' => $clase,
+                'mes' => $request->query('mes'),
+            ], fn ($v) => $v !== null && $v !== ''))
+            ->with('ok', 'Clase reactivada correctamente.');
     }
 }

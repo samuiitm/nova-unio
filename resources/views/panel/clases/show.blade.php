@@ -7,11 +7,11 @@
     $mesVolver = $mesVolver ?? null;
 
     $fechaFmt = \Carbon\Carbon::parse($clase->fecha)->format('d/m/Y');
-    $horaIni = $clase->hora_inicio ? substr($clase->hora_inicio,0,5) : '—';
-    $horaFin = $clase->hora_fin ? substr($clase->hora_fin,0,5) : '—';
+    $horaIni = $clase->hora_inicio ? substr($clase->hora_inicio, 0, 5) : '—';
+    $horaFin = $clase->hora_fin ? substr($clase->hora_fin, 0, 5) : '—';
 @endphp
 
-<div class="flex items-start justify-between gap-4">
+<div class="flex items-start justify-between gap-4 flex-wrap">
     <div>
         <h1 class="text-2xl font-semibold">Clase</h1>
         <p class="mt-1 panel-muted">
@@ -19,7 +19,30 @@
         </p>
     </div>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
+        @if($clase->estado === 'cancelada')
+            <form method="POST"
+                  action="{{ route('panel.clases.reactivar', ['clase' => $clase, 'mes' => $mesVolver]) }}">
+                @csrf
+                @method('PATCH')
+
+                <button class="panel-btn px-5 py-3">
+                    Reactivar clase
+                </button>
+            </form>
+        @else
+            <form method="POST"
+                  action="{{ route('panel.clases.cancelar', ['clase' => $clase, 'mes' => $mesVolver]) }}"
+                  onsubmit="return confirm('¿Seguro que quieres cancelar esta clase? Si tenía asistencias, se borrarán.');">
+                @csrf
+                @method('PATCH')
+
+                <button class="panel-icon-btn px-5 py-3">
+                    Cancelar clase
+                </button>
+            </form>
+        @endif
+
         @if($mesVolver)
             <a href="{{ route('panel.calendario', ['mes' => $mesVolver]) }}" class="panel-icon-btn px-5 py-3">Volver</a>
         @else
@@ -50,7 +73,7 @@
         <div>
             <div class="text-lg font-semibold">Lista</div>
             <div class="text-sm panel-muted">
-                Marca los presentes. Los que queden sin marcar se guardan como ausentes.
+                Marca el estado de cada alumno para esta clase.
             </div>
         </div>
 
@@ -123,7 +146,7 @@
                 <thead class="text-left panel-muted">
                     <tr>
                         <th class="py-2">Alumno</th>
-                        <th class="py-2">Presente</th>
+                        <th class="py-2">Estado</th>
                         <th class="py-2">Estado actual</th>
                     </tr>
                 </thead>
@@ -131,8 +154,7 @@
                     @forelse($alumnos as $a)
                         @php
                             $as = $asistencias->get($a->id);
-                            $estado = $as?->estado; // presente/ausente/null
-                            $checked = ($estado === null || $estado === 'presente');
+                            $estado = $as?->estado;
                         @endphp
                         <tr class="border-t panel-border">
                             <td class="py-3">
@@ -146,7 +168,7 @@
                                                name="asistencias[{{ $a->id }}]"
                                                value="presente"
                                                @checked($estado === 'presente')
-                                               @disabled($clase->asistencia_cerrada)>
+                                               @disabled($bloqueada)>
                                         <span>Presente</span>
                                     </label>
 
@@ -155,7 +177,7 @@
                                                name="asistencias[{{ $a->id }}]"
                                                value="ausente"
                                                @checked($estado === 'ausente')
-                                               @disabled($clase->asistencia_cerrada)>
+                                               @disabled($bloqueada)>
                                         <span>Ausente</span>
                                     </label>
                                 </div>
@@ -182,7 +204,7 @@
 
         <div class="mt-5 flex items-center justify-between gap-3">
             <div class="text-xs panel-muted">
-                Alumnos: {{ $alumnos->count() }} · Guardadas: {{ (int)$totalAsistencias }}
+                Alumnos: {{ $alumnos->count() }} · Guardadas: {{ (int) $totalAsistencias }}
             </div>
 
             <div class="flex gap-2">

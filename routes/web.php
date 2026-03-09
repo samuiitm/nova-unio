@@ -146,6 +146,13 @@ Route::prefix('panel')
             Route::post('clases/{clase}/asistencia', [\App\Http\Controllers\Panel\ClaseController::class, 'guardarAsistencia'])
                 ->name('clases.asistencia');
 
+            // Cancelar / reactivar clase
+            Route::patch('clases/{clase}/cancelar', [\App\Http\Controllers\Panel\ClaseController::class, 'cancelar'])
+                ->name('clases.cancelar');
+
+            Route::patch('clases/{clase}/reactivar', [\App\Http\Controllers\Panel\ClaseController::class, 'reactivar'])
+                ->name('clases.reactivar');
+
             // =========================
             // PAGOS Y CUOTAS
             // =========================

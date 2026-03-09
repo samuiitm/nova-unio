@@ -136,7 +136,9 @@
                             <div class="flex items-center justify-between gap-2">
                                 <span class="font-semibold">{{ substr($clase->hora_inicio,0,5) }}</span>
 
-                                @if($cerradaManual)
+                                @if($esCancelada)
+                                    <span class="text-[10px] opacity-80">cancelada</span>
+                                @elseif($cerradaManual)
                                     <span class="text-[10px] opacity-80">cerrada</span>
                                 @elseif($bloqueadaSinLista)
                                     <span class="text-[10px] opacity-80">sin lista</span>
