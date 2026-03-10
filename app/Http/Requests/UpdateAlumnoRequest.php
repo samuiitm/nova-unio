@@ -33,9 +33,11 @@ class UpdateAlumnoRequest extends FormRequest
             'telefono' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:190', 'unique:alumnos,email,' . $id],
 
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'quitar_foto' => ['nullable', 'boolean'],
+
             'notas' => ['nullable', 'string'],
 
-            // permitir añadir/quitar grupos en editar
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],
         ];

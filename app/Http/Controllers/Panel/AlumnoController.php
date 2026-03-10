@@ -15,6 +15,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AlumnoController extends Controller
 {
@@ -91,6 +94,12 @@ class AlumnoController extends Controller
     public function store(StoreAlumnoRequest $request)
     {
         $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            $data['foto_path'] = $this->guardarFotoOptimizada($request->file('foto'));
+        }
+
+        unset($data['foto'], $data['quitar_foto']);
 
         $grupoIds = collect($data['grupos'] ?? [])
             ->map(fn ($id) => (int) $id)
@@ -259,18 +268,19 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
-        $grupoIds = collect($data['grupos'] ?? [])
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
+        if ($request->hasFile('foto')) {
+            $data['foto_path'] = $this->guardarFotoOptimizada(
+                $request->file('foto'),
+                $alumno->foto_path
+            );
+        } elseif ($request->boolean('quitar_foto') && $alumno->foto_path) {
+            Storage::disk('public')->delete($alumno->foto_path);
+            $data['foto_path'] = null;
+        }
 
-        unset($data['grupos']);
+        unset($data['foto'], $data['quitar_foto']);
 
-        DB::transaction(function () use ($alumno, $data, $grupoIds) {
-            $alumno->update($data);
-            $this->sincronizarGrupos($alumno, $grupoIds);
-        });
+        $alumno->update($data);
 
         return redirect()
             ->route('panel.alumnos.show', $alumno)
@@ -389,5 +399,86 @@ class AlumnoController extends Controller
             'vigencia_inicio' => $inicio->toDateString(),
             'vigencia_fin' => $fin->toDateString(),
         ]);
+    }
+
+    private function guardarFotoOptimizada(UploadedFile $file, ?string $fotoAnterior = null): ?string
+    {
+        if (!extension_loaded('gd')) {
+            throw new \RuntimeException('La extensión GD no está activa en PHP.');
+        }
+
+        $binario = file_get_contents($file->getRealPath());
+
+        if ($binario === false) {
+            throw new \RuntimeException('No se ha podido leer la imagen subida.');
+        }
+
+        $imagenOrigen = imagecreatefromstring($binario);
+
+        if (!$imagenOrigen) {
+            throw new \RuntimeException('La imagen subida no tiene un formato válido.');
+        }
+
+        $anchoOrigen = imagesx($imagenOrigen);
+        $altoOrigen = imagesy($imagenOrigen);
+
+        $maxLado = 480;
+        $escala = min($maxLado / max($anchoOrigen, $altoOrigen), 1);
+
+        $anchoDestino = max(1, (int) round($anchoOrigen * $escala));
+        $altoDestino = max(1, (int) round($altoOrigen * $escala));
+
+        $imagenDestino = imagecreatetruecolor($anchoDestino, $altoDestino);
+
+        imagealphablending($imagenDestino, true);
+        imagesavealpha($imagenDestino, true);
+
+        $transparente = imagecolorallocatealpha($imagenDestino, 0, 0, 0, 127);
+        imagefill($imagenDestino, 0, 0, $transparente);
+
+        imagecopyresampled(
+            $imagenDestino,
+            $imagenOrigen,
+            0,
+            0,
+            0,
+            0,
+            $anchoDestino,
+            $altoDestino,
+            $anchoOrigen,
+            $altoOrigen
+        );
+
+        $carpeta = 'alumnos/' . now()->format('Y/m');
+        $nombreBase = Str::uuid()->toString();
+
+        if (function_exists('imagewebp')) {
+            $ruta = $carpeta . '/' . $nombreBase . '.webp';
+
+            ob_start();
+            imagewebp($imagenDestino, null, 78);
+            $contenido = ob_get_clean();
+        } else {
+            $ruta = $carpeta . '/' . $nombreBase . '.jpg';
+
+            ob_start();
+            imagejpeg($imagenDestino, null, 78);
+            $contenido = ob_get_clean();
+        }
+
+        imagedestroy($imagenOrigen);
+        imagedestroy($imagenDestino);
+
+        if ($contenido === false || $contenido === null) {
+            throw new \RuntimeException('No se ha podido generar la imagen optimizada.');
+        }
+
+        Storage::disk('public')->put($ruta, $contenido);
+
+        if ($fotoAnterior && Storage::disk('public')->exists($fotoAnterior)) {
+            Storage::disk('public')->delete($fotoAnterior);
+        }
+
+        return $ruta;
     }
 }

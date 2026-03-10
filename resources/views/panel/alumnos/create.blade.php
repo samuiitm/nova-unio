@@ -98,7 +98,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('panel.alumnos.store') }}" class="mt-5">
+    <form method="POST" action="{{ route('panel.alumnos.store') }}" class="mt-5" enctype="multipart/form-data">
         @csrf
 
         @if(isset($preinscripcion) && $preinscripcion)
