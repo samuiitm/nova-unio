@@ -31,9 +31,10 @@ class StoreAlumnoRequest extends FormRequest
             'telefono' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:190', 'unique:alumnos,email'],
 
-            'notas' => ['nullable', 'string'],
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'quitar_foto' => ['nullable', 'boolean'],
 
-            'preinscripcion_id' => ['nullable', 'integer', 'exists:preinscripciones,id'],
+            'notas' => ['nullable', 'string'],
 
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],

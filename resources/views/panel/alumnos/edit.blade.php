@@ -26,7 +26,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('panel.alumnos.update', $alumno) }}" class="mt-5">
+    <form method="POST" action="{{ route('panel.alumnos.update', $alumno) }}" class="mt-5" enctype="multipart/form-data">
         @csrf
         @method('PATCH')
 

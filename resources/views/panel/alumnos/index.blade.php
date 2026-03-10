@@ -122,9 +122,19 @@
 
                         <tr class="border-t panel-border items-center">
                             <td class="py-3">
-                                <div class="font-medium">{{ $a->nombre }} {{ $a->apellidos }}</div>
-                                <div class="text-xs panel-muted">
-                                    {{ $a->email ?: '—' }}
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        src="{{ $a->foto_url }}"
+                                        alt="Foto de {{ $a->nombre }}"
+                                        class="h-11 w-11 rounded-xl object-cover border panel-border shrink-0"
+                                    >
+
+                                    <div>
+                                        <div class="font-medium">{{ $a->nombre }} {{ $a->apellidos }}</div>
+                                        <div class="text-xs panel-muted">
+                                            {{ $a->email ?: '—' }}
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
 

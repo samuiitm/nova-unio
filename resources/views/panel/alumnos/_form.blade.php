@@ -13,6 +13,37 @@
     $metodoPago = old('metodo_pago', 'efectivo');
 @endphp
 
+<div class="mb-6 rounded-2xl border panel-border p-4" style="background: rgb(255 255 255 / .03);">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <img
+            src="{{ $alumno->foto_url ?? asset('img/alumno-default.svg') }}"
+            alt="Foto del alumno"
+            class="h-24 w-24 rounded-2xl object-cover border panel-border"
+        >
+
+        <div class="flex-1">
+            <label class="text-sm font-medium">Foto</label>
+
+            <input
+                type="file"
+                name="foto"
+                accept=".jpg,.jpeg,.png,.webp,image/*"
+                class="mt-2 w-full panel-input px-4 py-3"
+            >
+
+            <p class="mt-2 text-xs panel-muted">
+                La imagen se reduce automáticamente y se guarda optimizada para no ocupar mucho.
+            </p>
+
+            @if(($alumno->foto_path ?? null))
+                <label class="mt-3 inline-flex items-center gap-2 text-sm panel-muted">
+                    <input type="checkbox" name="quitar_foto" value="1">
+                    Quitar foto actual
+                </label>
+            @endif
+        </div>
+    </div>
+</div>
 <div class="space-y-4">
     {{-- DATOS (100% ancho) --}}
     <div class="panel-card p-6">

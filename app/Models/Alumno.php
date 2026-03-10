@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Alumno extends Model
 {
@@ -20,6 +21,7 @@ class Alumno extends Model
         'poblacion',
         'telefono',
         'email',
+        'foto_path',
         'activo',
         'fecha_baja',
         'fecha_inicio_actividad',
@@ -31,6 +33,19 @@ class Alumno extends Model
         'fecha_inicio_actividad' => 'date',
         'activo' => 'boolean',
     ];
+
+    protected $appends = [
+        'foto_url',
+    ];
+
+    public function getFotoUrlAttribute(): string
+    {
+        if ($this->foto_path && Storage::disk('public')->exists($this->foto_path)) {
+            return asset('storage/' . ltrim($this->foto_path, '/'));
+        }
+
+        return \Illuminate\Support\Facades\Vite::asset('resources/img/alumno-default.svg'); 
+    }
 
     public function grupos()
     {
@@ -44,13 +59,11 @@ class Alumno extends Model
         return $this->grupos()->wherePivotNull('fecha_baja');
     }
 
-    // Cuotas del alumno
     public function cuotas()
     {
         return $this->hasMany(\App\Models\Cuota::class, 'alumno_id');
     }
 
-    // Cuota “actual” (la última que no esté anulada)
     public function cuotaActual()
     {
         return $this->hasOne(\App\Models\Cuota::class, 'alumno_id')

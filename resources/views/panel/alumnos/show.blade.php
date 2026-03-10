@@ -26,10 +26,18 @@ $hoy = now()->toDateString();
         ($estadoCuota === 'vencida' ? $ultimaPagada->importe : null));
 @endphp
 
-<div class="flex items-start justify-between gap-4">
-    <div>
-        <h1 class="text-2xl font-semibold">Ficha del alumno</h1>
-        <p class="mt-1 panel-muted">{{ $alumno->nombre }} {{ $alumno->apellidos }}</p>
+<div class="flex items-start justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-4">
+        <img
+            src="{{ $alumno->foto_url }}"
+            alt="Foto del alumno"
+            class="h-20 w-20 rounded-2xl object-cover border panel-border"
+        >
+
+        <div>
+            <h1 class="text-2xl font-semibold">Ficha del alumno</h1>
+            <p class="mt-1 panel-muted">{{ $alumno->nombre }} {{ $alumno->apellidos }}</p>
+        </div>
     </div>
 
     <div class="flex gap-2">
