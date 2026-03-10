@@ -255,6 +255,12 @@ body {
     background: rgb(var(--p-surface) / .06);
   }
 
+  .panel-nav-group-btn-active{
+    background: rgb(var(--p-accent) / .14);
+    border-color: rgb(var(--p-accent) / .25);
+    color: rgb(var(--p-accent));
+  }
+
   .panel-subitem{
     border-radius: 12px;
     color: rgb(var(--p-text) / .68);

@@ -35,7 +35,7 @@ class UpdateAlumnoRequest extends FormRequest
 
             'notas' => ['nullable', 'string'],
 
-            // ✅ permitir añadir/quitar grupos en editar
+            // permitir añadir/quitar grupos en editar
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],
         ];

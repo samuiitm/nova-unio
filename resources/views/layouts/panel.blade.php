@@ -111,7 +111,7 @@
             <!-- ALUMNOS -->
             @if($puedeGestionClub) 
                 <button type="button"
-                        class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn"
+                        class="mt-1 w-full flex items-center gap-3 px-3 py-2 panel-nav-group-btn {{ $aAlumnos ? 'panel-nav-group-btn-active' : '' }}"
                         :class="sidebarCollapsed ? 'justify-center' : ''"
                         @click="if(sidebarCollapsed){ sidebarCollapsed=false } toggle('alumnos')">
                     <span class="w-6 shrink-0 flex items-center justify-center">
