@@ -14,6 +14,9 @@
         <div>
             <h1 class="text-2xl font-semibold">Grupos</h1>
             <p class="mt-1 panel-muted">Despliega un grupo para ver sus horarios.</p>
+            <p class="mt-2 text-sm panel-muted">
+                Las clases se generan automáticamente cada domingo para las 2 semanas siguientes.
+            </p>
         </div>
 
         <a href="{{ route('panel.grupos.create') }}" class="panel-btn px-5 py-3">
@@ -46,7 +49,6 @@
                 <div class="border panel-border rounded-2xl overflow-hidden"
                      style="background: rgb(var(--p-surface) / .06);">
 
-                    <!-- Fila cerrada -->
                     <div class="px-4 py-4 flex items-center gap-3">
                         <button type="button"
                                 class="panel-icon-btn h-10 w-10 flex items-center justify-center shrink-0"
@@ -81,7 +83,6 @@
                             </div>
                         </div>
 
-                        <!-- Acciones -->
                         <div class="flex items-center gap-2 shrink-0">
                             <a class="panel-icon-btn px-4 py-2"
                                href="{{ route('panel.grupos.show', $g) }}">
@@ -97,17 +98,9 @@
                                     Borrar
                                 </button>
                             </form>
-                            
-                            <form method="POST" action="{{ route('panel.grupos.generar-clases', $g) }}">
-                                @csrf
-                                <button class="panel-icon-btn px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700">
-                                    Generar próximas 8 semanas
-                                </button>
-                            </form>
                         </div>
                     </div>
 
-                    <!-- Desplegable -->
                     <div x-show="openId === {{ $g->id }}" x-collapse class="px-4 pb-4">
                         @if($g->programaciones->count() === 0)
                             <div class="panel-muted text-sm">Este grupo no tiene horarios todavía.</div>

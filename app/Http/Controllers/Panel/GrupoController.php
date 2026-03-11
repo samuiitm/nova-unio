@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGrupoRequest;
 use App\Http\Requests\UpdateGrupoRequest;
-use App\Models\Clase;
-use Carbon\Carbon;
 use App\Models\Alumno;
 use App\Models\Grupo;
 use Illuminate\Http\Request;
@@ -24,8 +22,13 @@ class GrupoController extends Controller
             $query->where('nombre', 'like', "%{$q}%");
         }
 
-        if ($estado === 'activos') $query->where('activo', 1);
-        if ($estado === 'inactivos') $query->where('activo', 0);
+        if ($estado === 'activos') {
+            $query->where('activo', 1);
+        }
+
+        if ($estado === 'inactivos') {
+            $query->where('activo', 0);
+        }
 
         $grupos = $query
             ->with([
@@ -63,18 +66,18 @@ class GrupoController extends Controller
     public function show(Grupo $grupo)
     {
         $grupo->load([
-            'programaciones' => fn($q) => $q->orderBy('dia_semana')->orderBy('hora_inicio'),
-            'alumnosActivos' => fn($q) => $q->orderBy('apellidos')->orderBy('nombre'),
+            'programaciones' => fn ($q) => $q->orderBy('dia_semana')->orderBy('hora_inicio'),
+            'alumnosActivos' => fn ($q) => $q->orderBy('apellidos')->orderBy('nombre'),
         ]);
 
         $alumnosDisponibles = Alumno::where('activo', 1)
-            ->orderBy('apellidos')->orderBy('nombre')
+            ->orderBy('apellidos')
+            ->orderBy('nombre')
             ->get(['id', 'nombre', 'apellidos']);
 
         return view('panel.grupos.show', compact('grupo', 'alumnosDisponibles'));
     }
 
-    // Ya no usamos una pantalla aparte: si alguien entra aquí, lo mandamos a la ficha
     public function edit(Grupo $grupo)
     {
         return redirect()->route('panel.grupos.show', $grupo);
@@ -153,38 +156,5 @@ class GrupoController extends Controller
         $grupo->delete();
 
         return redirect()->route('panel.grupos.index')->with('ok', 'Grupo borrado.');
-    }
-
-    public function generarClases(Grupo $grupo)
-    {
-        $programaciones = $grupo->programaciones;
-
-        // semana empieza en lunes (como tu dia_semana: 1=lunes..7=domingo)
-        $inicio = now()->startOfWeek(Carbon::MONDAY)->copy();
-        $fin = now()->copy()->addWeeks(8);
-
-        foreach ($programaciones as $p) {
-
-            $fecha = $inicio->copy();
-
-            while ($fecha <= $fin) {
-
-                // IMPORTANTE: ISO = 1..7
-                if ($fecha->dayOfWeekIso == (int) $p->dia_semana) {
-
-                    Clase::firstOrCreate([
-                        'grupo_id' => $grupo->id,
-                        'fecha' => $fecha->toDateString(),
-                        'hora_inicio' => $p->hora_inicio,
-                        'hora_fin' => $p->hora_fin,
-                    ]);
-                }
-
-                $fecha->addDay();
-            }
-        }
-
-        // en tus vistas del panel sueles mostrar session('ok')
-        return back()->with('ok', 'Clases generadas correctamente.');
     }
 }

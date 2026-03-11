@@ -113,9 +113,6 @@ Route::prefix('panel')
                 Route::patch('grupos/{grupo}/alumnos/{alumno}/activar', [\App\Http\Controllers\Panel\GrupoController::class, 'activarAlumno'])
                     ->name('grupos.alumnos.activar');
 
-                Route::post('grupos/{grupo}/generar-clases', [\App\Http\Controllers\Panel\GrupoController::class, 'generarClases'])
-                    ->name('grupos.generar-clases');
-
                 Route::resource('grupos', \App\Http\Controllers\Panel\GrupoController::class);
 
                 // HISTORIAL DE ASISTENCIAS
