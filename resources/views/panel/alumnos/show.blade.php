@@ -36,7 +36,22 @@ $hoy = now()->toDateString();
 
         <div>
             <h1 class="text-2xl font-semibold">Ficha del alumno</h1>
-            <p class="mt-1 panel-muted">{{ $alumno->nombre }} {{ $alumno->apellidos }}</p>
+
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+                <p class="panel-muted">{{ $alumno->nombre }} {{ $alumno->apellidos }}</p>
+
+                @if($alumno->activo)
+                    <span class="text-xs px-3 py-1 rounded-full"
+                        style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
+                        Activo
+                    </span>
+                @else
+                    <span class="text-xs px-3 py-1 rounded-full"
+                        style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                        De baja
+                    </span>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -54,6 +69,14 @@ $hoy = now()->toDateString();
 @if(session('ok'))
     <div class="mt-5 panel-card p-4">
         <div class="text-sm">{{ session('ok') }}</div>
+    </div>
+@endif
+
+@if(!$alumno->activo && $alumno->fecha_baja)
+    <div class="mt-5 panel-card p-4">
+        <div class="text-sm">
+            Este alumno está <span class="font-semibold">de baja</span> desde el {{ $alumno->fecha_baja->format('d/m/Y') }}.
+        </div>
     </div>
 @endif
 
@@ -88,7 +111,17 @@ $hoy = now()->toDateString();
                 {{ $alumno->fecha_baja ? $alumno->fecha_baja->format('d/m/Y') : '—' }}
             </div>
 
-            <div><span class="panel-muted">Estado:</span> {{ $alumno->activo ? 'Activo' : 'Inactivo' }}</div>
+            <div>
+                <span class="panel-muted">Estado:</span>
+                @if($alumno->activo)
+                    Activo
+                @else
+                    De baja
+                    @if($alumno->fecha_baja)
+                        desde el {{ $alumno->fecha_baja->format('d/m/Y') }}
+                    @endif
+                @endif
+            </div>
 
             <div>
                 <span class="panel-muted">Grupos:</span>
@@ -112,7 +145,8 @@ $hoy = now()->toDateString();
                 <form method="POST" action="{{ route('panel.alumnos.baja', $alumno) }}">
                     @csrf
                     @method('PATCH')
-                    <button class="panel-icon-btn px-5 py-3" onclick="return confirm('¿Dar de baja a este alumno?')">
+
+                    <button class="panel-icon-btn px-5 py-3">
                         Dar de baja
                     </button>
                 </form>
@@ -120,8 +154,9 @@ $hoy = now()->toDateString();
                 <form method="POST" action="{{ route('panel.alumnos.activar', $alumno) }}">
                     @csrf
                     @method('PATCH')
-                    <button class="panel-icon-btn px-5 py-3">
-                        Activar
+
+                    <button class="panel-btn px-5 py-3">
+                        Reactivar
                     </button>
                 </form>
             @endif

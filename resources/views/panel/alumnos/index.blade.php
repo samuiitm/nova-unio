@@ -160,12 +160,12 @@
                             <td class="py-3">
                                 @if($a->activo)
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                          style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
                                         Activo
                                     </span>
                                 @else
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                            style="background: rgb(255 77 77 / .12); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 77 77 / .10);">
                                         Inactivo
                                     </span>
                                 @endif
