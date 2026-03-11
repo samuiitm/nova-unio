@@ -6,6 +6,7 @@ use App\Enums\RolUsuario;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -27,6 +28,10 @@ class User extends Authenticatable
     protected $hidden = [
         'password_hash',
         'remember_token',
+    ];
+
+    protected $appends = [
+        'avatar_url',
     ];
 
     protected function casts(): array
@@ -107,6 +112,15 @@ class User extends Authenticatable
     public function setAvatarPathAttribute(?string $value): void
     {
         $this->attributes['foto_perfil'] = $value;
+    }
+
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->foto_perfil && Storage::disk('public')->exists($this->foto_perfil)) {
+            return asset('storage/' . ltrim($this->foto_perfil, '/'));
+        }
+
+        return \Illuminate\Support\Facades\Vite::asset('resources/img/usuario-default.svg');
     }
 
     public function rolEnum(): ?RolUsuario

@@ -393,7 +393,11 @@
                             @click="open = !open"
                             :aria-expanded="open.toString()"
                             aria-label="Menú de usuario">
-                            <div class="h-12 w-12 rounded-full border panel-border bg-white/5 shrink-0"></div>
+                            <img
+                                src="{{ $authUser->avatar_url }}"
+                                alt="Avatar"
+                                class="h-12 w-12 rounded-xl object-cover border panel-border"
+                            >
 
                             <div class="flex items-center gap-1">
                                 <!-- Nombre (solo una línea, sin rol) -->

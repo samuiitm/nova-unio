@@ -5,15 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
     public function edit(Request $request): View
     {
         return view('profile.edit', [
@@ -21,40 +20,115 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $datos = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if (($user->email ?? null) !== ($datos['email'] ?? null)) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if ($request->hasFile('foto')) {
+            $datos['foto_perfil'] = $this->guardarFotoOptimizada(
+                $request->file('foto'),
+                $user->foto_perfil
+            );
+        } elseif ($request->boolean('quitar_foto') && $user->foto_perfil) {
+            Storage::disk('public')->delete($user->foto_perfil);
+            $datos['foto_perfil'] = null;
+        }
+
+        unset($datos['foto'], $datos['quitar_foto']);
+
+        $user->update($datos);
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Delete the user's account.
-     */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+        return Redirect::route('profile.edit')->with('error', 'No se permite eliminar la cuenta desde el panel.');
+    }
 
-        $user = $request->user();
+    private function guardarFotoOptimizada(UploadedFile $file, ?string $fotoAnterior = null): ?string
+    {
+        if (!extension_loaded('gd')) {
+            return $fotoAnterior;
+        }
 
-        Auth::logout();
+        $binario = file_get_contents($file->getRealPath());
 
-        $user->delete();
+        if ($binario === false) {
+            return $fotoAnterior;
+        }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $imagenOrigen = imagecreatefromstring($binario);
 
-        return Redirect::to('/');
+        if (!$imagenOrigen) {
+            return $fotoAnterior;
+        }
+
+        $anchoOrigen = imagesx($imagenOrigen);
+        $altoOrigen = imagesy($imagenOrigen);
+
+        $maxLado = 360;
+        $escala = min($maxLado / max($anchoOrigen, $altoOrigen), 1);
+
+        $anchoDestino = max(1, (int) round($anchoOrigen * $escala));
+        $altoDestino = max(1, (int) round($altoOrigen * $escala));
+
+        $imagenDestino = imagecreatetruecolor($anchoDestino, $altoDestino);
+
+        imagealphablending($imagenDestino, true);
+        imagesavealpha($imagenDestino, true);
+
+        $transparente = imagecolorallocatealpha($imagenDestino, 0, 0, 0, 127);
+        imagefill($imagenDestino, 0, 0, $transparente);
+
+        imagecopyresampled(
+            $imagenDestino,
+            $imagenOrigen,
+            0,
+            0,
+            0,
+            0,
+            $anchoDestino,
+            $altoDestino,
+            $anchoOrigen,
+            $altoOrigen
+        );
+
+        $carpeta = 'usuarios/perfil/' . now()->format('Y/m');
+        $nombreBase = Str::uuid()->toString();
+
+        if (function_exists('imagewebp')) {
+            $ruta = $carpeta . '/' . $nombreBase . '.webp';
+
+            ob_start();
+            imagewebp($imagenDestino, null, 80);
+            $contenido = ob_get_clean();
+        } else {
+            $ruta = $carpeta . '/' . $nombreBase . '.jpg';
+
+            ob_start();
+            imagejpeg($imagenDestino, null, 80);
+            $contenido = ob_get_clean();
+        }
+
+        imagedestroy($imagenOrigen);
+        imagedestroy($imagenDestino);
+
+        if ($contenido === false || $contenido === null) {
+            return $fotoAnterior;
+        }
+
+        Storage::disk('public')->put($ruta, $contenido);
+
+        if ($fotoAnterior && Storage::disk('public')->exists($fotoAnterior)) {
+            Storage::disk('public')->delete($fotoAnterior);
+        }
+
+        return $ruta;
     }
 }
