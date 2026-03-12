@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,8 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'panel.admin'  => \App\Http\Middleware\EnsureAdmin::class,
         ]);
 
-        $middleware->redirectUsersTo(fn () => route('panel.home'));
         $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('panel.home'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $renderPanelError = function (Request $request, int $status, array $data = []) {
@@ -45,6 +47,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 'status' => $status,
             ], $data), $status);
         };
+
+        // IMPORTANTE: si no está autenticado, redirigir a login, no pintar 500
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            if ($request->is('panel') || $request->is('panel/*')) {
+                return redirect()->guest(route('login'));
+            }
+
+            return null;
+        });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) use ($renderPanelError) {
             return $renderPanelError($request, 404);
