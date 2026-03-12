@@ -432,12 +432,6 @@
                                 @click="open=false">
                                     Editar perfil
                                 </a>
-
-                                <a href="#"
-                                class="block px-4 py-2 text-sm hover:bg-white/5"
-                                @click="open=false">
-                                    Ajustes de cuenta
-                                </a>
                             </div>
 
                             <div class="border-t panel-border"></div>
