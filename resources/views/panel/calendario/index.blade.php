@@ -13,9 +13,8 @@
     $cursor = $inicio->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
     $finCalendario = $fin->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
-    // reglas
-    $limiteSinLista = now()->subDay()->toDateString();   // ayer (>= 1 día sin lista)
-    $limiteBloqueo  = now()->subDays(2)->toDateString(); // hace 2 días (bloquear si sigue sin lista)
+    $limiteSinLista = now()->subDay()->toDateString();
+    $limiteBloqueo  = now()->subDays(2)->toDateString();
 @endphp
 
 <div class="flex items-start justify-between gap-4">
@@ -79,10 +78,10 @@
                 });
             @endphp
 
-            <div class="min-h-[120px] bg-white/[0.02] p-2" 
-                    style="background: {{ $esDelMes ? 'rgb(255 255 255 / 0.02)' : 'rgb(255 255 255 / 0.01)' }};
-                    {{ $esHoy ? 'outline: 2px solid rgb(var(--p-accent) / .90); outline-offset: -2px;' : '' }}">
-                <div class="flex items-center justify-between">                    
+            <div class="min-h-[120px] bg-white/[0.02] p-2"
+                 style="background: {{ $esDelMes ? 'rgb(255 255 255 / 0.02)' : 'rgb(255 255 255 / 0.01)' }};
+                        {{ $esHoy ? 'outline: 2px solid rgb(var(--p-accent) / .90); outline-offset: -2px;' : '' }}">
+                <div class="flex items-center justify-between">
                     <div class="text-sm font-semibold {{ $esDelMes ? '' : 'opacity-40' }} flex items-center gap-2">
                         <span>{{ $cursor->day }}</span>
 
@@ -107,26 +106,29 @@
                         @php
                             $esCancelada = $clase->estado === 'cancelada';
                             $cerradaManual = (bool) $clase->asistencia_cerrada;
-
                             $total = (int) ($clase->asistencias_total ?? 0);
 
                             $bloqueadaSinLista = !$esCancelada && !$cerradaManual && ($clase->fecha <= $limiteBloqueo) && $total === 0;
                             $sinLista = !$esCancelada && !$cerradaManual && ($clase->fecha <= $limiteSinLista) && $total === 0 && !$bloqueadaSinLista;
-
                             $pasada = !$esCancelada && !$cerradaManual && $total > 0;
 
+                            $grupoHex = $clase->grupo->color_hex ?? '#7C5CFF';
+                            $grupoRgb = $clase->grupo->color_rgb ?? '124 92 255';
+
+                            $baseGrupo = '$grupoHex' . ';';
+
                             if ($esCancelada) {
-                                $style = 'background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);';
+                                $style = 'background: rgb(255 80 120 / .12); color: rgb(255 215 225 / .95); border: 1px solid rgb(255 80 120 / .22); ' . $baseGrupo;
                             } elseif ($cerradaManual) {
-                                $style = 'background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);';
+                                $style = 'background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .88); border: 1px solid rgb(255 255 255 / .10); ' . $baseGrupo;
                             } elseif ($bloqueadaSinLista) {
-                                $style = 'background: rgb(255 180 80 / .08); color: rgb(255 205 140 / .85); border: 1px solid rgb(255 180 80 / .18); opacity: .75;';
+                                $style = 'background: rgb(255 180 80 / .10); color: rgb(255 235 210 / .95); border: 1px solid rgb(255 180 80 / .18); opacity: .82; ' . $baseGrupo;
                             } elseif ($sinLista) {
-                                $style = 'background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);';
+                                $style = 'background: rgb(255 180 80 / .12); color: rgb(255 235 210 / .95); border: 1px solid rgb(255 180 80 / .22); ' . $baseGrupo;
                             } elseif ($pasada) {
-                                $style = 'background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);';
+                                $style = 'background: linear-gradient(0deg, rgb(' . $grupoRgb . ' / .22), rgb(' . $grupoRgb . ' / .22)), rgb(255 255 255 / .03); color: rgb(255 255 255 / .94); border: 1px solid rgb(' . $grupoRgb . ' / .34); ' . $baseGrupo;
                             } else {
-                                $style = 'background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);';
+                                $style = 'background: linear-gradient(0deg, rgb(' . $grupoRgb . ' / .14), rgb(' . $grupoRgb . ' / .14)), rgb(255 255 255 / .03); color: rgb(255 255 255 / .94); border: 1px solid rgb(' . $grupoRgb . ' / .26); ' . $baseGrupo;
                             }
                         @endphp
 
@@ -137,7 +139,7 @@
                                 <span class="font-semibold">{{ substr($clase->hora_inicio,0,5) }}</span>
 
                                 @if($esCancelada)
-                                    <span class="text-[10px] opacity-80">cancelada</span>
+                                    <span class="text-[10px] opacity-90">cancelada</span>
                                 @elseif($cerradaManual)
                                     <span class="text-[10px] opacity-80">cerrada</span>
                                 @elseif($bloqueadaSinLista)
@@ -147,10 +149,16 @@
                                     <span class="text-[10px] opacity-80">sin lista</span>
                                 @elseif($pasada)
                                     <span class="text-[10px] opacity-80">pasada</span>
+                                @else
+                                    <span class="text-[10px] opacity-80">abierta</span>
                                 @endif
                             </div>
 
-                            <div class="opacity-90">{{ $clase->grupo->nombre }}</div>
+                            <div class="mt-0.5 flex items-center gap-1.5 opacity-95">
+                                <span class="inline-block h-2 w-2 rounded-full"
+                                      style="background: {{ $grupoHex }};"></span>
+                                <span>{{ $clase->grupo->nombre }}</span>
+                            </div>
                         </a>
                     @endforeach
                 </div>

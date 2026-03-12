@@ -23,12 +23,11 @@ class CalendarioController extends Controller
         $inicio = $base->copy()->startOfMonth();
         $fin = $base->copy()->endOfMonth();
 
-        // Para que el calendario pinte semanas completas
         $inicioCal = $inicio->copy()->startOfWeek(Carbon::MONDAY);
         $finCal = $fin->copy()->endOfWeek(Carbon::SUNDAY);
 
         $clases = Clase::query()
-            ->with(['grupo:id,nombre'])
+            ->with(['grupo:id,nombre,color'])
             ->whereBetween('fecha', [$inicioCal->toDateString(), $finCal->toDateString()])
             ->withCount([
                 'asistencias as asistencias_total'

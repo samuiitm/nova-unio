@@ -63,16 +63,19 @@
 
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-block h-3 w-3 rounded-full border panel-border"
+                                    style="background: {{ $g->color_hex }};"></span>
+
                                 <div class="font-semibold truncate">{{ $g->nombre }}</div>
 
                                 @if($g->activo)
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                        style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
                                         Activo
                                     </span>
                                 @else
                                     <span class="text-xs px-3 py-1 rounded-full panel-muted"
-                                          style="background: rgb(var(--p-surface) / .10); border: 1px solid rgb(var(--p-border) / .18);">
+                                        style="background: rgb(var(--p-surface) / .10); border: 1px solid rgb(var(--p-border) / .18);">
                                         Inactivo
                                     </span>
                                 @endif

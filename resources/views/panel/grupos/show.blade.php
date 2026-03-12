@@ -12,8 +12,12 @@
 @section('content')
     <div class="flex items-start justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-semibold">{{ $grupo->nombre }}</h1>
-            <p class="mt-1 panel-muted">Gestiona el grupo: nombre, alumnos y horarios.</p>
+            <div class="flex items-center gap-3">
+                <span class="inline-block h-4 w-4 rounded-full border panel-border"
+                      style="background: {{ $grupo->color_hex }};"></span>
+                <h1 class="text-2xl font-semibold">{{ $grupo->nombre }}</h1>
+            </div>
+            <p class="mt-1 panel-muted">Gestiona el grupo: nombre, color, alumnos y horarios.</p>
         </div>
 
         <a href="{{ route('panel.grupos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
@@ -37,21 +41,48 @@
     @endif
 
     <div class="mt-5 grid gap-4">
-        <!-- DATOS DEL GRUPO (EDITABLE) -->
         <div class="panel-card p-6">
             <h2 class="text-lg font-semibold">Datos del grupo</h2>
-            <p class="mt-1 text-sm panel-muted">Cambia el nombre y el estado aquí.</p>
+            <p class="mt-1 text-sm panel-muted">Cambia el nombre, color y estado aquí.</p>
 
-            <form class="mt-4 grid gap-4" method="POST" action="{{ route('panel.grupos.update', $grupo) }}">
+            <form class="mt-4 grid gap-4"
+                method="POST"
+                action="{{ route('panel.grupos.update', $grupo) }}"
+                x-data="{ color: '{{ old('color', $grupo->color_hex) }}' }">
                 @csrf
                 @method('PATCH')
 
                 <div>
                     <label class="text-sm font-medium">Nombre *</label>
                     <input name="nombre"
-                           value="{{ old('nombre', $grupo->nombre) }}"
-                           class="mt-1 w-full panel-input px-4 py-3"
-                           required>
+                        value="{{ old('nombre', $grupo->nombre) }}"
+                        class="mt-1 w-full panel-input px-4 py-3"
+                        required>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium">Color del grupo *</label>
+
+                    <div class="mt-1 flex items-center gap-3">
+                        <input type="color"
+                            x-model="color"
+                            class="h-12 w-16 rounded-xl border panel-border bg-transparent p-1 cursor-pointer">
+
+                        <div class="flex-1">
+                            <input name="color"
+                                x-model="color"
+                                class="w-full panel-input px-4 py-3 uppercase"
+                                pattern="^#[A-Fa-f0-9]{6}$"
+                                required>
+                        </div>
+
+                        <span class="inline-block h-10 w-10 rounded-xl border panel-border"
+                            :style="`background: ${color}`"></span>
+                    </div>
+
+                    <p class="mt-2 text-xs panel-muted">
+                        Este color se usará en el calendario para las clases del grupo.
+                    </p>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -70,7 +101,6 @@
     </div>
 
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
-        <!-- Alumnos -->
         <div class="panel-card p-6">
             <h2 class="text-lg font-semibold">Alumnos del grupo</h2>
             <p class="mt-1 text-sm panel-muted">Asignar y dar de baja alumnos.</p>
@@ -128,7 +158,6 @@
             </div>
         </div>
 
-        <!-- Horarios -->
         <div class="panel-card p-6">
             <h2 class="text-lg font-semibold">Horarios</h2>
             <p class="mt-1 text-sm panel-muted">Programación semanal del grupo.</p>
