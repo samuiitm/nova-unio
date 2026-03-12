@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'panel.manage' => \App\Http\Middleware\EnsurePanelManagement::class,
             'panel.admin'  => \App\Http\Middleware\EnsureAdmin::class,
         ]);
+
+        $middleware->redirectUsersTo(fn () => route('panel.home'));
+        $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $renderPanelError = function (Request $request, int $status, array $data = []) {
