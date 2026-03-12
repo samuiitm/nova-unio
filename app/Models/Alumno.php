@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Alumno extends Model
 {
@@ -38,13 +37,13 @@ class Alumno extends Model
         'foto_url',
     ];
 
-    public function getAvatarUrlAttribute(): string
+    public function getFotoUrlAttribute(): string
     {
-        if ($this->foto_perfil) {
-            return route('panel.media.mi-avatar');
+        if ($this->foto_path) {
+            return route('panel.media.alumnos.foto', $this);
         }
 
-        return \Illuminate\Support\Facades\Vite::asset('resources/img/usuario-default.svg');
+        return \Illuminate\Support\Facades\Vite::asset('resources/img/alumno-default.svg');
     }
 
     public function grupos()

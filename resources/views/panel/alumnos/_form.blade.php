@@ -16,7 +16,7 @@
 <div class="mb-6 rounded-2xl border panel-border p-4" style="background: rgb(255 255 255 / .03);">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
         <img
-            src="{{ $alumno->foto_url ?? asset('img/alumno-default.svg') }}"
+            src="{{ $alumno->foto_url ?? \Illuminate\Support\Facades\Vite::asset('resources/img/alumno-default.svg') }}"
             alt="Foto del alumno"
             class="h-24 w-24 rounded-2xl object-cover border panel-border"
         >

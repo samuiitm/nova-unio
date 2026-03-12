@@ -13,7 +13,7 @@ class MediaController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->foto_perfil) {
+        if (! $user || ! $user->foto_perfil) {
             abort(404);
         }
 
@@ -22,14 +22,11 @@ class MediaController extends Controller
 
     public function fotoAlumno(Request $request, Alumno $alumno)
     {
-        $user = $request->user();
-
-        if (!$user) {
+        if (! $request->user()) {
             abort(403);
         }
 
-        // Si quieres, aquí puedes endurecer permisos más adelante.
-        if (!$alumno->foto_path) {
+        if (! $alumno->foto_path) {
             abort(404);
         }
 
@@ -38,7 +35,7 @@ class MediaController extends Controller
 
     private function devolverArchivoPrivado(string $ruta)
     {
-        if (!Storage::disk('private_uploads')->exists($ruta)) {
+        if (! Storage::disk('private_uploads')->exists($ruta)) {
             abort(404);
         }
 
