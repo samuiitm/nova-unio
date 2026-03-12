@@ -1,20 +1,32 @@
 <?php
 
 return [
-    'required' => 'El campo :attribute es obligatorio.',
-    'email'    => 'El campo :attribute debe ser un email válido.',
-    'in'       => 'El campo :attribute seleccionado no es válido.',
     'accepted' => 'El campo :attribute debe ser aceptado.',
-    'integer'  => 'El campo :attribute debe ser un número entero.',
+    'confirmed' => 'La confirmación del campo :attribute no coincide.',
+    'email' => 'El campo :attribute debe ser un email válido.',
+    'in' => 'El campo :attribute seleccionado no es válido.',
+    'integer' => 'El campo :attribute debe ser un número entero.',
+    'required' => 'El campo :attribute es obligatorio.',
+    'string' => 'El campo :attribute debe ser texto.',
+    'unique' => 'El campo :attribute ya está en uso.',
+
     'max' => [
         'numeric' => 'El campo :attribute no puede ser mayor que :max.',
-        'string'  => 'El campo :attribute no puede tener más de :max caracteres.',
+        'string' => 'El campo :attribute no puede tener más de :max caracteres.',
     ],
+
     'min' => [
         'numeric' => 'El campo :attribute debe ser como mínimo :min.',
-        'string'  => 'El campo :attribute debe tener al menos :min caracteres.',
+        'string' => 'El campo :attribute debe tener al menos :min caracteres.',
     ],
-    'string'   => 'El campo :attribute debe ser texto.',
+
+    'password' => [
+        'letters' => 'El campo :attribute debe contener al menos una letra.',
+        'mixed' => 'El campo :attribute debe contener al menos una letra mayúscula y una minúscula.',
+        'numbers' => 'El campo :attribute debe contener al menos un número.',
+        'symbols' => 'El campo :attribute debe contener al menos un símbolo.',
+        'uncompromised' => 'El campo :attribute aparece en una filtración de datos. Elige una contraseña diferente.',
+    ],
 
     'attributes' => [
         'nombre' => 'nombre',
@@ -23,11 +35,16 @@ return [
         'asunto' => 'asunto',
         'mensaje' => 'mensaje',
         'empresa' => 'empresa',
-        'apellidos'  => 'apellidos',
-        'edad'       => 'edad',
-        'modalidad'  => 'modalidad',
-        'nivel'      => 'nivel',
-        'objetivo'   => 'objetivo',
+        'apellidos' => 'apellidos',
+        'edad' => 'edad',
+        'modalidad' => 'modalidad',
+        'nivel' => 'nivel',
+        'objetivo' => 'objetivo',
         'privacidad' => 'política de privacidad',
+
+        'password' => 'contraseña',
+        'password_confirmation' => 'confirmación de contraseña',
+        'rol' => 'rol',
+        'activo' => 'estado',
     ],
 ];
