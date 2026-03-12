@@ -69,6 +69,15 @@ Route::prefix('panel')
                 ->name('home');
 
             // =========================
+            // MEDIA PRIVADA
+            // =========================
+            Route::get('media/mi-avatar', [\App\Http\Controllers\Panel\MediaController::class, 'miAvatar'])
+                ->name('media.mi-avatar');
+
+            Route::get('media/alumnos/{alumno}/foto', [\App\Http\Controllers\Panel\MediaController::class, 'fotoAlumno'])
+                ->name('media.alumnos.foto');
+
+            // =========================
             // ACCESO PARA LOS 3 ROLES
             // =========================
             Route::get('calendario', [\App\Http\Controllers\Panel\CalendarioController::class, 'index'])

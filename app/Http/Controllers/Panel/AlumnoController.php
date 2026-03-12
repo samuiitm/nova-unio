@@ -274,9 +274,7 @@ class AlumnoController extends Controller
                 $alumno->foto_path
             );
         } elseif ($request->boolean('quitar_foto') && $alumno->foto_path) {
-            if ($alumno->foto_path && file_exists(public_path($alumno->foto_path))) {
-                @unlink(public_path($alumno->foto_path));
-            }
+            Storage::disk('private_uploads')->delete($alumno->foto_path);
             $data['foto_path'] = null;
         }
 
@@ -451,8 +449,8 @@ class AlumnoController extends Controller
             $altoOrigen
         );
 
-        $carpeta = 'uploads/alumnos/' . now()->format('Y/m');
-        $nombreBase = Str::uuid()->toString();
+        $carpeta = 'alumnos/' . now()->format('Y/m');
+        $nombreBase = \Illuminate\Support\Str::uuid()->toString();
 
         if (function_exists('imagewebp')) {
             $ruta = $carpeta . '/' . $nombreBase . '.webp';
@@ -475,16 +473,10 @@ class AlumnoController extends Controller
             return $fotoAnterior;
         }
 
-        $directorio = dirname(public_path($ruta));
+        Storage::disk('private_uploads')->put($ruta, $contenido);
 
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0755, true);
-        }
-
-        file_put_contents(public_path($ruta), $contenido);
-
-        if ($fotoAnterior && file_exists(public_path($fotoAnterior))) {
-            @unlink(public_path($fotoAnterior));
+        if ($fotoAnterior && Storage::disk('private_uploads')->exists($fotoAnterior)) {
+            Storage::disk('private_uploads')->delete($fotoAnterior);
         }
 
         return $ruta;

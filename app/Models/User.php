@@ -116,8 +116,8 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute(): string
     {
-        if ($this->foto_perfil && file_exists(public_path($this->foto_perfil))) {
-            return asset($this->foto_perfil);
+        if ($this->foto_perfil) {
+            return route('panel.media.mi-avatar');
         }
 
         return \Illuminate\Support\Facades\Vite::asset('resources/img/usuario-default.svg');

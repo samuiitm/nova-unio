@@ -38,13 +38,13 @@ class Alumno extends Model
         'foto_url',
     ];
 
-    public function getFotoUrlAttribute(): string
+    public function getAvatarUrlAttribute(): string
     {
-        if ($this->foto_path && file_exists(public_path($this->foto_path))) {
-            return asset($this->foto_path);
+        if ($this->foto_perfil) {
+            return route('panel.media.mi-avatar');
         }
 
-        return \Illuminate\Support\Facades\Vite::asset('resources/img/alumno-default.svg'); 
+        return \Illuminate\Support\Facades\Vite::asset('resources/img/usuario-default.svg');
     }
 
     public function grupos()
