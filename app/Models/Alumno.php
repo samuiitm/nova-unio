@@ -40,8 +40,8 @@ class Alumno extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        if ($this->foto_path && Storage::disk('public')->exists($this->foto_path)) {
-            return asset('storage/' . ltrim($this->foto_path, '/'));
+        if ($this->foto_path && file_exists(public_path($this->foto_path))) {
+            return asset($this->foto_path);
         }
 
         return \Illuminate\Support\Facades\Vite::asset('resources/img/alumno-default.svg'); 

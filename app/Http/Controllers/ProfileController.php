@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -35,7 +34,9 @@ class ProfileController extends Controller
                 $user->foto_perfil
             );
         } elseif ($request->boolean('quitar_foto') && $user->foto_perfil) {
-            Storage::disk('public')->delete($user->foto_perfil);
+            if ($user->foto_perfil && file_exists(public_path($user->foto_perfil))) {
+                @unlink(public_path($user->foto_perfil));
+            }
             $datos['foto_perfil'] = null;
         }
 
@@ -99,7 +100,7 @@ class ProfileController extends Controller
             $altoOrigen
         );
 
-        $carpeta = 'usuarios/perfil/' . now()->format('Y/m');
+        $carpeta = 'uploads/usuarios/perfil/' . now()->format('Y/m');
         $nombreBase = Str::uuid()->toString();
 
         if (function_exists('imagewebp')) {
@@ -123,10 +124,16 @@ class ProfileController extends Controller
             return $fotoAnterior;
         }
 
-        Storage::disk('public')->put($ruta, $contenido);
+        $directorio = dirname(public_path($ruta));
 
-        if ($fotoAnterior && Storage::disk('public')->exists($fotoAnterior)) {
-            Storage::disk('public')->delete($fotoAnterior);
+        if (!is_dir($directorio)) {
+            mkdir($directorio, 0755, true);
+        }
+
+        file_put_contents(public_path($ruta), $contenido);
+
+        if ($fotoAnterior && file_exists(public_path($fotoAnterior))) {
+            @unlink(public_path($fotoAnterior));
         }
 
         return $ruta;

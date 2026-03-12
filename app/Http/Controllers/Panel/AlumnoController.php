@@ -274,7 +274,9 @@ class AlumnoController extends Controller
                 $alumno->foto_path
             );
         } elseif ($request->boolean('quitar_foto') && $alumno->foto_path) {
-            Storage::disk('public')->delete($alumno->foto_path);
+            if ($alumno->foto_path && file_exists(public_path($alumno->foto_path))) {
+                @unlink(public_path($alumno->foto_path));
+            }
             $data['foto_path'] = null;
         }
 
@@ -404,19 +406,19 @@ class AlumnoController extends Controller
     private function guardarFotoOptimizada(UploadedFile $file, ?string $fotoAnterior = null): ?string
     {
         if (!extension_loaded('gd')) {
-            throw new \RuntimeException('La extensión GD no está activa en PHP.');
+            return $fotoAnterior;
         }
 
         $binario = file_get_contents($file->getRealPath());
 
         if ($binario === false) {
-            throw new \RuntimeException('No se ha podido leer la imagen subida.');
+            return $fotoAnterior;
         }
 
         $imagenOrigen = imagecreatefromstring($binario);
 
         if (!$imagenOrigen) {
-            throw new \RuntimeException('La imagen subida no tiene un formato válido.');
+            return $fotoAnterior;
         }
 
         $anchoOrigen = imagesx($imagenOrigen);
@@ -449,7 +451,7 @@ class AlumnoController extends Controller
             $altoOrigen
         );
 
-        $carpeta = 'alumnos/' . now()->format('Y/m');
+        $carpeta = 'uploads/alumnos/' . now()->format('Y/m');
         $nombreBase = Str::uuid()->toString();
 
         if (function_exists('imagewebp')) {
@@ -470,13 +472,19 @@ class AlumnoController extends Controller
         imagedestroy($imagenDestino);
 
         if ($contenido === false || $contenido === null) {
-            throw new \RuntimeException('No se ha podido generar la imagen optimizada.');
+            return $fotoAnterior;
         }
 
-        Storage::disk('public')->put($ruta, $contenido);
+        $directorio = dirname(public_path($ruta));
 
-        if ($fotoAnterior && Storage::disk('public')->exists($fotoAnterior)) {
-            Storage::disk('public')->delete($fotoAnterior);
+        if (!is_dir($directorio)) {
+            mkdir($directorio, 0755, true);
+        }
+
+        file_put_contents(public_path($ruta), $contenido);
+
+        if ($fotoAnterior && file_exists(public_path($fotoAnterior))) {
+            @unlink(public_path($fotoAnterior));
         }
 
         return $ruta;
