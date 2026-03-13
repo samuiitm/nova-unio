@@ -38,7 +38,7 @@
 @endif
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2"
-     x-data="cuotaTicket(@js($tiposJson), '{{ old('tipo_cuota_id', '') }}', '{{ old('estado', 'pagada') }}', '{{ old('fecha_pago', $fechaPagoSugerida) }}')">
+     x-data="cuotaTicket(@js($tiposJson), '{{ old('tipo_cuota_id', '') }}', '{{ old('estado','pagada') }}', '{{ old('fecha_pago', $fechaPagoSugerida) }}')">
 
     <div class="panel-card p-6">
         <form method="POST" action="{{ route('panel.pagos.cuotas.store', $alumno) }}" class="grid gap-3">
@@ -70,20 +70,15 @@
             <div x-show="estado === 'pagada'" class="grid gap-3 lg:grid-cols-3">
                 <div>
                     <label class="text-sm panel-muted">Fecha de pago</label>
-                    <input
-                        type="date"
-                        name="fecha_pago"
-                        class="panel-input w-full mt-1 px-4 py-3"
-                        x-model="fechaPago"
-                        @change="recalcular()"
-                    >
+                    <input type="date" name="fecha_pago" class="panel-input w-full mt-1 px-4 py-3"
+                           x-model="fechaPago" @change="recalcular()">
                 </div>
 
                 <div>
                     <label class="text-sm panel-muted">Método</label>
                     <select name="metodo" class="panel-input w-full mt-1 px-4 py-3">
                         @foreach(['efectivo','bizum','tarjeta','transferencia','otro'] as $m)
-                            <option value="{{ $m }}" @selected(old('metodo', 'efectivo') === $m)>{{ ucfirst($m) }}</option>
+                            <option value="{{ $m }}" @selected(old('metodo','efectivo')===$m)>{{ ucfirst($m) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -170,6 +165,10 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
             if (this.estado !== 'pagada') return '';
             if (!this.fechaPago || !this.puedeGuardarse) return '';
 
+            if (this.tipoSeleccionado.tipo_vigencia === 'indefinida') {
+                return this.fechaPago;
+            }
+
             if (this.tipoSeleccionado.tipo_vigencia !== 'temporada') {
                 return this.fechaPago;
             }
@@ -182,6 +181,10 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
             if (!this.tipoSeleccionado) return '';
             if (this.estado !== 'pagada') return '';
             if (!this.fechaPago || !this.puedeGuardarse) return '';
+
+            if (this.tipoSeleccionado.tipo_vigencia === 'indefinida') {
+                return '';
+            }
 
             if (this.tipoSeleccionado.tipo_vigencia !== 'temporada') {
                 return this.addMonthsNoOverflow(this.fechaPago, this.tipoSeleccionado.duracion_meses);
@@ -199,6 +202,11 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
         get finFmt() {
             if (!this.tipoSeleccionado) return '—';
             if (this.estado !== 'pagada') return 'Al cobrar';
+
+            if (this.tipoSeleccionado.tipo_vigencia === 'indefinida') {
+                return 'Sin vencimiento';
+            }
+
             return this.formatoFecha(this.finIso);
         },
 
@@ -212,6 +220,10 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
         textoTipo(t) {
             if (t.tipo_vigencia === 'temporada') {
                 return `${t.nombre} (${this.formatoEuros(t.importe)} · temporada · venta ${this.textoVentana(t)})`;
+            }
+
+            if (t.tipo_vigencia === 'indefinida') {
+                return `${t.nombre} (${this.formatoEuros(t.importe)} · indefinida)`;
             }
 
             return `${t.nombre} (${this.formatoEuros(t.importe)} · ${t.duracion_meses} mes/es)`;

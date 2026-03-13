@@ -34,9 +34,11 @@
                 @foreach($tipos as $t)
                     <option value="{{ $t->id }}" @selected(old('tipo_cuota_id', $cuota->tipo_cuota_id) == $t->id)>
                         @if(($t->tipo_vigencia ?? 'meses') === 'temporada')
-                            {{ $t->nombre }} ({{ number_format((float) $t->importe, 2, ',', '.') }}€ · temporada)
+                            {{ $t->nombre }} ({{ number_format((float)$t->importe, 2, ',', '.') }}€ · temporada)
+                        @elseif(($t->tipo_vigencia ?? 'meses') === 'indefinida')
+                            {{ $t->nombre }} ({{ number_format((float)$t->importe, 2, ',', '.') }}€ · indefinida)
                         @else
-                            {{ $t->nombre }} ({{ number_format((float) $t->importe, 2, ',', '.') }}€ · {{ $t->duracion_meses }} mes/es)
+                            {{ $t->nombre }} ({{ number_format((float)$t->importe, 2, ',', '.') }}€ · {{ $t->duracion_meses }} mes/es)
                         @endif
                     </option>
                 @endforeach

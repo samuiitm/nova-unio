@@ -34,6 +34,13 @@ class CalculadorVigenciaCuotaService
             ? $fechaPago->copy()
             : Carbon::parse($fechaPago);
 
+        if ($tipo->esIndefinida()) {
+            return [
+                'inicio' => $fechaPago->copy(),
+                'fin' => null,
+            ];
+        }
+
         if ($tipo->esPorMeses()) {
             return [
                 'inicio' => $fechaPago->copy(),
@@ -45,7 +52,7 @@ class CalculadorVigenciaCuotaService
 
         [$inicioTemporada, $finTemporada] = $this->rangoTemporadaSegunFecha($fechaPago);
 
-        // Si se cobra antes de septiembre, la vigencia empieza cuando arranca la temporada.
+        // Si se cobra antes de septiembre, empieza al arrancar la temporada.
         $inicioVigencia = $fechaPago->lt($inicioTemporada)
             ? $inicioTemporada->copy()
             : $fechaPago->copy();
@@ -104,7 +111,7 @@ class CalculadorVigenciaCuotaService
             return [$inicio, $fin];
         }
 
-        // Julio y agosto apuntan a la temporada que va a arrancar en septiembre.
+        // Julio y agosto apuntan a la temporada que empieza en septiembre.
         $inicio = Carbon::create($fecha->year, self::TEMPORADA_INICIO_MES, self::TEMPORADA_INICIO_DIA);
         $fin = Carbon::create($fecha->year + 1, self::TEMPORADA_FIN_MES, self::TEMPORADA_FIN_DIA);
 

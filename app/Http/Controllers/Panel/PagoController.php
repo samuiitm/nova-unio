@@ -95,7 +95,11 @@ class PagoController extends Controller
             ->whereIn('id', $subAlumnosConUltimaPagadaVencida)
             ->whereDoesntHave('cuotas', fn ($c) => $c->where('estado', 'pendiente'))
             ->whereDoesntHave('cuotas', function ($c) use ($hoy) {
-                $c->where('estado', 'pagada')->whereDate('fecha_fin', '>=', $hoy);
+                $c->where('estado', 'pagada')
+                    ->where(function ($q) use ($hoy) {
+                        $q->whereNull('fecha_fin')
+                            ->orWhereDate('fecha_fin', '>=', $hoy);
+                    });
             })
             ->with(['gruposActivos', 'ultimaCuotaPagada.tipoCuota', 'ultimaCuotaPagada.pago']);
 

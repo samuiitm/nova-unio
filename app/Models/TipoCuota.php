@@ -36,8 +36,13 @@ class TipoCuota extends Model
         return $this->tipo_vigencia === 'temporada';
     }
 
+    public function esIndefinida(): bool
+    {
+        return $this->tipo_vigencia === 'indefinida';
+    }
+
     public function esPorMeses(): bool
     {
-        return !$this->esTemporada();
+        return !$this->esTemporada() && !$this->esIndefinida();
     }
 }

@@ -37,9 +37,7 @@ class TipoCuotaController extends Controller
 
         $tipoCuota->update($data);
 
-        return redirect()
-            ->route('panel.pagos.tipos')
-            ->with('ok', 'Tipo de cuota actualizado.');
+        return redirect()->route('panel.pagos.tipos')->with('ok', 'Tipo de cuota actualizado.');
     }
 
     public function destroy(TipoCuota $tipoCuota)
@@ -48,7 +46,6 @@ class TipoCuotaController extends Controller
 
         if ($tieneCuotas) {
             $tipoCuota->update(['activo' => false]);
-
             return back()->with('ok', 'No se puede borrar: tiene cuotas. Se ha desactivado.');
         }
 
@@ -62,10 +59,13 @@ class TipoCuotaController extends Controller
         $data['activo'] = (bool) ($data['activo'] ?? false);
 
         if (($data['tipo_vigencia'] ?? 'meses') === 'temporada') {
-            // En temporada no usamos la duración por meses para calcular la vigencia.
             $data['duracion_meses'] = 1;
             $data['venta_inicio_mes'] = (int) ($data['venta_inicio_mes'] ?? 8);
             $data['venta_fin_mes'] = (int) ($data['venta_fin_mes'] ?? 12);
+        } elseif (($data['tipo_vigencia'] ?? 'meses') === 'indefinida') {
+            $data['duracion_meses'] = 1;
+            $data['venta_inicio_mes'] = null;
+            $data['venta_fin_mes'] = null;
         } else {
             $data['duracion_meses'] = (int) ($data['duracion_meses'] ?? 1);
             $data['venta_inicio_mes'] = null;

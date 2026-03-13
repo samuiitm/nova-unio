@@ -25,7 +25,7 @@ class UpdateTipoCuotaRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:120'],
             'importe' => ['required', 'numeric', 'min:0'],
-            'tipo_vigencia' => ['required', 'in:meses,temporada'],
+            'tipo_vigencia' => ['required', 'in:meses,temporada,indefinida'],
 
             'duracion_meses' => [
                 'nullable',

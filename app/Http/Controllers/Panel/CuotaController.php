@@ -9,8 +9,10 @@ use App\Models\Alumno;
 use App\Models\Cuota;
 use App\Models\Pago;
 use App\Models\TipoCuota;
+use App\Services\CalculadorVigenciaCuotaService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CuotaController extends Controller
 {
@@ -19,21 +21,22 @@ class CuotaController extends Controller
         $hoy = now()->toDateString();
 
         return Cuota::where('alumno_id', $alumno->id)
-            ->where('estado', '!=', 'anulada') // por si quedaran antiguas
+            ->where('estado', '!=', 'anulada')
             ->where(function ($q) use ($hoy) {
                 $q->where('estado', 'pendiente')
-                  ->orWhere(function ($w) use ($hoy) {
-                      $w->where('estado', 'pagada')
-                        ->whereDate('fecha_fin', '>=', $hoy);
-                  });
+                    ->orWhere(function ($w) use ($hoy) {
+                        $w->where('estado', 'pagada')
+                            ->where(function ($x) use ($hoy) {
+                                $x->whereNull('fecha_fin')
+                                    ->orWhereDate('fecha_fin', '>=', $hoy);
+                            });
+                    });
             })
             ->exists();
     }
 
     public function create(Alumno $alumno)
     {
-        // Si tiene pendiente o vigente, NO dejamos asignar desde aquí.
-        // (los cambios se hacen editando la pendiente o borrando pago)
         if ($this->alumnoTieneCuotaAsignada($alumno)) {
             return redirect()
                 ->route('panel.alumnos.show', $alumno)
@@ -42,15 +45,15 @@ class CuotaController extends Controller
 
         $tipos = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
 
-        // Si el alumno tiene una cuota vencida, la vamos a renovar EDITANDO esa misma cuota
         $hoy = now()->toDateString();
         $cuotaVencida = Cuota::where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
+            ->whereNotNull('fecha_fin')
             ->whereDate('fecha_fin', '<', $hoy)
             ->orderByDesc('fecha_fin')
             ->first();
 
-        $cuotaIdRenovar = $cuotaVencida?->id; // si es null, es asignación “desde cero”
+        $cuotaIdRenovar = $cuotaVencida?->id;
         $fechaPagoSugerida = now()->toDateString();
 
         return view('panel.pagos.cuotas.crear', compact(
@@ -65,7 +68,6 @@ class CuotaController extends Controller
     {
         $data = $request->validated();
 
-        // Si llega cuotaIdRenovar => actualizamos esa cuota (renovar sin crear otra)
         $cuota = null;
 
         if ($request->filled('cuota_id')) {
@@ -73,18 +75,16 @@ class CuotaController extends Controller
                 ->where('alumno_id', $alumno->id)
                 ->firstOrFail();
         } else {
-            // si no viene cuota_id, pero hay una vencida, también renovamos esa (por seguridad)
             $hoy = now()->toDateString();
             $cuota = Cuota::where('alumno_id', $alumno->id)
                 ->where('estado', 'pagada')
+                ->whereNotNull('fecha_fin')
                 ->whereDate('fecha_fin', '<', $hoy)
                 ->orderByDesc('fecha_fin')
                 ->first();
         }
 
-        // si NO hay cuota existente, creamos una nueva (alumno sin cuota)
         if (!$cuota) {
-            // si tiene pendiente o vigente, bloqueamos
             if ($this->alumnoTieneCuotaAsignada($alumno)) {
                 return back()->withErrors([
                     'tipo_cuota_id' => 'Este alumno ya tiene una cuota asignada (pendiente o vigente).',
@@ -97,15 +97,13 @@ class CuotaController extends Controller
         $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
 
         DB::transaction(function () use ($data, $alumno, $tipo, $cuota) {
-
-            // ---- PENDIENTE: NO entra en vigor, NO hay pago
             if ($data['estado'] === 'pendiente') {
+                $this->validarAsignacionPendiente($tipo);
+
                 $cuota->fill([
                     'tipo_cuota_id' => $tipo->id,
                     'importe' => $tipo->importe,
                     'estado' => 'pendiente',
-
-                    // no usamos fechas reales en pendiente (las pondremos al cobrar)
                     'fecha_inicio' => now()->toDateString(),
                     'fecha_fin' => now()->toDateString(),
                 ])->save();
@@ -113,21 +111,19 @@ class CuotaController extends Controller
                 return;
             }
 
-            // ---- PAGADA: entra en vigor en fecha_pago
             $fechaPago = Carbon::parse($data['fecha_pago']);
-            $inicio = $fechaPago->copy();
-            $fin = $fechaPago->copy()->addMonthsNoOverflow((int) $tipo->duracion_meses);
+            $vigencia = $this->calcularVigenciaPagada($tipo, $fechaPago);
+            $inicio = $vigencia['inicio'];
+            $fin = $vigencia['fin'];
 
-            // actualizamos la cuota (si era vencida => renovación sin crear otra)
             $cuota->fill([
                 'tipo_cuota_id' => $tipo->id,
                 'importe' => $tipo->importe,
                 'estado' => 'pagada',
                 'fecha_inicio' => $inicio->toDateString(),
-                'fecha_fin' => $fin->toDateString(),
+                'fecha_fin' => $fin?->toDateString(),
             ])->save();
 
-            // creamos un pago NUEVO (historial real)
             Pago::create([
                 'cuota_id' => $cuota->id,
                 'alumno_id' => $alumno->id,
@@ -139,7 +135,7 @@ class CuotaController extends Controller
                 'tipo_cuota_id' => $tipo->id,
                 'tipo_cuota_nombre' => $tipo->nombre,
                 'vigencia_inicio' => $inicio->toDateString(),
-                'vigencia_fin' => $fin->toDateString(),
+                'vigencia_fin' => $fin?->toDateString(),
             ]);
         });
 
@@ -168,18 +164,17 @@ class CuotaController extends Controller
 
         DB::transaction(function () use ($cuota, $data) {
             $fechaPago = Carbon::parse($data['fecha_pago']);
-            $inicio = $fechaPago->copy();
-            $fin = $fechaPago->copy()->addMonthsNoOverflow((int) $cuota->tipoCuota->duracion_meses);
+            $vigencia = $this->calcularVigenciaPagada($cuota->tipoCuota, $fechaPago);
+            $inicio = $vigencia['inicio'];
+            $fin = $vigencia['fin'];
 
-            // actualizamos cuota a pagada y le ponemos vigencia real
             $cuota->update([
                 'estado' => 'pagada',
                 'fecha_inicio' => $inicio->toDateString(),
-                'fecha_fin' => $fin->toDateString(),
+                'fecha_fin' => $fin?->toDateString(),
                 'importe' => $cuota->tipoCuota->importe,
             ]);
 
-            // pago nuevo en historial
             Pago::create([
                 'cuota_id' => $cuota->id,
                 'alumno_id' => $cuota->alumno_id,
@@ -191,14 +186,13 @@ class CuotaController extends Controller
                 'tipo_cuota_id' => $cuota->tipoCuota->id,
                 'tipo_cuota_nombre' => $cuota->tipoCuota->nombre,
                 'vigencia_inicio' => $inicio->toDateString(),
-                'vigencia_fin' => $fin->toDateString(),
+                'vigencia_fin' => $fin?->toDateString(),
             ]);
         });
 
         return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Pago registrado.');
     }
 
-    // editar SOLO si pendiente
     public function edit(Cuota $cuota)
     {
         if ($cuota->estado !== 'pendiente') {
@@ -220,6 +214,8 @@ class CuotaController extends Controller
         $data = $request->validated();
         $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
 
+        $this->validarAsignacionPendiente($tipo);
+
         $cuota->update([
             'tipo_cuota_id' => $tipo->id,
             'importe' => $tipo->importe,
@@ -231,7 +227,6 @@ class CuotaController extends Controller
         return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Cuota pendiente actualizada.');
     }
 
-    // eliminar SOLO si pendiente
     public function destroy(Cuota $cuota)
     {
         if ($cuota->estado !== 'pendiente') {
@@ -241,5 +236,32 @@ class CuotaController extends Controller
         $cuota->delete();
 
         return back()->with('ok', 'Cuota eliminada.');
+    }
+
+    private function calculadorCuotas(): CalculadorVigenciaCuotaService
+    {
+        return app(CalculadorVigenciaCuotaService::class);
+    }
+
+    private function validarAsignacionPendiente(TipoCuota $tipo): void
+    {
+        try {
+            $this->calculadorCuotas()->asegurarQueSePuedeAsignar($tipo, now()->toDateString());
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages([
+                'tipo_cuota_id' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function calcularVigenciaPagada(TipoCuota $tipo, Carbon $fechaPago): array
+    {
+        try {
+            return $this->calculadorCuotas()->calcularParaPago($tipo, $fechaPago);
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages([
+                'fecha_pago' => $e->getMessage(),
+            ]);
+        }
     }
 }

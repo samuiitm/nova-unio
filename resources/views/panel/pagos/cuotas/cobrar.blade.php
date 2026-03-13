@@ -32,29 +32,21 @@
 
         <div>
             <label class="text-sm panel-muted">Fecha de pago</label>
-            <input
-                type="date"
-                name="fecha_pago"
-                value="{{ old('fecha_pago', now()->toDateString()) }}"
-                class="panel-input w-full mt-1 px-4 py-3"
-            >
+            <input type="date" name="fecha_pago" value="{{ old('fecha_pago', now()->toDateString()) }}"
+                   class="panel-input w-full mt-1 px-4 py-3">
         </div>
 
         <div>
             <label class="text-sm panel-muted">Importe</label>
-            <input
-                name="importe"
-                value="{{ old('importe', $cuota->importe) }}"
-                class="panel-input w-full mt-1 px-4 py-3"
-                disabled
-            >
+            <input name="importe" value="{{ old('importe', $cuota->importe) }}"
+                   class="panel-input w-full mt-1 px-4 py-3" disabled>
         </div>
 
         <div>
             <label class="text-sm panel-muted">Método</label>
             <select name="metodo" class="panel-input w-full mt-1 px-4 py-3">
                 @foreach(['efectivo','bizum','tarjeta','transferencia','otro'] as $m)
-                    <option value="{{ $m }}" @selected(old('metodo', 'efectivo') === $m)>{{ ucfirst($m) }}</option>
+                    <option value="{{ $m }}" @selected(old('metodo','efectivo')===$m)>{{ ucfirst($m) }}</option>
                 @endforeach
             </select>
         </div>
