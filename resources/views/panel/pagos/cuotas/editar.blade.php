@@ -33,7 +33,11 @@
             <select name="tipo_cuota_id" class="panel-input w-full mt-1 px-4 py-3">
                 @foreach($tipos as $t)
                     <option value="{{ $t->id }}" @selected(old('tipo_cuota_id', $cuota->tipo_cuota_id) == $t->id)>
-                        {{ $t->nombre }} ({{ number_format((float)$t->importe, 2, ',', '.') }}€ · {{ $t->duracion_meses }} mes/es)
+                        @if(($t->tipo_vigencia ?? 'meses') === 'temporada')
+                            {{ $t->nombre }} ({{ number_format((float) $t->importe, 2, ',', '.') }}€ · temporada)
+                        @else
+                            {{ $t->nombre }} ({{ number_format((float) $t->importe, 2, ',', '.') }}€ · {{ $t->duracion_meses }} mes/es)
+                        @endif
                     </option>
                 @endforeach
             </select>

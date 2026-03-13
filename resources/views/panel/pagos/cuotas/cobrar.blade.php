@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-semibold">Cobrar cuota</h1>
         <p class="mt-1 panel-muted">
             {{ $cuota->alumno->nombre }} {{ $cuota->alumno->apellidos }} ·
-            {{ $cuota->fecha_inicio?->format('d/m/Y') }} - {{ $cuota->fecha_fin?->format('d/m/Y') }}
+            {{ $cuota->tipoCuota?->nombre ?? 'Sin tipo' }}
         </p>
     </div>
 
@@ -32,21 +32,29 @@
 
         <div>
             <label class="text-sm panel-muted">Fecha de pago</label>
-            <input type="date" name="fecha_pago" value="{{ old('fecha_pago', now()->toDateString()) }}"
-                   class="panel-input w-full mt-1 px-4 py-3">
+            <input
+                type="date"
+                name="fecha_pago"
+                value="{{ old('fecha_pago', now()->toDateString()) }}"
+                class="panel-input w-full mt-1 px-4 py-3"
+            >
         </div>
 
         <div>
             <label class="text-sm panel-muted">Importe</label>
-            <input name="importe" value="{{ old('importe', $cuota->importe) }}"
-                   class="panel-input w-full mt-1 px-4 py-3">
+            <input
+                name="importe"
+                value="{{ old('importe', $cuota->importe) }}"
+                class="panel-input w-full mt-1 px-4 py-3"
+                disabled
+            >
         </div>
 
         <div>
             <label class="text-sm panel-muted">Método</label>
             <select name="metodo" class="panel-input w-full mt-1 px-4 py-3">
                 @foreach(['efectivo','bizum','tarjeta','transferencia','otro'] as $m)
-                    <option value="{{ $m }}" @selected(old('metodo','efectivo')===$m)>{{ ucfirst($m) }}</option>
+                    <option value="{{ $m }}" @selected(old('metodo', 'efectivo') === $m)>{{ ucfirst($m) }}</option>
                 @endforeach
             </select>
         </div>

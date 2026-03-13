@@ -8,7 +8,10 @@
         'id' => $t->id,
         'nombre' => $t->nombre,
         'importe' => (float) $t->importe,
+        'tipo_vigencia' => $t->tipo_vigencia ?? 'meses',
         'duracion_meses' => (int) $t->duracion_meses,
+        'venta_inicio_mes' => $t->venta_inicio_mes,
+        'venta_fin_mes' => $t->venta_fin_mes,
     ])->values();
 @endphp
 
@@ -35,9 +38,8 @@
 @endif
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2"
-     x-data="cuotaTicket(@js($tiposJson), '{{ old('tipo_cuota_id', '') }}', '{{ old('estado','pagada') }}', '{{ old('fecha_pago', $fechaPagoSugerida) }}')">
+     x-data="cuotaTicket(@js($tiposJson), '{{ old('tipo_cuota_id', '') }}', '{{ old('estado', 'pagada') }}', '{{ old('fecha_pago', $fechaPagoSugerida) }}')">
 
-    {{-- FORM --}}
     <div class="panel-card p-6">
         <form method="POST" action="{{ route('panel.pagos.cuotas.store', $alumno) }}" class="grid gap-3">
             @csrf
@@ -51,9 +53,10 @@
                 <select name="tipo_cuota_id" class="panel-input w-full mt-1 px-4 py-3" x-model="tipoId" @change="recalcular()">
                     <option value="">Selecciona un tipo</option>
                     <template x-for="t in tipos" :key="t.id">
-                        <option :value="t.id" x-text="t.nombre + ' (' + formatoEuros(t.importe) + ' · ' + t.duracion_meses + ' mes/es)'"></option>
+                        <option :value="t.id" x-text="textoTipo(t)"></option>
                     </template>
                 </select>
+                <div class="mt-2 text-sm text-amber-300" x-show="mensajeDisponibilidad" x-text="mensajeDisponibilidad"></div>
             </div>
 
             <div>
@@ -67,15 +70,20 @@
             <div x-show="estado === 'pagada'" class="grid gap-3 lg:grid-cols-3">
                 <div>
                     <label class="text-sm panel-muted">Fecha de pago</label>
-                    <input type="date" name="fecha_pago" class="panel-input w-full mt-1 px-4 py-3"
-                           x-model="fechaPago" @change="recalcular()">
+                    <input
+                        type="date"
+                        name="fecha_pago"
+                        class="panel-input w-full mt-1 px-4 py-3"
+                        x-model="fechaPago"
+                        @change="recalcular()"
+                    >
                 </div>
 
                 <div>
                     <label class="text-sm panel-muted">Método</label>
                     <select name="metodo" class="panel-input w-full mt-1 px-4 py-3">
                         @foreach(['efectivo','bizum','tarjeta','transferencia','otro'] as $m)
-                            <option value="{{ $m }}" @selected(old('metodo','efectivo')===$m)>{{ ucfirst($m) }}</option>
+                            <option value="{{ $m }}" @selected(old('metodo', 'efectivo') === $m)>{{ ucfirst($m) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -87,14 +95,13 @@
             </div>
 
             <div class="mt-2">
-                <button class="panel-btn px-6 py-3" :disabled="!tipoSeleccionado">
+                <button class="panel-btn px-6 py-3" :disabled="!tipoSeleccionado || !puedeGuardarse">
                     Guardar
                 </button>
             </div>
         </form>
     </div>
 
-    {{-- TICKET --}}
     <div>
         <div class="panel-card p-6" style="background: radial-gradient(1200px 600px at 0% 0%, rgba(0,255,160,.06), transparent 60%);">
             <div class="text-xl font-semibold" style="color: rgb(60 220 150);" x-text="tituloTicket"></div>
@@ -138,17 +145,49 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
             return this.tipoSeleccionado ? this.tipoSeleccionado.nombre : 'Selecciona un tipo de cuota';
         },
 
+        get mensajeDisponibilidad() {
+            if (!this.tipoSeleccionado || this.tipoSeleccionado.tipo_vigencia !== 'temporada') {
+                return '';
+            }
+
+            if (this.puedeGuardarse) {
+                return '';
+            }
+
+            return 'La cuota de temporada solo se puede vender ' + this.textoVentana(this.tipoSeleccionado) + '.';
+        },
+
+        get puedeGuardarse() {
+            if (!this.tipoSeleccionado) return false;
+            if (this.tipoSeleccionado.tipo_vigencia !== 'temporada') return true;
+
+            const fecha = this.estado === 'pagada' ? this.fechaPago : this.hoyIso();
+            return this.estaEnVentanaVenta(this.tipoSeleccionado, fecha);
+        },
+
         get inicioIso() {
             if (!this.tipoSeleccionado) return '';
             if (this.estado !== 'pagada') return '';
-            return this.fechaPago || '';
+            if (!this.fechaPago || !this.puedeGuardarse) return '';
+
+            if (this.tipoSeleccionado.tipo_vigencia !== 'temporada') {
+                return this.fechaPago;
+            }
+
+            const rango = this.rangoTemporada(this.fechaPago);
+            return this.fechaPago < rango.inicio ? rango.inicio : this.fechaPago;
         },
 
         get finIso() {
             if (!this.tipoSeleccionado) return '';
             if (this.estado !== 'pagada') return '';
-            if (!this.fechaPago) return '';
-            return this.addMonthsNoOverflow(this.fechaPago, this.tipoSeleccionado.duracion_meses);
+            if (!this.fechaPago || !this.puedeGuardarse) return '';
+
+            if (this.tipoSeleccionado.tipo_vigencia !== 'temporada') {
+                return this.addMonthsNoOverflow(this.fechaPago, this.tipoSeleccionado.duracion_meses);
+            }
+
+            return this.rangoTemporada(this.fechaPago).fin;
         },
 
         get inicioFmt() {
@@ -169,6 +208,52 @@ function cuotaTicket(tipos, tipoIdInicial, estadoInicial, fechaPagoInicial) {
         },
 
         recalcular() {},
+
+        textoTipo(t) {
+            if (t.tipo_vigencia === 'temporada') {
+                return `${t.nombre} (${this.formatoEuros(t.importe)} · temporada · venta ${this.textoVentana(t)})`;
+            }
+
+            return `${t.nombre} (${this.formatoEuros(t.importe)} · ${t.duracion_meses} mes/es)`;
+        },
+
+        textoVentana(t) {
+            return this.nombreMes(t.venta_inicio_mes || 8) + ' - ' + this.nombreMes(t.venta_fin_mes || 12);
+        },
+
+        estaEnVentanaVenta(t, iso) {
+            const mes = Number((iso || this.hoyIso()).split('-')[1]);
+            const inicio = Number(t.venta_inicio_mes || 8);
+            const fin = Number(t.venta_fin_mes || 12);
+
+            if (inicio <= fin) {
+                return mes >= inicio && mes <= fin;
+            }
+
+            return mes >= inicio || mes <= fin;
+        },
+
+        rangoTemporada(iso) {
+            const [y, m] = iso.split('-').map(Number);
+
+            if (m >= 9) {
+                return { inicio: `${y}-09-01`, fin: `${y + 1}-06-30` };
+            }
+
+            if (m <= 6) {
+                return { inicio: `${y - 1}-09-01`, fin: `${y}-06-30` };
+            }
+
+            return { inicio: `${y}-09-01`, fin: `${y + 1}-06-30` };
+        },
+
+        hoyIso() {
+            return new Date().toISOString().slice(0, 10);
+        },
+
+        nombreMes(numero) {
+            return ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][numero - 1] || 'mes';
+        },
 
         formatoEuros(n) {
             if (n === null || n === undefined) return '—';
