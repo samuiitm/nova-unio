@@ -7,10 +7,18 @@ use App\Http\Requests\StoreAlumnoRequest;
 use App\Http\Requests\UpdateAlumnoRequest;
 use App\Models\Alumno;
 use App\Models\Cuota;
-use App\Models\Pago;
 use App\Models\Grupo;
+use App\Models\Pago;
+use App\Models\Preinscripcion;
+use App\Models\TipoCuota;
+use App\Support\Phone;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AlumnoController extends Controller
 {
@@ -30,7 +38,9 @@ class AlumnoController extends Controller
                     ->orWhere('telefono', 'like', "%{$q}%")
                     ->orWhere('dni', 'like', "%{$q}%")
                     ->orWhere('catsalut', 'like', "%{$q}%")
-                    ->orWhere('poblacion', 'like', "%{$q}%");
+                    ->orWhere('poblacion', 'like', "%{$q}%")
+                    ->orWhere('tutor_legal_nombre', 'like', "%{$q}%")
+                    ->orWhere('tutor_legal_dni', 'like', "%{$q}%");
             });
         }
 
@@ -56,17 +66,43 @@ class AlumnoController extends Controller
         return view('panel.alumnos.index', compact('alumnos', 'q', 'estado', 'orden', 'nuevosMes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $grupos = Grupo::where('activo', 1)->orderBy('nombre')->get();
-        $tiposCuota = \App\Models\TipoCuota::where('activo', 1)->orderBy('nombre')->get();
+        $tiposCuota = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
 
-        return view('panel.alumnos.create', compact('grupos', 'tiposCuota'));
+        $preinscripcion = null;
+        $alumno = null;
+
+        if ($request->filled('preinscripcion')) {
+            $preinscripcion = Preinscripcion::findOrFail($request->integer('preinscripcion'));
+
+            if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
+                return redirect()
+                    ->route('panel.alumnos.show', $preinscripcion->alumno_id)
+                    ->with('ok', 'Esta preinscripción ya está resuelta y vinculada a un alumno.');
+            }
+
+            $alumno = new Alumno([
+                'nombre' => $preinscripcion->nombre,
+                'apellidos' => $preinscripcion->apellidos,
+                'email' => $preinscripcion->email,
+                'telefono' => $preinscripcion->telefono,
+            ]);
+        }
+
+        return view('panel.alumnos.create', compact('grupos', 'tiposCuota', 'preinscripcion', 'alumno'));
     }
 
     public function store(StoreAlumnoRequest $request)
     {
         $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            $data['foto_path'] = $this->guardarFotoOptimizada($request->file('foto'));
+        }
+
+        unset($data['foto'], $data['quitar_foto']);
 
         $grupoIds = collect($data['grupos'] ?? [])
             ->map(fn ($id) => (int) $id)
@@ -74,16 +110,78 @@ class AlumnoController extends Controller
             ->values()
             ->all();
 
-        unset($data['grupos']);
+        $telefonosContacto = $data['telefonos_contacto'] ?? [];
+
+        $preinscripcionId = $data['preinscripcion_id'] ?? null;
+        $tipoCuotaId = $data['tipo_cuota_id'] ?? null;
+        $cuotaEstado = $data['cuota_estado'] ?? null;
+        $fechaPago = $data['fecha_pago'] ?? null;
+        $metodoPago = $data['metodo_pago'] ?? null;
+        $notasPago = $data['notas_pago'] ?? null;
+
+        unset(
+            $data['grupos'],
+            $data['telefonos_contacto'],
+            $data['preinscripcion_id'],
+            $data['tipo_cuota_id'],
+            $data['cuota_estado'],
+            $data['fecha_pago'],
+            $data['metodo_pago'],
+            $data['notas_pago']
+        );
+
+        $data = $this->normalizarDatosAlumno($data);
 
         $data['activo'] = true;
         $data['fecha_baja'] = null;
         $data['fecha_inicio_actividad'] = null;
 
-        $alumno = DB::transaction(function () use ($data, $grupoIds) {
+        $alumno = DB::transaction(function () use (
+            $data,
+            $grupoIds,
+            $telefonosContacto,
+            $preinscripcionId,
+            $tipoCuotaId,
+            $cuotaEstado,
+            $fechaPago,
+            $metodoPago,
+            $notasPago
+        ) {
+            $preinscripcion = null;
+
+            if ($preinscripcionId) {
+                $preinscripcion = Preinscripcion::lockForUpdate()->findOrFail($preinscripcionId);
+
+                if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
+                    throw ValidationException::withMessages([
+                        'preinscripcion_id' => 'Esta preinscripción ya fue convertida en alumno.',
+                    ]);
+                }
+            }
+
             $alumno = Alumno::create($data);
 
+            $this->guardarTelefonosContacto($alumno, $telefonosContacto);
             $this->sincronizarGrupos($alumno, $grupoIds);
+
+            if ($tipoCuotaId && $cuotaEstado) {
+                $this->crearCuotaInicial(
+                    alumno: $alumno,
+                    tipoCuotaId: (int) $tipoCuotaId,
+                    estado: $cuotaEstado,
+                    fechaPago: $fechaPago,
+                    metodoPago: $metodoPago,
+                    notasPago: $notasPago,
+                );
+            }
+
+            if ($preinscripcion) {
+                $preinscripcion->update([
+                    'estado' => 'resuelta',
+                    'alumno_id' => $alumno->id,
+                    'resuelta_at' => now(),
+                ]);
+            }
 
             return $alumno;
         });
@@ -95,6 +193,8 @@ class AlumnoController extends Controller
 
     public function show(Alumno $alumno)
     {
+        $alumno->load('telefonosContacto');
+
         $hoy = now()->toDateString();
 
         $gruposActivos = $alumno->gruposActivos()->orderBy('nombre')->get();
@@ -165,6 +265,8 @@ class AlumnoController extends Controller
 
     public function edit(Alumno $alumno)
     {
+        $alumno->load('telefonosContacto');
+
         $grupos = Grupo::where('activo', 1)->orderBy('nombre')->get();
 
         $gruposSeleccionados = $alumno->grupos()
@@ -180,16 +282,33 @@ class AlumnoController extends Controller
     {
         $data = $request->validated();
 
+        if ($request->hasFile('foto')) {
+            $data['foto_path'] = $this->guardarFotoOptimizada(
+                $request->file('foto'),
+                $alumno->foto_path
+            );
+        } elseif ($request->boolean('quitar_foto') && $alumno->foto_path) {
+            Storage::disk('private_uploads')->delete($alumno->foto_path);
+            $data['foto_path'] = null;
+        }
+
+        unset($data['foto'], $data['quitar_foto']);
+
         $grupoIds = collect($data['grupos'] ?? [])
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
 
-        unset($data['grupos']);
+        $telefonosContacto = $data['telefonos_contacto'] ?? [];
 
-        DB::transaction(function () use ($alumno, $data, $grupoIds) {
+        unset($data['grupos'], $data['telefonos_contacto']);
+
+        $data = $this->normalizarDatosAlumno($data);
+
+        DB::transaction(function () use ($alumno, $data, $grupoIds, $telefonosContacto) {
             $alumno->update($data);
+            $this->guardarTelefonosContacto($alumno, $telefonosContacto);
             $this->sincronizarGrupos($alumno, $grupoIds);
         });
 
@@ -259,5 +378,189 @@ class AlumnoController extends Controller
                     'updated_at' => $ahora,
                 ]);
         }
+    }
+
+    private function guardarTelefonosContacto(Alumno $alumno, array $telefonos): void
+    {
+        $filas = collect($telefonos)
+            ->values()
+            ->map(function ($fila, $index) {
+                $contacto = trim((string) ($fila['contacto'] ?? ''));
+                $telefono = trim((string) ($fila['telefono'] ?? ''));
+
+                if ($contacto === '' || $telefono === '') {
+                    return null;
+                }
+
+                return [
+                    'contacto' => $contacto,
+                    'telefono' => Phone::normalize($telefono),
+                    'orden' => $index + 1,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        $alumno->telefonosContacto()->delete();
+
+        if (!empty($filas)) {
+            $alumno->telefonosContacto()->createMany($filas);
+        }
+    }
+
+    private function normalizarDatosAlumno(array $data): array
+    {
+        $data['telefono'] = Phone::normalize($data['telefono'] ?? null);
+        $data['email'] = $this->textoONull($data['email'] ?? null);
+
+        $data['tutor_legal_nombre'] = $this->textoONull($data['tutor_legal_nombre'] ?? null);
+        $data['tutor_legal_dni'] = $this->textoONull($data['tutor_legal_dni'] ?? null);
+        $data['tutor_legal_relacion'] = $this->textoONull($data['tutor_legal_relacion'] ?? null);
+
+        if ($data['tutor_legal_dni']) {
+            $data['tutor_legal_dni'] = strtoupper($data['tutor_legal_dni']);
+        }
+
+        return $data;
+    }
+
+    private function textoONull(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function crearCuotaInicial(
+        Alumno $alumno,
+        int $tipoCuotaId,
+        string $estado,
+        ?string $fechaPago,
+        ?string $metodoPago,
+        ?string $notasPago
+    ): void {
+        $tipo = TipoCuota::findOrFail($tipoCuotaId);
+
+        if ($estado === 'pendiente') {
+            Cuota::create([
+                'alumno_id' => $alumno->id,
+                'tipo_cuota_id' => $tipo->id,
+                'fecha_inicio' => now()->toDateString(),
+                'fecha_fin' => now()->toDateString(),
+                'importe' => $tipo->importe,
+                'estado' => 'pendiente',
+            ]);
+
+            return;
+        }
+
+        $fecha = Carbon::parse($fechaPago ?: now()->toDateString());
+        $inicio = $fecha->copy();
+        $fin = $fecha->copy()->addMonthsNoOverflow(max(1, (int) ($tipo->duracion_meses ?? 1)));
+
+        $cuota = Cuota::create([
+            'alumno_id' => $alumno->id,
+            'tipo_cuota_id' => $tipo->id,
+            'fecha_inicio' => $inicio->toDateString(),
+            'fecha_fin' => $fin->toDateString(),
+            'importe' => $tipo->importe,
+            'estado' => 'pagada',
+        ]);
+
+        Pago::create([
+            'cuota_id' => $cuota->id,
+            'alumno_id' => $alumno->id,
+            'fecha_pago' => $fecha->toDateString(),
+            'importe' => $tipo->importe,
+            'metodo' => $metodoPago ?: 'efectivo',
+            'notas' => $notasPago,
+
+            'tipo_cuota_id' => $tipo->id,
+            'tipo_cuota_nombre' => $tipo->nombre,
+            'vigencia_inicio' => $inicio->toDateString(),
+            'vigencia_fin' => $fin->toDateString(),
+        ]);
+    }
+
+    private function guardarFotoOptimizada(UploadedFile $file, ?string $fotoAnterior = null): ?string
+    {
+        if (!extension_loaded('gd')) {
+            return $fotoAnterior;
+        }
+
+        $binario = file_get_contents($file->getRealPath());
+
+        if ($binario === false) {
+            return $fotoAnterior;
+        }
+
+        $imagenOrigen = imagecreatefromstring($binario);
+
+        if (!$imagenOrigen) {
+            return $fotoAnterior;
+        }
+
+        $anchoOrigen = imagesx($imagenOrigen);
+        $altoOrigen = imagesy($imagenOrigen);
+
+        $maxLado = 480;
+        $escala = min($maxLado / max($anchoOrigen, $altoOrigen), 1);
+
+        $anchoDestino = max(1, (int) round($anchoOrigen * $escala));
+        $altoDestino = max(1, (int) round($altoOrigen * $escala));
+
+        $imagenDestino = imagecreatetruecolor($anchoDestino, $altoDestino);
+
+        imagealphablending($imagenDestino, true);
+        imagesavealpha($imagenDestino, true);
+
+        $transparente = imagecolorallocatealpha($imagenDestino, 0, 0, 0, 127);
+        imagefill($imagenDestino, 0, 0, $transparente);
+
+        imagecopyresampled(
+            $imagenDestino,
+            $imagenOrigen,
+            0,
+            0,
+            0,
+            0,
+            $anchoDestino,
+            $altoDestino,
+            $anchoOrigen,
+            $altoOrigen
+        );
+
+        $carpeta = 'alumnos/' . now()->format('Y/m');
+        $nombreBase = Str::uuid()->toString();
+
+        if (function_exists('imagewebp')) {
+            $ruta = $carpeta . '/' . $nombreBase . '.webp';
+
+            ob_start();
+            imagewebp($imagenDestino, null, 78);
+            $contenido = ob_get_clean();
+        } else {
+            $ruta = $carpeta . '/' . $nombreBase . '.jpg';
+
+            ob_start();
+            imagejpeg($imagenDestino, null, 78);
+            $contenido = ob_get_clean();
+        }
+
+        imagedestroy($imagenOrigen);
+        imagedestroy($imagenDestino);
+
+        if ($contenido === false || $contenido === null) {
+            return $fotoAnterior;
+        }
+
+        Storage::disk('private_uploads')->put($ruta, $contenido);
+
+        if ($fotoAnterior && Storage::disk('private_uploads')->exists($fotoAnterior)) {
+            Storage::disk('private_uploads')->delete($fotoAnterior);
+        }
+
+        return $ruta;
     }
 }

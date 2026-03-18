@@ -4,8 +4,8 @@
 
 @section('content')
 @php
+    $hoy = now()->toDateString();
 
-$hoy = now()->toDateString();
     $tituloCuota =
         $estadoCuota === 'vigente' ? ($cuotaVigente->tipoCuota->nombre ?? 'Cuota') :
         ($estadoCuota === 'pendiente' ? ($cuotaPendiente->tipoCuota->nombre ?? 'Cuota pendiente') :
@@ -24,6 +24,15 @@ $hoy = now()->toDateString();
         $estadoCuota === 'vigente' ? $cuotaVigente->importe :
         ($estadoCuota === 'pendiente' ? $cuotaPendiente->importe :
         ($estadoCuota === 'vencida' ? $ultimaPagada->importe : null));
+
+    $telefonosContacto = $alumno->telefonosContacto ?? collect();
+
+    $relacionTutorTexto = match($alumno->tutor_legal_relacion) {
+        'padre' => 'Padre',
+        'madre' => 'Madre',
+        'tutor' => 'Tutor/a',
+        default => '—',
+    };
 @endphp
 
 <div class="flex items-start justify-between gap-4 flex-wrap">
@@ -89,7 +98,7 @@ $hoy = now()->toDateString();
             <div><span class="panel-muted">Apellidos:</span> {{ $alumno->apellidos }}</div>
 
             <div><span class="panel-muted">CatSalut:</span> {{ $alumno->catsalut ?: '—' }}</div>
-            <div><span class="panel-muted">DNI:</span> {{ $alumno->dni ?: '—' }}</div>
+            <div><span class="panel-muted">DNI/NIE:</span> {{ $alumno->dni ?: '—' }}</div>
 
             <div><span class="panel-muted">Nacimiento:</span>
                 {{ $alumno->fecha_nacimiento ? $alumno->fecha_nacimiento->format('d/m/Y') : '—' }}
@@ -99,9 +108,6 @@ $hoy = now()->toDateString();
             <div><span class="panel-muted">Dirección:</span> {{ $alumno->direccion ?: '—' }}</div>
             <div><span class="panel-muted">CP:</span> {{ $alumno->cp ?: '—' }}</div>
             <div><span class="panel-muted">Población:</span> {{ $alumno->poblacion ?: '—' }}</div>
-
-            <div><span class="panel-muted">Teléfono:</span> {{ $alumno->telefono ?: '—' }}</div>
-            <div><span class="panel-muted">Email:</span> {{ $alumno->email ?: '—' }}</div>
 
             <div><span class="panel-muted">Inicio actividad:</span>
                 {{ $alumno->fecha_inicio_actividad ? $alumno->fecha_inicio_actividad->format('d/m/Y') : '—' }}
@@ -137,6 +143,36 @@ $hoy = now()->toDateString();
                         @endforeach
                     </div>
                 @endif
+            </div>
+        </div>
+
+        <div class="mt-6 border-t panel-border pt-5">
+            <h3 class="text-base font-semibold">Contacto y tutor legal</h3>
+
+            <div class="mt-4 grid gap-3 text-sm">
+                <div><span class="panel-muted">Teléfono principal:</span> {{ $alumno->telefono ?: '—' }}</div>
+                <div><span class="panel-muted">Email:</span> {{ $alumno->email ?: '—' }}</div>
+
+                <div><span class="panel-muted">Tutor legal:</span> {{ $alumno->tutor_legal_nombre ?: '—' }}</div>
+                <div><span class="panel-muted">DNI/NIE tutor legal:</span> {{ $alumno->tutor_legal_dni ?: '—' }}</div>
+                <div><span class="panel-muted">Relación:</span> {{ $relacionTutorTexto }}</div>
+
+                <div>
+                    <span class="panel-muted">Otros teléfonos:</span>
+                    @if($telefonosContacto->isEmpty())
+                        —
+                    @else
+                        <div class="mt-2 space-y-1">
+                            @foreach($telefonosContacto as $telefonoExtra)
+                                <div>
+                                    <span class="text-white">{{ $telefonoExtra->contacto }}</span>
+                                    <span class="panel-muted">·</span>
+                                    <span>{{ $telefonoExtra->telefono }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -281,7 +317,6 @@ $hoy = now()->toDateString();
                                 } elseif ($c->estado === 'pendiente') {
                                     $estadoVisual = 'Pendiente';
                                 } else {
-                                    // pagada
                                     $estadoVisual = ($c->fecha_fin && $c->fecha_fin->toDateString() < $hoy) ? 'Vencida' : 'Vigente';
                                 }
                             @endphp

@@ -11,6 +11,22 @@
 
     $fechaPago = old('fecha_pago', now()->format('Y-m-d'));
     $metodoPago = old('metodo_pago', 'efectivo');
+
+    $telefonosContactoIniciales = old(
+        'telefonos_contacto',
+        ($alumno && $alumno->telefonosContacto)
+            ? $alumno->telefonosContacto->map(fn ($telefono) => [
+                'contacto' => $telefono->contacto,
+                'telefono' => $telefono->telefono,
+            ])->values()->all()
+            : []
+    );
+
+    if (empty($telefonosContactoIniciales)) {
+        $telefonosContactoIniciales = [
+            ['contacto' => '', 'telefono' => ''],
+        ];
+    }
 @endphp
 
 <div class="mb-6 rounded-2xl border panel-border p-4" style="background: rgb(255 255 255 / .03);">
@@ -44,8 +60,9 @@
         </div>
     </div>
 </div>
+
 <div class="space-y-4">
-    {{-- DATOS (100% ancho) --}}
+    {{-- DATOS --}}
     <div class="panel-card p-6">
         <h2 class="text-lg font-semibold">Datos</h2>
 
@@ -75,7 +92,7 @@
             </div>
 
             <div>
-                <label class="text-sm font-medium">DNI</label>
+                <label class="text-sm font-medium">DNI/NIE/Pasaporte</label>
                 <input name="dni"
                        value="{{ old('dni', $alumno->dni ?? '') }}"
                        class="mt-1 w-full panel-input px-4 py-3"
@@ -122,23 +139,6 @@
                        placeholder="Barcelona">
             </div>
 
-            <div>
-                <label class="text-sm font-medium">Teléfono</label>
-                <input name="telefono"
-                       value="{{ old('telefono', $alumno->telefono ?? '') }}"
-                       class="mt-1 w-full panel-input px-4 py-3"
-                       placeholder="600 000 000">
-            </div>
-
-            <div>
-                <label class="text-sm font-medium">Email</label>
-                <input type="email"
-                       name="email"
-                       value="{{ old('email', $alumno->email ?? '') }}"
-                       class="mt-1 w-full panel-input px-4 py-3"
-                       placeholder="correo@ejemplo.com">
-            </div>
-
             <div class="sm:col-span-2">
                 <label class="text-sm font-medium">Notas</label>
                 <textarea name="notas"
@@ -149,7 +149,131 @@
         </div>
     </div>
 
-    {{-- DEBAJO: si es CREATE -> grid (Cuota izquierda, Grupos+Ticket derecha) --}}
+    {{-- CONTACTO --}}
+    <div class="panel-card p-6">
+        <h2 class="text-lg font-semibold">Contacto</h2>
+        <p class="mt-1 text-sm panel-muted">
+            El teléfono principal sigue siendo el contacto principal. Si el alumno es menor, puedes desplegar los datos del tutor legal.
+        </p>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+                <label class="text-sm font-medium">Teléfono principal de contacto</label>
+                <input name="telefono"
+                    value="{{ old('telefono', $alumno->telefono ?? '') }}"
+                    class="mt-1 w-full panel-input px-4 py-3"
+                    placeholder="600 000 000">
+            </div>
+
+            <div>
+                <label class="text-sm font-medium">Email</label>
+                <input type="email"
+                    name="email"
+                    value="{{ old('email', $alumno->email ?? '') }}"
+                    class="mt-1 w-full panel-input px-4 py-3"
+                    placeholder="correo@ejemplo.com">
+            </div>
+
+            <div class="sm:col-span-2 pt-2">
+                <button
+                    type="button"
+                    id="toggle-tutor-legal"
+                    class="panel-icon-btn px-5 py-3"
+                >
+                    Mostrar datos del tutor legal
+                </button>
+
+                <p id="texto-ayuda-tutor" class="mt-2 text-sm panel-muted">
+                    Este bloque se abre automáticamente si el alumno es menor de edad o si ya hay datos del tutor guardados.
+                </p>
+            </div>
+
+            <div id="bloque-tutor-legal" class="sm:col-span-2 hidden">
+                <div class="mt-2 rounded-2xl border panel-border p-4" style="background: rgb(255 255 255 / .03);">
+                    <h3 class="text-base font-semibold">Tutor legal</h3>
+                    <p class="mt-1 text-sm panel-muted">Obligatorio si el alumno es menor de edad.</p>
+
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="text-sm font-medium">Nombre y apellidos del tutor legal</label>
+                            <input name="tutor_legal_nombre"
+                                id="tutor_legal_nombre"
+                                value="{{ old('tutor_legal_nombre', $alumno->tutor_legal_nombre ?? '') }}"
+                                class="mt-1 w-full panel-input px-4 py-3"
+                                placeholder="Nombre completo del tutor legal">
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-medium">DNI/NIE del tutor legal</label>
+                            <input name="tutor_legal_dni"
+                                id="tutor_legal_dni"
+                                value="{{ old('tutor_legal_dni', $alumno->tutor_legal_dni ?? '') }}"
+                                class="mt-1 w-full panel-input px-4 py-3"
+                                placeholder="12345678X">
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-medium">Relación</label>
+                            <select name="tutor_legal_relacion" id="tutor_legal_relacion" class="mt-1 w-full panel-input px-4 py-3">
+                                <option value="">Selecciona una opción</option>
+                                <option value="padre" @selected(old('tutor_legal_relacion', $alumno->tutor_legal_relacion ?? '') === 'padre')>Padre</option>
+                                <option value="madre" @selected(old('tutor_legal_relacion', $alumno->tutor_legal_relacion ?? '') === 'madre')>Madre</option>
+                                <option value="tutor" @selected(old('tutor_legal_relacion', $alumno->tutor_legal_relacion ?? '') === 'tutor')>Tutor/a</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sm:col-span-2 pt-2">
+                <h3 class="text-base font-semibold">Otros teléfonos de contacto</h3>
+                <p class="mt-1 text-sm panel-muted">
+                    Puedes añadir madre, padre, abuela, abuelo o cualquier otro contacto útil.
+                </p>
+            </div>
+
+            <div class="sm:col-span-2">
+                <div id="telefonos-contacto-lista" class="space-y-3">
+                    @foreach($telefonosContactoIniciales as $i => $fila)
+                        <div class="grid gap-3 sm:grid-cols-[1fr,1fr,auto]" data-telefono-contacto-row>
+                            <div>
+                                <label class="text-sm font-medium">Quién es</label>
+                                <input
+                                    name="telefonos_contacto[{{ $i }}][contacto]"
+                                    value="{{ $fila['contacto'] ?? '' }}"
+                                    class="mt-1 w-full panel-input px-4 py-3"
+                                    placeholder="Madre, Padre, Abuela..."
+                                >
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium">Teléfono</label>
+                                <input
+                                    name="telefonos_contacto[{{ $i }}][telefono]"
+                                    value="{{ $fila['telefono'] ?? '' }}"
+                                    class="mt-1 w-full panel-input px-4 py-3"
+                                    placeholder="600 000 000"
+                                >
+                            </div>
+
+                            <div class="flex items-end">
+                                <button type="button" class="panel-icon-btn px-4 py-3" onclick="eliminarFilaTelefonoContacto(this)">
+                                    Quitar
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" id="add-telefono-contacto" class="panel-icon-btn px-5 py-3">
+                        Añadir teléfono
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if($modo === 'create')
         <div class="grid gap-4 lg:grid-cols-2">
             {{-- IZQUIERDA: CUOTA --}}
@@ -165,10 +289,10 @@
                             @foreach($tiposCuota as $t)
                                 <option value="{{ $t->id }}"
                                         data-nombre="{{ $t->nombre }}"
-                                        data-importe="{{ (float)$t->importe }}"
-                                        data-meses="{{ (int)($t->duracion_meses ?? $t->meses ?? 0) }}"
-                                        data-dias="{{ (int)($t->duracion_dias ?? $t->dias ?? 0) }}"
-                                        @selected((string)$tipoSeleccionado === (string)$t->id)>
+                                        data-importe="{{ (float) $t->importe }}"
+                                        data-meses="{{ (int) ($t->duracion_meses ?? $t->meses ?? 0) }}"
+                                        data-dias="{{ (int) ($t->duracion_dias ?? $t->dias ?? 0) }}"
+                                        @selected((string) $tipoSeleccionado === (string) $t->id)>
                                     {{ $t->nombre }}
                                 </option>
                             @endforeach
@@ -178,8 +302,8 @@
                     <div class="mt-4">
                         <label class="text-sm font-medium">Estado</label>
                         <select name="cuota_estado" id="cuota_estado" class="mt-1 w-full panel-input px-4 py-3">
-                            <option value="pagada" @selected($cuotaEstado==='pagada')>Pagada</option>
-                            <option value="pendiente" @selected($cuotaEstado==='pendiente')>Pendiente</option>
+                            <option value="pagada" @selected($cuotaEstado === 'pagada')>Pagada</option>
+                            <option value="pendiente" @selected($cuotaEstado === 'pendiente')>Pendiente</option>
                         </select>
                     </div>
 
@@ -195,10 +319,10 @@
                             <div>
                                 <label class="text-sm font-medium">Método</label>
                                 <select name="metodo_pago" id="metodo_pago" class="mt-1 w-full panel-input px-4 py-3">
-                                    <option value="efectivo" @selected($metodoPago==='efectivo')>Efectivo</option>
-                                    <option value="bizum" @selected($metodoPago==='bizum')>Bizum</option>
-                                    <option value="tarjeta" @selected($metodoPago==='tarjeta')>Tarjeta</option>
-                                    <option value="transferencia" @selected($metodoPago==='transferencia')>Transferencia</option>
+                                    <option value="efectivo" @selected($metodoPago === 'efectivo')>Efectivo</option>
+                                    <option value="bizum" @selected($metodoPago === 'bizum')>Bizum</option>
+                                    <option value="tarjeta" @selected($metodoPago === 'tarjeta')>Tarjeta</option>
+                                    <option value="transferencia" @selected($metodoPago === 'transferencia')>Transferencia</option>
                                 </select>
                             </div>
 
@@ -223,7 +347,7 @@
                     <div class="mt-4 flex flex-wrap gap-2">
                         @forelse($grupos as $g)
                             @php
-                                $checked = in_array((int)$g->id, array_map('intval', (array)$gruposSeleccionados), true);
+                                $checked = in_array((int) $g->id, array_map('intval', (array) $gruposSeleccionados), true);
                             @endphp
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="grupos[]" value="{{ $g->id }}" class="sr-only peer" @checked($checked)>
@@ -344,11 +468,105 @@
                             refrescar();
                         })();
                     </script>
+
+                    @once
+                    <script>
+                        (function () {
+                            const fechaNacimiento = document.querySelector('input[name="fecha_nacimiento"]');
+                            const toggleTutor = document.getElementById('toggle-tutor-legal');
+                            const bloqueTutor = document.getElementById('bloque-tutor-legal');
+
+                            const tutorNombre = document.getElementById('tutor_legal_nombre');
+                            const tutorDni = document.getElementById('tutor_legal_dni');
+                            const tutorRelacion = document.getElementById('tutor_legal_relacion');
+
+                            if (!toggleTutor || !bloqueTutor) {
+                                return;
+                            }
+
+                            function calcularEdad(valor) {
+                                if (!valor) {
+                                    return null;
+                                }
+
+                                const fecha = new Date(valor + 'T00:00:00');
+
+                                if (Number.isNaN(fecha.getTime())) {
+                                    return null;
+                                }
+
+                                const hoy = new Date();
+                                let edad = hoy.getFullYear() - fecha.getFullYear();
+
+                                const mes = hoy.getMonth() - fecha.getMonth();
+
+                                if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) {
+                                    edad--;
+                                }
+
+                                return edad;
+                            }
+
+                            function hayDatosTutor() {
+                                return !!(
+                                    (tutorNombre && tutorNombre.value.trim() !== '') ||
+                                    (tutorDni && tutorDni.value.trim() !== '') ||
+                                    (tutorRelacion && tutorRelacion.value.trim() !== '')
+                                );
+                            }
+
+                            function esMenor() {
+                                const edad = calcularEdad(fechaNacimiento ? fechaNacimiento.value : '');
+                                return edad !== null && edad < 18;
+                            }
+
+                            function abrirTutor() {
+                                bloqueTutor.classList.remove('hidden');
+                                toggleTutor.textContent = 'Ocultar datos del tutor legal';
+                            }
+
+                            function cerrarTutor() {
+                                bloqueTutor.classList.add('hidden');
+                                toggleTutor.textContent = 'Mostrar datos del tutor legal';
+                            }
+
+                            function refrescarTutorLegal() {
+                                if (esMenor() || hayDatosTutor()) {
+                                    abrirTutor();
+                                } else {
+                                    cerrarTutor();
+                                }
+                            }
+
+                            toggleTutor.addEventListener('click', function () {
+                                if (bloqueTutor.classList.contains('hidden')) {
+                                    abrirTutor();
+                                } else {
+                                    cerrarTutor();
+                                }
+                            });
+
+                            if (fechaNacimiento) {
+                                fechaNacimiento.addEventListener('change', refrescarTutorLegal);
+                            }
+
+                            [tutorNombre, tutorDni, tutorRelacion].forEach(function (campo) {
+                                if (campo) {
+                                    campo.addEventListener('input', refrescarTutorLegal);
+                                    campo.addEventListener('change', refrescarTutorLegal);
+                                }
+                            });
+
+                            refrescarTutorLegal();
+                        })();
+                    </script>
                 @endonce
+                @endonce
+                
             </div>
         </div>
     @else
-        {{-- EDIT: solo grupos debajo de datos (100% ancho) --}}
+        {{-- EDIT: solo grupos debajo de datos --}}
         <div class="panel-card p-6">
             <h2 class="text-lg font-semibold">Grupos</h2>
             <p class="mt-1 text-sm panel-muted">Marca los grupos en los que está actualmente.</p>
@@ -356,7 +574,7 @@
             <div class="mt-4 flex flex-wrap gap-2">
                 @forelse($grupos as $g)
                     @php
-                        $checked = in_array((int)$g->id, array_map('intval', (array)$gruposSeleccionados), true);
+                        $checked = in_array((int) $g->id, array_map('intval', (array) $gruposSeleccionados), true);
                     @endphp
                     <label class="cursor-pointer">
                         <input type="checkbox" name="grupos[]" value="{{ $g->id }}" class="sr-only peer" @checked($checked)>
@@ -373,3 +591,72 @@
         </div>
     @endif
 </div>
+
+<template id="telefono-contacto-template">
+    <div class="grid gap-3 sm:grid-cols-[1fr,1fr,auto]" data-telefono-contacto-row>
+        <div>
+            <label class="text-sm font-medium">Quién es</label>
+            <input
+                name="telefonos_contacto[__INDEX__][contacto]"
+                class="mt-1 w-full panel-input px-4 py-3"
+                placeholder="Madre, Padre, Abuela..."
+            >
+        </div>
+
+        <div>
+            <label class="text-sm font-medium">Teléfono</label>
+            <input
+                name="telefonos_contacto[__INDEX__][telefono]"
+                class="mt-1 w-full panel-input px-4 py-3"
+                placeholder="600 000 000"
+            >
+        </div>
+
+        <div class="flex items-end">
+            <button type="button" class="panel-icon-btn px-4 py-3" onclick="eliminarFilaTelefonoContacto(this)">
+                Quitar
+            </button>
+        </div>
+    </div>
+</template>
+
+@once
+    <script>
+        (function () {
+            const lista = document.getElementById('telefonos-contacto-lista');
+            const botonAdd = document.getElementById('add-telefono-contacto');
+            const template = document.getElementById('telefono-contacto-template');
+
+            if (!lista || !botonAdd || !template) {
+                return;
+            }
+
+            let index = lista.querySelectorAll('[data-telefono-contacto-row]').length;
+
+            botonAdd.addEventListener('click', function () {
+                const html = template.innerHTML.replaceAll('__INDEX__', index);
+                lista.insertAdjacentHTML('beforeend', html);
+                index++;
+            });
+
+            window.eliminarFilaTelefonoContacto = function (boton) {
+                const fila = boton.closest('[data-telefono-contacto-row]');
+
+                if (!fila) {
+                    return;
+                }
+
+                const filas = lista.querySelectorAll('[data-telefono-contacto-row]');
+
+                if (filas.length <= 1) {
+                    fila.querySelectorAll('input').forEach(function (input) {
+                        input.value = '';
+                    });
+                    return;
+                }
+
+                fila.remove();
+            };
+        })();
+    </script>
+@endonce

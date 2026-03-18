@@ -20,6 +20,9 @@ class Alumno extends Model
         'poblacion',
         'telefono',
         'email',
+        'tutor_legal_nombre',
+        'tutor_legal_dni',
+        'tutor_legal_relacion',
         'foto_path',
         'activo',
         'fecha_baja',
@@ -68,5 +71,12 @@ class Alumno extends Model
         return $this->hasOne(\App\Models\Cuota::class, 'alumno_id')
             ->where('estado', '!=', 'anulada')
             ->latestOfMany();
+    }
+
+    public function telefonosContacto()
+    {
+        return $this->hasMany(\App\Models\AlumnoTelefonoContacto::class, 'alumno_id')
+            ->orderBy('orden')
+            ->orderBy('id');
     }
 }
