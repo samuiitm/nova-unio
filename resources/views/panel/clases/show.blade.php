@@ -177,6 +177,10 @@
                                         style="{{ $estiloCuota }}">
                                         {{ $estadoCuota['texto'] }}
                                     </div>
+
+                                    @if(!empty($estadoCuota['detalle']))
+                                        <div class="mt-1 text-xs panel-muted">{{ $estadoCuota['detalle'] }}</div>
+                                    @endif
                                 @else
                                     <span class="panel-muted">—</span>
                                 @endif
