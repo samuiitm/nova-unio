@@ -55,12 +55,18 @@ class PreinscripcionController extends Controller
         return view('panel.preinscripciones.show', compact('preinscripcion'));
     }
 
-    public function convertir(Preinscripcion $preinscripcion)
+   public function convertir(Preinscripcion $preinscripcion)
     {
         if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
             return redirect()
                 ->route('panel.alumnos.show', $preinscripcion->alumno_id)
                 ->with('ok', 'Esta preinscripción ya se convirtió en alumno.');
+        }
+
+        if ($preinscripcion->estado === 'nueva') {
+            $preinscripcion->update([
+                'estado' => 'en_proceso',
+            ]);
         }
 
         return redirect()->route('panel.alumnos.create', [

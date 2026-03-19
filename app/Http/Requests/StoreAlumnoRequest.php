@@ -48,6 +48,8 @@ class StoreAlumnoRequest extends FormRequest
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],
 
+            'preinscripcion_id' => ['nullable', 'integer', 'exists:preinscripciones,id'],
+
             'tipo_cuota_id' => ['nullable', 'integer', 'exists:tipos_cuota,id'],
             'cuota_estado' => ['nullable', 'required_with:tipo_cuota_id', 'in:pendiente,pagada'],
 
