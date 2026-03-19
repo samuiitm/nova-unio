@@ -20,20 +20,80 @@ class ClaseController extends Controller
                     ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
             ->where(function ($q) use ($clase) {
-                $q->whereNull('alumnos.fecha_baja')
-                    ->orWhereDate('alumnos.fecha_baja', '>=', $clase->fecha);
+                $q->where(function ($w) {
+                    $w->whereNull('alumnos.fecha_baja')
+                        ->where('alumnos.activo', 1);
+                })->orWhereDate('alumnos.fecha_baja', '>=', $clase->fecha);
             })
+            ->with([
+                'cuotas' => function ($q) {
+                    $q->where('estado', '!=', 'anulada')
+                        ->with('tipoCuota')
+                        ->orderByDesc('fecha_fin')
+                        ->orderByDesc('id');
+                },
+            ])
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get();
+    }
+
+    private function estadoCuotaAlumnoEnFecha($alumno, string $fechaClase): array
+    {
+        $fechaClase = Carbon::parse($fechaClase)->toDateString();
+
+        $cuotaVigente = $alumno->cuotas->first(function ($cuota) use ($fechaClase) {
+            if ($cuota->estado !== 'pagada') {
+                return false;
+            }
+
+            $inicioOk = !$cuota->fecha_inicio || $cuota->fecha_inicio->toDateString() <= $fechaClase;
+            $finOk = !$cuota->fecha_fin || $cuota->fecha_fin->toDateString() >= $fechaClase;
+
+            return $inicioOk && $finOk;
+        });
+
+        if ($cuotaVigente) {
+            return [
+                'clave' => 'al_dia',
+                'texto' => 'Al día',
+                'detalle' => $cuotaVigente->tipoCuota?->nombre,
+            ];
+        }
+
+        $cuotaPendiente = $alumno->cuotas->first(fn ($cuota) => $cuota->estado === 'pendiente');
+
+        if ($cuotaPendiente) {
+            return [
+                'clave' => 'pendiente',
+                'texto' => 'Pendiente',
+                'detalle' => $cuotaPendiente->tipoCuota?->nombre,
+            ];
+        }
+
+        $tuvoPagada = $alumno->cuotas->contains(fn ($cuota) => $cuota->estado === 'pagada');
+
+        if ($tuvoPagada) {
+            return [
+                'clave' => 'no_al_dia',
+                'texto' => 'No al día',
+                'detalle' => 'Cuota vencida',
+            ];
+        }
+
+        return [
+            'clave' => 'no_al_dia',
+            'texto' => 'No al día',
+            'detalle' => 'Sin cuota',
+        ];
     }
 
     private function estadoVisual(Clase $clase, int $totalAsistencias): array
     {
         $fecha = Carbon::parse($clase->fecha)->startOfDay();
 
-        $limiteSinLista = now()->subDay()->startOfDay();    // ayer
-        $limiteBloqueo = now()->subDays(2)->startOfDay();   // hace 2 días
+        $limiteSinLista = now()->subDay()->startOfDay();
+        $limiteBloqueo = now()->subDays(2)->startOfDay();
 
         $esCancelada = ($clase->estado ?? null) === 'cancelada';
         $cerradaManual = (bool) ($clase->asistencia_cerrada ?? false);
@@ -54,7 +114,10 @@ class ClaseController extends Controller
     {
         $clase->load('grupo');
 
-        $alumnos = $this->alumnosDelGrupoEnFecha($clase);
+        $alumnos = $this->alumnosDelGrupoEnFecha($clase)->map(function ($alumno) use ($clase) {
+            $alumno->estado_cuota_clase = $this->estadoCuotaAlumnoEnFecha($alumno, $clase->fecha);
+            return $alumno;
+        });
 
         $asistencias = Asistencia::where('clase_id', $clase->id)
             ->get()
@@ -99,7 +162,6 @@ class ClaseController extends Controller
         $asistencias = collect($data['asistencias'] ?? []);
 
         DB::transaction(function () use ($clase, $alumnoIds, $asistencias) {
-            // borrar asistencias de alumnos que ya no tocan en esta clase
             Asistencia::where('clase_id', $clase->id)
                 ->whereNotIn('alumno_id', $alumnoIds)
                 ->delete();

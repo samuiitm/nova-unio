@@ -146,6 +146,7 @@
                 <thead class="text-left panel-muted">
                     <tr>
                         <th class="py-2">Alumno</th>
+                        <th class="py-2">Estado cuota</th>
                         <th class="py-2">Estado</th>
                         <th class="py-2">Estado actual</th>
                     </tr>
@@ -155,6 +156,7 @@
                         @php
                             $as = $asistencias->get($a->id);
                             $estado = $as?->estado;
+                            $estadoCuota = $a->estado_cuota_clase ?? null;
                         @endphp
                         <tr class="border-t panel-border">
                             <td class="py-3">
@@ -162,22 +164,41 @@
                             </td>
 
                             <td class="py-3">
+                                @if($estadoCuota)
+                                    @php
+                                        $estiloCuota = match($estadoCuota['clave']) {
+                                            'al_dia' => 'background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);',
+                                            'pendiente' => 'background: rgb(255 180 0 / .12); color: rgb(255 210 120); border: 1px solid rgb(255 180 0 / .22);',
+                                            default => 'background: rgb(255 80 120 / .12); color: rgb(255 150 170); border: 1px solid rgb(255 80 120 / .22);',
+                                        };
+                                    @endphp
+
+                                    <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                        style="{{ $estiloCuota }}">
+                                        {{ $estadoCuota['texto'] }}
+                                    </div>
+                                @else
+                                    <span class="panel-muted">—</span>
+                                @endif
+                            </td>
+
+                            <td class="py-3">
                                 <div class="flex items-center gap-4">
                                     <label class="inline-flex items-center gap-2">
                                         <input type="radio"
-                                               name="asistencias[{{ $a->id }}]"
-                                               value="presente"
-                                               @checked($estado === 'presente')
-                                               @disabled($bloqueada)>
+                                            name="asistencias[{{ $a->id }}]"
+                                            value="presente"
+                                            @checked($estado === 'presente')
+                                            @disabled($bloqueada)>
                                         <span>Presente</span>
                                     </label>
 
                                     <label class="inline-flex items-center gap-2">
                                         <input type="radio"
-                                               name="asistencias[{{ $a->id }}]"
-                                               value="ausente"
-                                               @checked($estado === 'ausente')
-                                               @disabled($bloqueada)>
+                                            name="asistencias[{{ $a->id }}]"
+                                            value="ausente"
+                                            @checked($estado === 'ausente')
+                                            @disabled($bloqueada)>
                                         <span>Ausente</span>
                                     </label>
                                 </div>
@@ -195,7 +216,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="py-4 panel-muted">No hay alumnos para esta clase.</td>
+                            <td colspan="4" class="py-4 panel-muted">No hay alumnos para esta clase.</td>
                         </tr>
                     @endforelse
                 </tbody>
