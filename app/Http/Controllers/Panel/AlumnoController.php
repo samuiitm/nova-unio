@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CalculadorVigenciaCuotaService;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -432,6 +433,33 @@ class AlumnoController extends Controller
         return $value === '' ? null : $value;
     }
 
+    private function calculadorCuotas(): CalculadorVigenciaCuotaService
+    {
+        return app(CalculadorVigenciaCuotaService::class);
+    }
+
+    private function validarAsignacionPendiente(TipoCuota $tipo): void
+    {
+        try {
+            $this->calculadorCuotas()->asegurarQueSePuedeAsignar($tipo, now()->toDateString());
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages([
+                'tipo_cuota_id' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function calcularVigenciaPagada(TipoCuota $tipo, Carbon $fechaPago): array
+    {
+        try {
+            return $this->calculadorCuotas()->calcularParaPago($tipo, $fechaPago);
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages([
+                'fecha_pago' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private function crearCuotaInicial(
         Alumno $alumno,
         int $tipoCuotaId,
@@ -443,6 +471,8 @@ class AlumnoController extends Controller
         $tipo = TipoCuota::findOrFail($tipoCuotaId);
 
         if ($estado === 'pendiente') {
+            $this->validarAsignacionPendiente($tipo);
+
             Cuota::create([
                 'alumno_id' => $alumno->id,
                 'tipo_cuota_id' => $tipo->id,
@@ -456,14 +486,15 @@ class AlumnoController extends Controller
         }
 
         $fecha = Carbon::parse($fechaPago ?: now()->toDateString());
-        $inicio = $fecha->copy();
-        $fin = $fecha->copy()->addMonthsNoOverflow(max(1, (int) ($tipo->duracion_meses ?? 1)));
+        $vigencia = $this->calcularVigenciaPagada($tipo, $fecha);
+        $inicio = $vigencia['inicio'];
+        $fin = $vigencia['fin'];
 
         $cuota = Cuota::create([
             'alumno_id' => $alumno->id,
             'tipo_cuota_id' => $tipo->id,
             'fecha_inicio' => $inicio->toDateString(),
-            'fecha_fin' => $fin->toDateString(),
+            'fecha_fin' => $fin?->toDateString(),
             'importe' => $tipo->importe,
             'estado' => 'pagada',
         ]);
@@ -479,7 +510,7 @@ class AlumnoController extends Controller
             'tipo_cuota_id' => $tipo->id,
             'tipo_cuota_nombre' => $tipo->nombre,
             'vigencia_inicio' => $inicio->toDateString(),
-            'vigencia_fin' => $fin->toDateString(),
+            'vigencia_fin' => $fin?->toDateString(),
         ]);
     }
 

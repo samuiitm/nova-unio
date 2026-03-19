@@ -284,19 +284,23 @@
 
                     <div class="mt-4">
                         <label class="text-sm font-medium">Tipo de cuota</label>
-                        <select name="tipo_cuota_id" id="tipo_cuota_id" class="mt-1 w-full panel-input px-4 py-3">
-                            <option value="">Selecciona un tipo</option>
-                            @foreach($tiposCuota as $t)
-                                <option value="{{ $t->id }}"
-                                        data-nombre="{{ $t->nombre }}"
-                                        data-importe="{{ (float) $t->importe }}"
-                                        data-meses="{{ (int) ($t->duracion_meses ?? $t->meses ?? 0) }}"
-                                        data-dias="{{ (int) ($t->duracion_dias ?? $t->dias ?? 0) }}"
-                                        @selected((string) $tipoSeleccionado === (string) $t->id)>
-                                    {{ $t->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
+                            <select name="tipo_cuota_id" id="tipo_cuota_id" class="mt-1 w-full panel-input px-4 py-3">
+                                <option value="">Selecciona un tipo</option>
+                                @foreach($tiposCuota as $t)
+                                    <option value="{{ $t->id }}"
+                                            data-nombre="{{ $t->nombre }}"
+                                            data-importe="{{ (float) $t->importe }}"
+                                            data-meses="{{ (int) ($t->duracion_meses ?? 0) }}"
+                                            data-vigencia="{{ $t->tipo_vigencia ?? 'meses' }}"
+                                            data-venta-inicio="{{ (int) ($t->venta_inicio_mes ?? 8) }}"
+                                            data-venta-fin="{{ (int) ($t->venta_fin_mes ?? 12) }}"
+                                            @selected((string) $tipoSeleccionado === (string) $t->id)>
+                                        {{ $t->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <div id="cuota_mensaje_disponibilidad" class="mt-2 text-sm text-amber-300 hidden"></div>
                     </div>
 
                     <div class="mt-4">
@@ -397,7 +401,7 @@
                             const estado = document.getElementById('cuota_estado');
                             const bloquePago = document.getElementById('bloque_pago');
                             const fechaPago = document.getElementById('fecha_pago');
-
+                            const mensajeDisponibilidad = document.getElementById('cuota_mensaje_disponibilidad');
                             const ticketNombre = document.getElementById('ticket_nombre');
                             const ticketInicio = document.getElementById('ticket_inicio');
                             const ticketFin = document.getElementById('ticket_fin');
@@ -420,11 +424,20 @@
                                 return d;
                             }
 
+                            function nombreMes(numero) {
+                                return ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][numero - 1] || 'mes';
+                            }
+
                             function refrescar() {
                                 const tipoId = sel.value;
                                 const est = estado.value;
 
                                 bloquePago.style.display = (est === 'pagada') ? '' : 'none';
+
+                                if (mensajeDisponibilidad) {
+                                    mensajeDisponibilidad.textContent = '';
+                                    mensajeDisponibilidad.classList.add('hidden');
+                                }
 
                                 if (!tipoId) {
                                     ticketNombre.textContent = 'Selecciona un tipo de cuota';
@@ -438,27 +451,87 @@
                                 const nombre = opt.dataset.nombre || 'Cuota';
                                 const importe = parseFloat(opt.dataset.importe || '0');
                                 const meses = parseInt(opt.dataset.meses || '0');
-                                const dias = parseInt(opt.dataset.dias || '0');
+                                const vigencia = opt.dataset.vigencia || 'meses';
+                                const ventaInicio = parseInt(opt.dataset.ventaInicio || '8');
+                                const ventaFin = parseInt(opt.dataset.ventaFin || '12');
 
                                 ticketNombre.textContent = nombre;
                                 ticketTotal.textContent = importe.toFixed(2).replace('.', ',') + ' €';
 
-                                if (est === 'pagada') {
-                                    const base = new Date((fechaPago.value || new Date().toISOString().slice(0,10)) + 'T00:00:00');
-                                    let fin = new Date(base.getTime());
+                                if (est !== 'pagada') {
+                                    if (vigencia === 'temporada') {
+                                        const hoy = new Date();
+                                        const mes = hoy.getMonth() + 1;
+                                        const enVentana = ventaInicio <= ventaFin
+                                            ? (mes >= ventaInicio && mes <= ventaFin)
+                                            : (mes >= ventaInicio || mes <= ventaFin);
 
-                                    if (dias > 0) {
-                                        fin.setDate(fin.getDate() + dias);
-                                    } else {
-                                        fin = addMonthsNoOverflow(fin, Math.max(1, meses));
+                                        if (!enVentana) {
+                                            if (mensajeDisponibilidad) {
+                                                mensajeDisponibilidad.textContent =
+                                                    'La cuota de temporada solo se puede vender ' +
+                                                    nombreMes(ventaInicio) + ' - ' + nombreMes(ventaFin) + '.';
+                                                mensajeDisponibilidad.classList.remove('hidden');
+                                            }
+
+                                            ticketInicio.textContent = 'No disponible';
+                                            ticketFin.textContent = 'Fuera de venta';
+                                            return;
+                                        }
                                     }
 
-                                    ticketInicio.textContent = fmt(base);
-                                    ticketFin.textContent = fmt(fin);
-                                } else {
                                     ticketInicio.textContent = '—';
                                     ticketFin.textContent = '—';
+                                    return;
                                 }
+
+                                const base = new Date((fechaPago.value || new Date().toISOString().slice(0, 10)) + 'T00:00:00');
+
+                                if (vigencia === 'indefinida') {
+                                    ticketInicio.textContent = fmt(base);
+                                    ticketFin.textContent = 'Sin vencimiento';
+                                    return;
+                                }
+
+                                if (vigencia === 'temporada') {
+                                    const mes = base.getMonth() + 1;
+                                    const enVentana = ventaInicio <= ventaFin
+                                        ? (mes >= ventaInicio && mes <= ventaFin)
+                                        : (mes >= ventaInicio || mes <= ventaFin);
+
+                                    if (!enVentana) {
+                                        if (mensajeDisponibilidad) {
+                                            mensajeDisponibilidad.textContent =
+                                                'La cuota de temporada solo se puede vender ' +
+                                                nombreMes(ventaInicio) + ' - ' + nombreMes(ventaFin) + '.';
+                                            mensajeDisponibilidad.classList.remove('hidden');
+                                        }
+
+                                        ticketInicio.textContent = 'No disponible';
+                                        ticketFin.textContent = 'Fuera de venta';
+                                        return;
+                                    }
+
+                                    let inicio = new Date(base.getTime());
+                                    let fin;
+
+                                    if (mes >= 9) {
+                                        fin = new Date(base.getFullYear() + 1, 5, 30);
+                                    } else if (mes <= 6) {
+                                        fin = new Date(base.getFullYear(), 5, 30);
+                                    } else {
+                                        inicio = new Date(base.getFullYear(), 8, 1);
+                                        fin = new Date(base.getFullYear() + 1, 5, 30);
+                                    }
+
+                                    ticketInicio.textContent = fmt(inicio);
+                                    ticketFin.textContent = fmt(fin);
+                                    return;
+                                }
+
+                                const fin = addMonthsNoOverflow(base, Math.max(1, meses));
+                                ticketInicio.textContent = fmt(base);
+                                ticketFin.textContent = fmt(fin);
                             }
 
                             sel.addEventListener('change', refrescar);

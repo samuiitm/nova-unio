@@ -19,6 +19,10 @@ class ClaseController extends Controller
                 $q->whereNull('alumno_grupo.fecha_baja')
                     ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
+            ->where(function ($q) use ($clase) {
+                $q->whereNull('alumnos.fecha_baja')
+                    ->orWhereDate('alumnos.fecha_baja', '>=', $clase->fecha);
+            })
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get();
