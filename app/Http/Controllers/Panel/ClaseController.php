@@ -25,14 +25,6 @@ class ClaseController extends Controller
                         ->where('alumnos.activo', 1);
                 })->orWhereDate('alumnos.fecha_baja', '>=', $clase->fecha);
             })
-            ->with([
-                'cuotas' => function ($q) {
-                    $q->where('estado', '!=', 'anulada')
-                        ->with('tipoCuota')
-                        ->orderByDesc('fecha_fin')
-                        ->orderByDesc('id');
-                },
-            ])
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get();
