@@ -73,6 +73,13 @@ class Alumno extends Model
             ->latestOfMany();
     }
 
+    public function ultimaCuotaPagada()
+    {
+        return $this->hasOne(\App\Models\Cuota::class, 'alumno_id')
+            ->where('estado', 'pagada')
+            ->latestOfMany('fecha_fin');
+    }
+
     public function telefonosContacto()
     {
         return $this->hasMany(\App\Models\AlumnoTelefonoContacto::class, 'alumno_id')
