@@ -17,13 +17,13 @@ class ClaseController extends Controller
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
                 $q->whereNull('alumno_grupo.fecha_baja')
-                    ->orWhere('alumno_grupo.fecha_baja', '>=', $clase->fecha);
+                    ->orWhereDate('alumno_grupo.fecha_baja', '>', $clase->fecha);
             })
             ->where(function ($q) use ($clase) {
                 $q->where(function ($w) {
                     $w->whereNull('alumnos.fecha_baja')
                         ->where('alumnos.activo', 1);
-                })->orWhereDate('alumnos.fecha_baja', '>=', $clase->fecha);
+                })->orWhereDate('alumnos.fecha_baja', '>', $clase->fecha);
             })
             ->with([
                 'cuotas' => function ($q) {
