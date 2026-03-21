@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Services\CalculadorVigenciaCuotaService;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class AlumnoController extends Controller
 {
@@ -137,55 +138,79 @@ class AlumnoController extends Controller
         $data['fecha_baja'] = null;
         $data['fecha_inicio_actividad'] = null;
 
-        $alumno = DB::transaction(function () use (
-            $data,
-            $grupoIds,
-            $telefonosContacto,
-            $preinscripcionId,
-            $tipoCuotaId,
-            $cuotaEstado,
-            $fechaPago,
-            $metodoPago,
-            $notasPago
-        ) {
-            $preinscripcion = null;
+        try {
+            $alumno = DB::transaction(function () use (
+                $data,
+                $grupoIds,
+                $telefonosContacto,
+                $preinscripcionId,
+                $tipoCuotaId,
+                $cuotaEstado,
+                $fechaPago,
+                $metodoPago,
+                $notasPago
+            ) {
+                $preinscripcion = null;
 
-            if ($preinscripcionId) {
-                $preinscripcion = Preinscripcion::lockForUpdate()->findOrFail($preinscripcionId);
+                if ($preinscripcionId) {
+                    $preinscripcion = Preinscripcion::lockForUpdate()->findOrFail($preinscripcionId);
 
-                if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
-                    throw ValidationException::withMessages([
-                        'preinscripcion_id' => 'Esta preinscripción ya fue convertida en alumno.',
+                    if ($preinscripcion->estado === 'resuelta' && $preinscripcion->alumno_id) {
+                        throw ValidationException::withMessages([
+                            'preinscripcion_id' => 'Esta preinscripción ya fue convertida en alumno.',
+                        ]);
+                    }
+                }
+
+                $alumno = Alumno::create($data);
+
+                $this->guardarTelefonosContacto($alumno, $telefonosContacto);
+                $this->sincronizarGrupos($alumno, $grupoIds);
+
+                if ($tipoCuotaId && $cuotaEstado) {
+                    $this->crearCuotaInicial(
+                        alumno: $alumno,
+                        tipoCuotaId: (int) $tipoCuotaId,
+                        estado: $cuotaEstado,
+                        fechaPago: $fechaPago,
+                        metodoPago: $metodoPago,
+                        notasPago: $notasPago,
+                    );
+                }
+
+                if ($preinscripcion) {
+                    $preinscripcion->update([
+                        'estado' => 'resuelta',
+                        'alumno_id' => $alumno->id,
+                        'resuelta_at' => now(),
                     ]);
                 }
-            }
 
-            $alumno = Alumno::create($data);
+                return $alumno;
+            });
+        } catch (QueryException $e) {
+            $mensaje = $e->getMessage();
 
-            $this->guardarTelefonosContacto($alumno, $telefonosContacto);
-            $this->sincronizarGrupos($alumno, $grupoIds);
-
-            if ($tipoCuotaId && $cuotaEstado) {
-                $this->crearCuotaInicial(
-                    alumno: $alumno,
-                    tipoCuotaId: (int) $tipoCuotaId,
-                    estado: $cuotaEstado,
-                    fechaPago: $fechaPago,
-                    metodoPago: $metodoPago,
-                    notasPago: $notasPago,
-                );
-            }
-
-            if ($preinscripcion) {
-                $preinscripcion->update([
-                    'estado' => 'resuelta',
-                    'alumno_id' => $alumno->id,
-                    'resuelta_at' => now(),
+            if (str_contains($mensaje, 'alumnos_email_unique')) {
+                throw ValidationException::withMessages([
+                    'email' => 'Ya existe un alumno con ese email.',
                 ]);
             }
 
-            return $alumno;
-        });
+            if (str_contains($mensaje, 'alumnos_dni_unique')) {
+                throw ValidationException::withMessages([
+                    'dni' => 'Ya existe un alumno con ese DNI.',
+                ]);
+            }
+
+            if (str_contains($mensaje, 'alumnos_catsalut_unique')) {
+                throw ValidationException::withMessages([
+                    'catsalut' => 'Ya existe un alumno con ese CatSalut.',
+                ]);
+            }
+
+            throw $e;
+        }
 
         return redirect()
             ->route('panel.alumnos.show', $alumno)

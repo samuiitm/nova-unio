@@ -59,6 +59,36 @@ class StoreAlumnoRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'nombre' => $this->textoONull($this->input('nombre')),
+            'apellidos' => $this->textoONull($this->input('apellidos')),
+            'catsalut' => $this->textoONull($this->input('catsalut')),
+            'dni' => $this->textoONull($this->input('dni')),
+            'direccion' => $this->textoONull($this->input('direccion')),
+            'cp' => $this->textoONull($this->input('cp')),
+            'poblacion' => $this->textoONull($this->input('poblacion')),
+            'telefono' => $this->textoONull($this->input('telefono')),
+            'email' => $this->normalizarEmail($this->input('email')),
+            'tutor_legal_nombre' => $this->textoONull($this->input('tutor_legal_nombre')),
+            'tutor_legal_dni' => $this->textoONull($this->input('tutor_legal_dni')),
+            'tutor_legal_relacion' => $this->textoONull($this->input('tutor_legal_relacion')),
+        ]);
+    }
+
+    private function textoONull($value): ?string
+    {
+        $value = trim((string) $value);
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizarEmail($value): ?string
+    {
+        $value = trim((string) $value);
+        return $value === '' ? null : mb_strtolower($value);
+    }
+
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
