@@ -23,7 +23,7 @@ class StoreAlumnoRequest extends FormRequest
             'fecha_nacimiento' => ['nullable', 'date', 'before:today'],
             'lugar_nacimiento' => ['nullable', 'string', 'max:120'],
 
-            'dni' => ['nullable', 'string', 'max:25', 'unique:alumnos,dni'],
+            'dni' => ['required', 'string', 'max:25', 'unique:alumnos,dni'],
 
             'direccion' => ['nullable', 'string', 'max:200'],
             'cp' => ['nullable', 'string', 'max:10'],

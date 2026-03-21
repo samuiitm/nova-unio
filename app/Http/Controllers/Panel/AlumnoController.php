@@ -189,23 +189,31 @@ class AlumnoController extends Controller
                 return $alumno;
             });
         } catch (QueryException $e) {
-            $mensaje = $e->getMessage();
+            $sqlState = $e->errorInfo[0] ?? null;
+            $driverCode = (int) ($e->errorInfo[1] ?? 0);
+            $mensaje = mb_strtolower($e->getMessage());
 
-            if (str_contains($mensaje, 'alumnos_email_unique')) {
-                throw ValidationException::withMessages([
-                    'email' => 'Ya existe un alumno con ese email.',
-                ]);
-            }
+            if ($sqlState === '23000' && $driverCode === 1062) {
+                if (str_contains($mensaje, 'dni')) {
+                    throw ValidationException::withMessages([
+                        'dni' => 'Ya existe un alumno con ese DNI.',
+                    ]);
+                }
 
-            if (str_contains($mensaje, 'alumnos_dni_unique')) {
-                throw ValidationException::withMessages([
-                    'dni' => 'Ya existe un alumno con ese DNI.',
-                ]);
-            }
+                if (str_contains($mensaje, 'catsalut')) {
+                    throw ValidationException::withMessages([
+                        'catsalut' => 'Ya existe un alumno con ese CatSalut.',
+                    ]);
+                }
 
-            if (str_contains($mensaje, 'alumnos_catsalut_unique')) {
+                if (str_contains($mensaje, 'email')) {
+                    throw ValidationException::withMessages([
+                        'email' => 'Ya existe un alumno con ese email.',
+                    ]);
+                }
+
                 throw ValidationException::withMessages([
-                    'catsalut' => 'Ya existe un alumno con ese CatSalut.',
+                    'dni' => 'Ya existe un alumno con datos duplicados en el sistema.',
                 ]);
             }
 
