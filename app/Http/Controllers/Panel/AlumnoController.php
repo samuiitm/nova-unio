@@ -188,36 +188,75 @@ class AlumnoController extends Controller
 
                 return $alumno;
             });
+        } catch (ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors());
         } catch (QueryException $e) {
+            logger()->error('Error SQL al crear alumno', [
+                'preinscripcion_id' => $preinscripcionId,
+                'dni' => $data['dni'] ?? null,
+                'email' => $data['email'] ?? null,
+                'sql_state' => $e->errorInfo[0] ?? null,
+                'driver_code' => $e->errorInfo[1] ?? null,
+                'message' => $e->getMessage(),
+            ]);
+
             $sqlState = $e->errorInfo[0] ?? null;
             $driverCode = (int) ($e->errorInfo[1] ?? 0);
             $mensaje = mb_strtolower($e->getMessage());
 
             if ($sqlState === '23000' && $driverCode === 1062) {
                 if (str_contains($mensaje, 'dni')) {
-                    throw ValidationException::withMessages([
-                        'dni' => 'Ya existe un alumno con ese DNI.',
-                    ]);
+                    return back()
+                        ->withInput()
+                        ->withErrors([
+                            'dni' => 'Ya existe un alumno con ese DNI.',
+                        ]);
                 }
 
                 if (str_contains($mensaje, 'catsalut')) {
-                    throw ValidationException::withMessages([
-                        'catsalut' => 'Ya existe un alumno con ese CatSalut.',
-                    ]);
+                    return back()
+                        ->withInput()
+                        ->withErrors([
+                            'catsalut' => 'Ya existe un alumno con ese CatSalut.',
+                        ]);
                 }
 
                 if (str_contains($mensaje, 'email')) {
-                    throw ValidationException::withMessages([
-                        'email' => 'Ya existe un alumno con ese email.',
-                    ]);
+                    return back()
+                        ->withInput()
+                        ->withErrors([
+                            'email' => 'Ya existe un alumno con ese email.',
+                        ]);
                 }
 
-                throw ValidationException::withMessages([
-                    'dni' => 'Ya existe un alumno con datos duplicados en el sistema.',
-                ]);
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'dni' => 'Ya existe un alumno con datos duplicados en el sistema.',
+                    ]);
             }
 
-            throw $e;
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'general' => 'Ha ocurrido un error al crear el alumno. Revisa los datos e inténtalo de nuevo.',
+                ]);
+        } catch (\Throwable $e) {
+            logger()->error('Error inesperado al crear alumno', [
+                'preinscripcion_id' => $preinscripcionId,
+                'dni' => $data['dni'] ?? null,
+                'email' => $data['email'] ?? null,
+                'clase' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'general' => 'Ha ocurrido un error inesperado al crear el alumno.',
+                ]);
         }
 
         return redirect()

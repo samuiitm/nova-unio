@@ -88,6 +88,17 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            if ($request->is('panel') || $request->is('panel/*')) {
+                return redirect()
+                    ->back()
+                    ->withInput($request->except(['password', 'password_confirmation']))
+                    ->withErrors($e->errors());
+            }
+
             return null;
         });
 
