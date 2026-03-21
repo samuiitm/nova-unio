@@ -30,7 +30,7 @@ class StoreAlumnoRequest extends FormRequest
             'poblacion' => ['nullable', 'string', 'max:120'],
 
             'telefono' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:190', 'unique:alumnos,email'],
+            'email' => ['nullable', 'email', 'max:190'],
 
             'tutor_legal_nombre' => ['nullable', 'string', 'max:180'],
             'tutor_legal_dni' => ['nullable', 'string', 'max:25'],
