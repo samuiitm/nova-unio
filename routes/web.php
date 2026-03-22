@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PreinscripcionController;
@@ -23,6 +25,20 @@ Route::post('/contacto', [ContactController::class, 'store'])->name('public.cont
 Route::post('/preinscripcion', [PreinscripcionController::class, 'store'])
     ->name('public.preinscripcion.enviar')
     ->middleware('throttle:10,1');
+
+Route::get('/cron/generar-clases', function (Request $request) {
+    abort_unless(
+        hash_equals((string) config('app.cron_secret'), (string) $request->query('token')),
+        403
+    );
+
+    Artisan::call('clases:generar-proximas-dos-semanas');
+
+    return response()->json([
+        'ok' => true,
+        'output' => Artisan::output(),
+    ]);
+});
 
 Route::get('/sitemap.xml', function () {
     $today = now()->toDateString();
