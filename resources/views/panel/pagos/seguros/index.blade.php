@@ -196,7 +196,7 @@
     </div>
 
     <div class="mt-4">
-        {{ $seguros->links() }}
+        {{ $seguros->onEachSide(1)->links() }}
     </div>
 </div>
 @endsection

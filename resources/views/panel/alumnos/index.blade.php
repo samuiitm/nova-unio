@@ -242,7 +242,7 @@
                 Mostrando {{ $alumnos->firstItem() ?? 0 }}-{{ $alumnos->lastItem() ?? 0 }} de {{ $alumnos->total() }} resultados
             </div>
             <div>
-                {{ $alumnos->links() }}
+                {{ $alumnos->onEachSide(1)->links() }}
             </div>
         </div>
     </div>

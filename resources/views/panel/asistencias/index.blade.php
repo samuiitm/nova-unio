@@ -153,7 +153,7 @@
             Mostrando {{ $clases->firstItem() ?? 0 }}-{{ $clases->lastItem() ?? 0 }} de {{ $clases->total() }} clases
         </div>
         <div>
-            {{ $clases->links() }}
+            {{ $clases->onEachSide(1)->links() }}
         </div>
     </div>
 </div>

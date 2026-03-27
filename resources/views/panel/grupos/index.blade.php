@@ -145,7 +145,7 @@
         </div>
 
         <div class="mt-5">
-            {{ $grupos->links() }}
+            {{ $grupos->onEachSide(1)->links() }}
         </div>
     </div>
 @endsection
