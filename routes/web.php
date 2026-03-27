@@ -170,6 +170,20 @@ Route::prefix('panel')
                     Route::patch('cuotas/{cuota}', [\App\Http\Controllers\Panel\CuotaController::class, 'update'])->name('cuotas.update');
                     Route::patch('cuotas/{cuota}/anular', [\App\Http\Controllers\Panel\CuotaController::class, 'anular'])->name('cuotas.anular');
                     Route::delete('cuotas/{cuota}', [\App\Http\Controllers\Panel\CuotaController::class, 'destroy'])->name('cuotas.destroy');
+                    Route::get('seguros', [\App\Http\Controllers\Panel\SeguroController::class, 'index'])->name('seguros.index');
+
+                    Route::get('seguros/crear', [\App\Http\Controllers\Panel\SeguroController::class, 'create'])->name('seguros.create');
+                    Route::post('seguros', [\App\Http\Controllers\Panel\SeguroController::class, 'store'])->name('seguros.store');
+
+                    Route::get('seguros/{seguro}/cobrar', [\App\Http\Controllers\Panel\SeguroController::class, 'cobrar'])->name('seguros.cobrar');
+                    Route::post('seguros/{seguro}/cobrar', [\App\Http\Controllers\Panel\SeguroController::class, 'guardarCobro'])->name('seguros.cobrar.guardar');
+
+                    Route::get('seguros/{seguro}/editar', [\App\Http\Controllers\Panel\SeguroController::class, 'edit'])->name('seguros.edit');
+                    Route::patch('seguros/{seguro}', [\App\Http\Controllers\Panel\SeguroController::class, 'update'])->name('seguros.update');
+                    Route::delete('seguros/{seguro}', [\App\Http\Controllers\Panel\SeguroController::class, 'destroy'])->name('seguros.destroy');
+
+                    Route::delete('seguros/{seguro}/pago', [\App\Http\Controllers\Panel\SeguroController::class, 'destroyPago'])->name('seguros.pago.destroy');
+                    
                     Route::delete('{pago}', [\App\Http\Controllers\Panel\PagoController::class, 'destroy'])->name('destroy');
                 });
 

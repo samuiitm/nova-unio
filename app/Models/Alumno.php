@@ -86,4 +86,9 @@ class Alumno extends Model
             ->orderBy('orden')
             ->orderBy('id');
     }
+
+    public function seguros()
+    {
+        return $this->hasMany(\App\Models\Seguro::class, 'alumno_id');
+    }
 }

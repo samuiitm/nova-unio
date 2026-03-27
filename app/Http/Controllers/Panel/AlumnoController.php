@@ -21,6 +21,7 @@ use App\Services\CalculadorVigenciaCuotaService;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use App\Models\Seguro;
 
 class AlumnoController extends Controller
 {
@@ -279,7 +280,7 @@ class AlumnoController extends Controller
                 $q->whereNull('fecha_fin')
                     ->orWhereDate('fecha_fin', '>=', $hoy);
             })
-            ->with(['tipoCuota', 'pago'])
+            ->with(['tipoCuota', 'ultimoPago'])
             ->orderByDesc('fecha_fin')
             ->orderByDesc('id')
             ->first();
@@ -295,7 +296,7 @@ class AlumnoController extends Controller
         $ultimaPagada = Cuota::query()
             ->where('alumno_id', $alumno->id)
             ->where('estado', 'pagada')
-            ->with(['tipoCuota', 'pago'])
+            ->with(['tipoCuota', 'ultimoPago'])
             ->orderByDesc('fecha_fin')
             ->orderByDesc('id')
             ->first();
@@ -312,15 +313,36 @@ class AlumnoController extends Controller
 
         $cuotas = Cuota::query()
             ->where('alumno_id', $alumno->id)
-            ->with(['tipoCuota', 'pago'])
+            ->with(['tipoCuota', 'ultimoPago'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
 
-        $pagos = Pago::query()
+        $seguroVigente = Seguro::query()
             ->where('alumno_id', $alumno->id)
-            ->with(['cuota.tipoCuota'])
-            ->orderByDesc('fecha_pago')
+            ->where('estado', 'pagado')
+            ->whereDate('fecha_fin', '>=', $hoy)
+            ->orderByDesc('fecha_fin')
+            ->orderByDesc('id')
+            ->first();
+
+        $seguroPendiente = Seguro::query()
+            ->where('alumno_id', $alumno->id)
+            ->where('estado', 'pendiente')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        $ultimoSeguroPagado = Seguro::query()
+            ->where('alumno_id', $alumno->id)
+            ->where('estado', 'pagado')
+            ->orderByDesc('fecha_fin')
+            ->orderByDesc('id')
+            ->first();
+
+        $seguros = Seguro::query()
+            ->where('alumno_id', $alumno->id)
+            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
 
@@ -332,7 +354,10 @@ class AlumnoController extends Controller
             'cuotaPendiente',
             'ultimaPagada',
             'cuotas',
-            'pagos'
+            'seguroVigente',
+            'seguroPendiente',
+            'ultimoSeguroPagado',
+            'seguros'
         ));
     }
 

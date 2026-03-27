@@ -4,8 +4,6 @@
 
 @section('content')
 @php
-    $hoy = now()->toDateString();
-
     $tituloCuota =
         $estadoCuota === 'vigente' ? ($cuotaVigente->tipoCuota->nombre ?? 'Cuota') :
         ($estadoCuota === 'pendiente' ? ($cuotaPendiente->tipoCuota->nombre ?? 'Cuota pendiente') :
@@ -33,6 +31,18 @@
         'tutor' => 'Tutor/a',
         default => '—',
     };
+
+    $seguroActual = $seguroVigente ?: $seguroPendiente ?: $ultimoSeguroPagado;
+
+    $tituloSeguro = $seguroActual?->tipo_nombre ?? 'Sin seguro deportivo';
+    $importeSeguro = $seguroActual?->importe ?? null;
+    $inicioSeguro = $seguroActual?->fecha_inicio ?? null;
+    $finSeguro = $seguroActual?->fecha_fin ?? null;
+
+    $estadoSeguro =
+        $seguroVigente ? 'vigente' :
+        ($seguroPendiente ? 'pendiente' :
+        ($ultimoSeguroPagado ? 'vencido' : 'sin_seguro'));
 @endphp
 
 <div class="flex items-start justify-between gap-4 flex-wrap">
@@ -70,6 +80,7 @@
                 Asignar cuota
             </a>
         @endif
+
         <a href="{{ route('panel.alumnos.edit', $alumno) }}" class="panel-btn px-5 py-3">Editar</a>
         <a href="{{ route('panel.alumnos.index') }}" class="panel-icon-btn px-5 py-3">Volver</a>
     </div>
@@ -89,31 +100,34 @@
     </div>
 @endif
 
-<div class="mt-5 grid gap-4 lg:grid-cols-2">
-    <div class="panel-card p-6">
-        <h2 class="text-lg font-semibold">Datos</h2>
+<div class="mt-5 grid gap-4 lg:grid-cols-4">
+    <div class="panel-card p-6 lg:col-span-2">
+        <h2 class="text-lg font-semibold">Datos del alumno</h2>
 
-        <div class="mt-4 grid gap-3 text-sm">
+        <div class="mt-4 grid gap-3 text-sm lg:grid-cols-2">
             <div><span class="panel-muted">Nombre:</span> {{ $alumno->nombre }}</div>
             <div><span class="panel-muted">Apellidos:</span> {{ $alumno->apellidos }}</div>
 
+            <div><span class="panel-muted">Documento identificativo:</span> {{ $alumno->dni ?: '—' }}</div>
             <div><span class="panel-muted">CatSalut:</span> {{ $alumno->catsalut ?: '—' }}</div>
-            <div><span class="panel-muted">DNI/NIE/Pasaporte:</span> {{ $alumno->dni ?: '—' }}</div>
 
-            <div><span class="panel-muted">Nacimiento:</span>
+            <div>
+                <span class="panel-muted">Nacimiento:</span>
                 {{ $alumno->fecha_nacimiento ? $alumno->fecha_nacimiento->format('d/m/Y') : '—' }}
             </div>
-            <div><span class="panel-muted">Lugar:</span> {{ $alumno->lugar_nacimiento ?: '—' }}</div>
 
+            <div><span class="panel-muted">Lugar de nacimiento:</span> {{ $alumno->lugar_nacimiento ?: '—' }}</div>
             <div><span class="panel-muted">Dirección:</span> {{ $alumno->direccion ?: '—' }}</div>
             <div><span class="panel-muted">CP:</span> {{ $alumno->cp ?: '—' }}</div>
             <div><span class="panel-muted">Población:</span> {{ $alumno->poblacion ?: '—' }}</div>
 
-            <div><span class="panel-muted">Inicio actividad:</span>
+            <div>
+                <span class="panel-muted">Inicio actividad:</span>
                 {{ $alumno->fecha_inicio_actividad ? $alumno->fecha_inicio_actividad->format('d/m/Y') : '—' }}
             </div>
 
-            <div><span class="panel-muted">Fecha baja:</span>
+            <div>
+                <span class="panel-muted">Fecha baja:</span>
                 {{ $alumno->fecha_baja ? $alumno->fecha_baja->format('d/m/Y') : '—' }}
             </div>
 
@@ -149,15 +163,15 @@
         <div class="mt-6 border-t panel-border pt-5">
             <h3 class="text-base font-semibold">Contacto y tutor legal</h3>
 
-            <div class="mt-4 grid gap-3 text-sm">
+            <div class="mt-4 grid gap-3 text-sm lg:grid-cols-2">
                 <div><span class="panel-muted">Teléfono principal:</span> {{ $alumno->telefono ?: '—' }}</div>
                 <div><span class="panel-muted">Email:</span> {{ $alumno->email ?: '—' }}</div>
 
                 <div><span class="panel-muted">Tutor legal:</span> {{ $alumno->tutor_legal_nombre ?: '—' }}</div>
-                <div><span class="panel-muted">DNI/NIE tutor legal:</span> {{ $alumno->tutor_legal_dni ?: '—' }}</div>
+                <div><span class="panel-muted">Documento tutor legal:</span> {{ $alumno->tutor_legal_dni ?: '—' }}</div>
                 <div><span class="panel-muted">Relación:</span> {{ $relacionTutorTexto }}</div>
 
-                <div>
+                <div class="lg:col-span-2">
                     <span class="panel-muted">Otros teléfonos:</span>
                     @if($telefonosContacto->isEmpty())
                         —
@@ -174,6 +188,13 @@
                     @endif
                 </div>
             </div>
+        </div>
+
+        <div class="mt-6 border-t panel-border pt-5">
+            <h3 class="text-base font-semibold">Notas</h3>
+            <p class="mt-3 text-sm panel-muted whitespace-pre-line">
+                {{ $alumno->notas ?: 'Sin notas.' }}
+            </p>
         </div>
 
         <div class="mt-5 flex gap-2">
@@ -199,8 +220,7 @@
         </div>
     </div>
 
-    {{-- CUOTA --}}
-    <div>
+    <div class="space-y-4 lg:col-span-2">
         <div class="panel-card p-6"
              style="background: radial-gradient(1200px 600px at 0% 0%, rgba(0,255,160,.06), transparent 60%);">
             <div class="flex items-start justify-between gap-4">
@@ -225,7 +245,7 @@
                 <div class="text-right">
                     <div class="text-xs panel-muted uppercase tracking-wider">TOTAL</div>
                     <div class="text-3xl font-bold">
-                        {{ $importe !== null ? number_format((float)$importe, 2, ',', '.') . ' €' : '—' }}
+                        {{ $importe !== null ? number_format((float) $importe, 2, ',', '.') . ' €' : '—' }}
                     </div>
                 </div>
             </div>
@@ -279,17 +299,70 @@
             </div>
         </div>
 
-        <div class="mt-4 panel-card p-6">
-            <h2 class="text-lg font-semibold">Notas</h2>
-            <p class="mt-3 text-sm panel-muted whitespace-pre-line">
-                {{ $alumno->notas ?: 'Sin notas.' }}
-            </p>
+        <div class="panel-card p-6"
+             style="background: radial-gradient(1200px 600px at 0% 0%, rgba(90,155,255,.10), transparent 60%);">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <div class="text-xl font-semibold" style="color: rgb(145 190 255);">
+                        {{ $tituloSeguro }}
+                    </div>
+
+                    <div class="mt-2 text-sm panel-muted">
+                        @if($estadoSeguro === 'vigente')
+                            Estado: <span class="text-white">Vigente</span>
+                        @elseif($estadoSeguro === 'vencido')
+                            Estado: <span class="text-white">Vencido</span>
+                        @else
+                            Estado: <span class="text-white">Sin seguro</span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <div class="text-xs panel-muted uppercase tracking-wider">TOTAL</div>
+                    <div class="text-3xl font-bold">
+                        {{ $importeSeguro !== null ? number_format((float) $importeSeguro, 2, ',', '.') . ' €' : '—' }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-between">
+                <div class="panel-muted text-sm">
+                    Inicio:
+                    <span class="text-white">{{ $inicioSeguro ? $inicioSeguro->format('d/m/Y') : '—' }}</span>
+                </div>
+                <div class="panel-muted text-sm">
+                    Fin:
+                    <span class="text-white">{{ $finSeguro ? $finSeguro->format('d/m/Y') : '—' }}</span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-wrap gap-2">
+                @if(\Illuminate\Support\Facades\Route::has('panel.pagos.seguros.create'))
+                    @if(!$seguroVigente)
+                        <a class="panel-btn px-5 py-3" href="{{ route('panel.pagos.seguros.create', ['alumno' => $alumno->id]) }}">
+                            {{ $ultimoSeguroPagado ? 'Renovar seguro' : 'Registrar seguro' }}
+                        </a>
+                    @endif
+                @endif
+
+                @if($seguroVigente && \Illuminate\Support\Facades\Route::has('panel.pagos.seguros.edit'))
+                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.edit', $seguroVigente) }}">
+                        Editar seguro
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('panel.pagos.seguros.index'))
+                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.index') }}">
+                        Ver seguros
+                    </a>
+                @endif
+            </div>
         </div>
     </div>
 </div>
 
-{{-- HISTORIAL --}}
-<div class="mt-5 grid gap-4 lg:grid-cols-2">
+<div class="mt-5 space-y-4">
     <div class="panel-card p-6">
         <h2 class="text-lg font-semibold">Historial de cuotas</h2>
 
@@ -297,32 +370,40 @@
             <table class="w-full text-sm">
                 <thead class="text-left panel-muted">
                     <tr>
-                        <th class="py-2">Plan</th>
+                        <th class="py-2">Tipo</th>
                         <th class="py-2">Estado</th>
-                        <th class="py-2">Periodo</th>
+                        <th class="py-2">Vigencia</th>
+                        <th class="py-2">Fecha pago</th>
                         <th class="py-2">Importe</th>
+                        <th class="py-2">Método</th>
                         <th class="py-2 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($cuotas as $c)
+                        @php
+                            if ($c->estado === 'anulada') {
+                                $estadoVisual = 'Anulada';
+                            } elseif ($c->estado === 'pendiente') {
+                                $estadoVisual = 'Pendiente';
+                            } else {
+                                $estadoVisual = ($c->fecha_fin && $c->fecha_fin->toDateString() < now()->toDateString()) ? 'Vencida' : 'Vigente';
+                            }
+                        @endphp
+
                         <tr class="border-t panel-border {{ $c->estado === 'anulada' ? 'opacity-50' : '' }}">
                             <td class="py-3">{{ $c->tipoCuota?->nombre ?? '—' }}</td>
-                            <td class="py-3">{{ ucfirst($c->estado) }}</td>
-                            @php
-                                $hoy = now()->toDateString();
-
-                                if ($c->estado === 'anulada') {
-                                    $estadoVisual = 'Anulada';
-                                } elseif ($c->estado === 'pendiente') {
-                                    $estadoVisual = 'Pendiente';
-                                } else {
-                                    $estadoVisual = ($c->fecha_fin && $c->fecha_fin->toDateString() < $hoy) ? 'Vencida' : 'Vigente';
-                                }
-                            @endphp
-
                             <td class="py-3">{{ $estadoVisual }}</td>
-                            <td class="py-3">{{ number_format((float)$c->importe, 2, ',', '.') }} €</td>
+                            <td class="py-3">
+                                @if($c->fecha_inicio || $c->fecha_fin)
+                                    {{ $c->fecha_inicio?->format('d/m/Y') ?: '—' }} - {{ $c->fecha_fin?->format('d/m/Y') ?: '—' }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="py-3">{{ $c->ultimoPago?->fecha_pago?->format('d/m/Y') ?: '—' }}</td>
+                            <td class="py-3">{{ number_format((float) $c->importe, 2, ',', '.') }} €</td>
+                            <td class="py-3">{{ $c->ultimoPago?->metodo ? ucfirst($c->ultimoPago->metodo) : '—' }}</td>
                             <td class="py-3 text-right">
                                 <div class="inline-flex gap-2">
                                     @if($c->estado === 'pendiente')
@@ -339,8 +420,8 @@
                                         </form>
                                     @endif
 
-                                    @if($c->estado === 'pagada' && $c->pago)
-                                        <form method="POST" action="{{ route('panel.pagos.destroy', $c->pago) }}">
+                                    @if($c->estado === 'pagada' && $c->ultimoPago)
+                                        <form method="POST" action="{{ route('panel.pagos.destroy', $c->ultimoPago) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button class="panel-icon-btn px-4 py-2"
@@ -353,7 +434,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="py-6 panel-muted">Sin cuotas.</td></tr>
+                        <tr><td colspan="7" class="py-6 panel-muted">Sin cuotas.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -361,41 +442,65 @@
     </div>
 
     <div class="panel-card p-6">
-        <h2 class="text-lg font-semibold">Historial de pagos</h2>
+        <h2 class="text-lg font-semibold">Historial de seguros deportivos</h2>
 
         <div class="mt-4 overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="text-left panel-muted">
                     <tr>
-                        <th class="py-2">Fecha</th>
-                        <th class="py-2">Plan</th>
+                        <th class="py-2">Tipo</th>
+                        <th class="py-2">Estado</th>
+                        <th class="py-2">Vigencia</th>
+                        <th class="py-2">Fecha pago</th>
                         <th class="py-2">Importe</th>
                         <th class="py-2">Método</th>
-                        <th class="py-2">Notas</th>
-                        <th class="py-2 text-right">Acción</th>
+                        <th class="py-2 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($pagos as $p)
+                    @forelse($seguros as $seguro)
                         <tr class="border-t panel-border">
-                            <td class="py-3">{{ $p->fecha_pago?->format('d/m/Y') }}</td>
-                            <td class="py-3">{{ $p->cuota->tipoCuota?->nombre ?? '—' }}</td>
-                            <td class="py-3">{{ number_format((float)$p->importe, 2, ',', '.') }} €</td>
-                            <td class="py-3">{{ ucfirst($p->metodo) }}</td>
-                            <td class="py-3 panel-muted">{{ $p->notas ?: '—' }}</td>
+                            <td class="py-3">{{ $seguro->tipo_nombre }}</td>
+                            <td class="py-3">{{ $seguro->estado_visual }}</td>
+                            <td class="py-3">
+                                @if($seguro->fecha_inicio || $seguro->fecha_fin)
+                                    {{ $seguro->fecha_inicio?->format('d/m/Y') ?: '—' }} - {{ $seguro->fecha_fin?->format('d/m/Y') ?: '—' }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="py-3">{{ $seguro->fecha_pago?->format('d/m/Y') ?: '—' }}</td>
+                            <td class="py-3">{{ number_format((float) $seguro->importe, 2, ',', '.') }} €</td>
+                            <td class="py-3">{{ $seguro->metodo ? ucfirst($seguro->metodo) : '—' }}</td>
                             <td class="py-3 text-right">
-                                <form method="POST" action="{{ route('panel.pagos.destroy', $p) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="panel-icon-btn px-4 py-2"
-                                            onclick="return confirm('¿Borrar este pago? La cuota volverá a pendiente.')">
-                                        Borrar pago
-                                    </button>
-                                </form>
+                                <div class="inline-flex gap-2">
+                                    @if($seguro->estado === 'pendiente')
+                                        <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.seguros.cobrar', $seguro) }}">Cobrar</a>
+                                        <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.seguros.edit', $seguro) }}">Editar</a>
+
+                                        <form method="POST" action="{{ route('panel.pagos.seguros.destroy', $seguro) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="panel-icon-btn px-4 py-2"
+                                                    onclick="return confirm('¿Eliminar este seguro pendiente?')">
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    @elseif($seguro->estado === 'pagado')
+                                        <form method="POST" action="{{ route('panel.pagos.seguros.pago.destroy', $seguro) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="panel-icon-btn px-4 py-2"
+                                                    onclick="return confirm('¿Borrar pago? El seguro volverá a pendiente para poder cobrarlo, editarlo o eliminarlo.')">
+                                                Borrar pago
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="py-6 panel-muted">Sin pagos.</td></tr>
+                        <tr><td colspan="7" class="py-6 panel-muted">Sin seguros registrados.</td></tr>
                     @endforelse
                 </tbody>
             </table>

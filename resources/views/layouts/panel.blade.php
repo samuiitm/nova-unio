@@ -182,6 +182,10 @@
                     class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.tipos') ? 'panel-subitem-active' : '' }}">
                         Tipos de cuota
                     </a>
+                    <a href="{{ $r('panel.pagos.seguros.index') }}" @click="sidebarOpen=false"
+                    class="block px-3 py-2 panel-subitem {{ $is('panel.pagos.seguros.*') ? 'panel-subitem-active' : '' }}">
+                        Seguros deportivos
+                    </a>
                 </div>
             @endif
 
