@@ -55,13 +55,12 @@ class AlumnoController extends Controller
 
         if ($orden === 'nombre') {
             $query->orderByDesc('activo')
-                ->orderBy('apellidos')
-                ->orderBy('nombre');
+                ->orderBy('nombre')
+                ->orderBy('apellidos');
         } else {
             $query->orderByDesc('activo')
                 ->orderByDesc('created_at');
         }
-
         $alumnos = $query->paginate(10)->withQueryString();
 
         $nuevosMes = Alumno::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
