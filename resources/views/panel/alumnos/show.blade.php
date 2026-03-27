@@ -98,7 +98,7 @@
             <div><span class="panel-muted">Apellidos:</span> {{ $alumno->apellidos }}</div>
 
             <div><span class="panel-muted">CatSalut:</span> {{ $alumno->catsalut ?: '—' }}</div>
-            <div><span class="panel-muted">DNI/NIE:</span> {{ $alumno->dni ?: '—' }}</div>
+            <div><span class="panel-muted">DNI/NIE/Pasaporte:</span> {{ $alumno->dni ?: '—' }}</div>
 
             <div><span class="panel-muted">Nacimiento:</span>
                 {{ $alumno->fecha_nacimiento ? $alumno->fecha_nacimiento->format('d/m/Y') : '—' }}

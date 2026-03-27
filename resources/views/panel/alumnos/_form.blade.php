@@ -92,7 +92,7 @@
             </div>
 
             <div>
-                <label class="text-sm font-medium">DNI/NIE/Pasaporte</label>
+                <label class="text-sm font-medium">DNI/NIE/Pasaporte*</label>
                 <input name="dni"
                        value="{{ old('dni', $alumno->dni ?? '') }}"
                        class="mt-1 w-full panel-input px-4 py-3"

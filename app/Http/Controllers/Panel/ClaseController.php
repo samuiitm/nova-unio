@@ -93,7 +93,7 @@ class ClaseController extends Controller
         $fecha = Carbon::parse($clase->fecha)->startOfDay();
 
         $limiteSinLista = now()->subDay()->startOfDay();
-        $limiteBloqueo = now()->subDays(2)->startOfDay();
+        $limiteBloqueo = now()->subDays(3)->startOfDay();
 
         $esCancelada = ($clase->estado ?? null) === 'cancelada';
         $cerradaManual = (bool) ($clase->asistencia_cerrada ?? false);
