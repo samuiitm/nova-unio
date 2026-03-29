@@ -416,14 +416,20 @@
                             <td class="py-3">{{ ucfirst($p->metodo) }}</td>
                             <td class="py-3">{{ $p->notas ?: '—' }}</td>
                             <td class="py-3 text-right">
-                                <form method="POST" action="{{ route('panel.pagos.destroy', $p) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="panel-icon-btn px-4 py-2"
-                                            onclick="return confirm('¿Borrar este pago? La cuota volverá a pendiente.')">
-                                        Borrar pago
-                                    </button>
-                                </form>
+                                <div class="inline-flex gap-2 flex-wrap justify-end">
+                                    <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.recibo', $p) }}">
+                                        Descargar recibo
+                                    </a>
+
+                                    <form method="POST" action="{{ route('panel.pagos.destroy', $p) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="panel-icon-btn px-4 py-2"
+                                                onclick="return confirm('¿Borrar este pago? La cuota volverá a pendiente.')">
+                                            Borrar pago
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

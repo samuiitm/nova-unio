@@ -8,8 +8,10 @@ use App\Models\Cuota;
 use App\Models\Grupo;
 use App\Models\Pago;
 use App\Models\TipoCuota;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PagoController extends Controller
 {
@@ -17,43 +19,38 @@ class PagoController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $grupo_id = (string) $request->query('grupo_id', '');
-
-        // ✅ la vista lo usa, así que lo mantenemos (por defecto true)
         $incluirSinGrupo = (bool) $request->boolean('incluir_sin_grupo', true);
 
         $grupos = Grupo::orderBy('nombre')->get(['id', 'nombre']);
 
-        // ✅ Cuotas pendientes: siempre se muestran
         $cuotasPendientes = Cuota::query()
             ->with(['alumno.gruposActivos', 'tipoCuota'])
             ->where('estado', 'pendiente')
             ->when($q !== '', function ($query) use ($q) {
                 $query->whereHas('alumno', function ($w) use ($q) {
                     $w->where('nombre', 'like', "%{$q}%")
-                    ->orWhere('apellidos', 'like', "%{$q}%");
+                        ->orWhere('apellidos', 'like', "%{$q}%");
                 });
             })
             ->when($grupo_id !== '', function ($query) use ($grupo_id) {
-                $query->whereHas('alumno.gruposActivos', fn($g) => $g->where('grupos.id', $grupo_id));
+                $query->whereHas('alumno.gruposActivos', fn ($g) => $g->where('grupos.id', $grupo_id));
             })
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();
 
-        // ✅ Alumnos sin cuota (A): sin cuotas no anuladas
         $alumnosSinCuota = Alumno::query()
             ->where('activo', 1)
             ->with('gruposActivos')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($w) use ($q) {
                     $w->where('nombre', 'like', "%{$q}%")
-                    ->orWhere('apellidos', 'like', "%{$q}%");
+                        ->orWhere('apellidos', 'like', "%{$q}%");
                 });
             })
             ->when($grupo_id !== '', function ($query) use ($grupo_id) {
-                $query->whereHas('gruposActivos', fn($g) => $g->where('grupos.id', $grupo_id));
+                $query->whereHas('gruposActivos', fn ($g) => $g->where('grupos.id', $grupo_id));
             })
-            // si el usuario NO quiere incluir sin grupo, filtramos (solo para esta lista)
             ->when(!$incluirSinGrupo, function ($query) {
                 $query->whereHas('gruposActivos');
             })
@@ -75,7 +72,6 @@ class PagoController extends Controller
         ));
     }
 
-    // Vencidas = alumnos cuya última cuota pagada está vencida y NO tienen una vigente ni pendiente
     public function vencidas(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -106,7 +102,7 @@ class PagoController extends Controller
         if ($q !== '') {
             $alumnos->where(function ($w) use ($q) {
                 $w->where('nombre', 'like', "%{$q}%")
-                ->orWhere('apellidos', 'like', "%{$q}%");
+                    ->orWhere('apellidos', 'like', "%{$q}%");
             });
         }
 
@@ -123,7 +119,6 @@ class PagoController extends Controller
         return view('panel.pagos.vencidas', compact('q', 'grupo_id', 'grupos', 'alumnosVencidos'));
     }
 
-    // Historial global (lo dejamos, pero ahora también lo ponemos en ficha alumno)
     public function historial(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -140,7 +135,7 @@ class PagoController extends Controller
         if ($q !== '') {
             $baseQuery->where(function ($w) use ($q) {
                 $w->where('alumnos.nombre', 'like', "%{$q}%")
-                  ->orWhere('alumnos.apellidos', 'like', "%{$q}%");
+                    ->orWhere('alumnos.apellidos', 'like', "%{$q}%");
             });
         }
 
@@ -150,8 +145,13 @@ class PagoController extends Controller
             $metodo = '';
         }
 
-        if ($desde !== '') $baseQuery->whereDate('pagos.fecha_pago', '>=', $desde);
-        if ($hasta !== '') $baseQuery->whereDate('pagos.fecha_pago', '<=', $hasta);
+        if ($desde !== '') {
+            $baseQuery->whereDate('pagos.fecha_pago', '>=', $desde);
+        }
+
+        if ($hasta !== '') {
+            $baseQuery->whereDate('pagos.fecha_pago', '<=', $hasta);
+        }
 
         if ($tipo_cuota_id !== '') {
             $baseQuery->where('cuotas.tipo_cuota_id', $tipo_cuota_id);
@@ -165,6 +165,7 @@ class PagoController extends Controller
             ->select('pagos.*')
             ->with(['alumno', 'cuota.tipoCuota'])
             ->orderByDesc('pagos.fecha_pago')
+            ->orderByDesc('pagos.id')
             ->paginate(30)
             ->withQueryString();
 
@@ -182,7 +183,6 @@ class PagoController extends Controller
         ));
     }
 
-    // borrar pago para corregir errores (la cuota vuelve a pendiente)
     public function destroy(Pago $pago)
     {
         $cuota = $pago->cuota;
@@ -206,9 +206,28 @@ class PagoController extends Controller
 
             $cuota->update([
                 'estado' => 'pendiente',
+                'fecha_inicio' => null,
+                'fecha_fin' => null,
             ]);
         });
 
         return back()->with('ok', 'Pago borrado correctamente. La cuota ha vuelto a pendiente.');
+    }
+
+    public function recibo(Pago $pago)
+    {
+        $pago->loadMissing(['alumno', 'cuota.tipoCuota']);
+
+        $pdf = Pdf::loadView('pdf.justificante-pago', [
+            'pago' => $pago,
+        ]);
+
+        $nombreAlumno = trim(($pago->alumno?->nombre ?? '') . ' ' . ($pago->alumno?->apellidos ?? ''));
+        $nombreAlumnoSlug = Str::slug($nombreAlumno ?: 'alumno');
+        $fecha = $pago->fecha_pago?->format('Y-m-d') ?? now()->format('Y-m-d');
+
+        $nombreArchivo = "justificante-pago-{$pago->id}-{$nombreAlumnoSlug}-{$fecha}.pdf";
+
+        return $pdf->download($nombreArchivo);
     }
 }

@@ -185,6 +185,8 @@ Route::prefix('panel')
                     Route::delete('seguros/{seguro}/pago', [\App\Http\Controllers\Panel\SeguroController::class, 'destroyPago'])->name('seguros.pago.destroy');
                     
                     Route::delete('{pago}', [\App\Http\Controllers\Panel\PagoController::class, 'destroy'])->name('destroy');
+                    
+                    Route::get('{pago}/recibo', [\App\Http\Controllers\Panel\PagoController::class, 'recibo'])->name('recibo');
                 });
 
                 // PREINSCRIPCIONES

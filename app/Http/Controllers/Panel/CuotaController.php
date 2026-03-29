@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CobrarCuotaRequest;
 use App\Http\Requests\StoreCuotaAlumnoRequest;
+use App\Mail\JustificantePagoMail;
 use App\Models\Alumno;
 use App\Models\Cuota;
 use App\Models\Pago;
@@ -12,6 +13,7 @@ use App\Models\TipoCuota;
 use App\Services\CalculadorVigenciaCuotaService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class CuotaController extends Controller
@@ -63,23 +65,21 @@ class CuotaController extends Controller
             ])->withInput();
         }
 
-        $cuota = new Cuota([
-            'alumno_id' => $alumno->id,
-        ]);
-
         $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
+        $pagoCreado = null;
 
-        DB::transaction(function () use ($data, $alumno, $tipo, $cuota) {
+        DB::transaction(function () use ($data, $alumno, $tipo, &$pagoCreado) {
             if ($data['estado'] === 'pendiente') {
                 $this->validarAsignacionPendiente($tipo);
 
-                $cuota->fill([
+                Cuota::create([
+                    'alumno_id' => $alumno->id,
                     'tipo_cuota_id' => $tipo->id,
                     'importe' => $tipo->importe,
                     'estado' => 'pendiente',
-                    'fecha_inicio' => now()->toDateString(),
-                    'fecha_fin' => now()->toDateString(),
-                ])->save();
+                    'fecha_inicio' => null,
+                    'fecha_fin' => null,
+                ]);
 
                 return;
             }
@@ -89,15 +89,16 @@ class CuotaController extends Controller
             $inicio = $vigencia['inicio'];
             $fin = $vigencia['fin'];
 
-            $cuota->fill([
+            $cuota = Cuota::create([
+                'alumno_id' => $alumno->id,
                 'tipo_cuota_id' => $tipo->id,
                 'importe' => $tipo->importe,
                 'estado' => 'pagada',
                 'fecha_inicio' => $inicio->toDateString(),
                 'fecha_fin' => $fin?->toDateString(),
-            ])->save();
+            ]);
 
-            Pago::create([
+            $pagoCreado = Pago::create([
                 'cuota_id' => $cuota->id,
                 'alumno_id' => $alumno->id,
                 'fecha_pago' => $fechaPago->toDateString(),
@@ -112,7 +113,11 @@ class CuotaController extends Controller
             ]);
         });
 
-        return redirect()->route('panel.alumnos.show', $alumno)->with('ok', 'Cuota guardada.');
+        $this->enviarJustificantePago($pagoCreado);
+
+        return redirect()
+            ->route('panel.alumnos.show', $alumno)
+            ->with('ok', 'Cuota guardada correctamente.');
     }
 
     public function cobrar(Cuota $cuota)
@@ -135,9 +140,12 @@ class CuotaController extends Controller
         $data = $request->validated();
         $cuota->load(['tipoCuota', 'alumno']);
 
-        DB::transaction(function () use ($cuota, $data) {
+        $tipo = $cuota->tipoCuota;
+        $pagoCreado = null;
+
+        DB::transaction(function () use ($cuota, $data, $tipo, &$pagoCreado) {
             $fechaPago = Carbon::parse($data['fecha_pago']);
-            $vigencia = $this->calcularVigenciaPagada($cuota->tipoCuota, $fechaPago);
+            $vigencia = $this->calcularVigenciaPagada($tipo, $fechaPago);
             $inicio = $vigencia['inicio'];
             $fin = $vigencia['fin'];
 
@@ -145,25 +153,29 @@ class CuotaController extends Controller
                 'estado' => 'pagada',
                 'fecha_inicio' => $inicio->toDateString(),
                 'fecha_fin' => $fin?->toDateString(),
-                'importe' => $cuota->tipoCuota->importe,
+                'importe' => $tipo->importe,
             ]);
 
-            Pago::create([
+            $pagoCreado = Pago::create([
                 'cuota_id' => $cuota->id,
                 'alumno_id' => $cuota->alumno_id,
                 'fecha_pago' => $fechaPago->toDateString(),
-                'importe' => $cuota->tipoCuota->importe,
+                'importe' => $tipo->importe,
                 'metodo' => $data['metodo'],
                 'notas' => $data['notas'] ?? null,
 
-                'tipo_cuota_id' => $cuota->tipoCuota->id,
-                'tipo_cuota_nombre' => $cuota->tipoCuota->nombre,
+                'tipo_cuota_id' => $tipo->id,
+                'tipo_cuota_nombre' => $tipo->nombre,
                 'vigencia_inicio' => $inicio->toDateString(),
                 'vigencia_fin' => $fin?->toDateString(),
             ]);
         });
 
-        return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Pago registrado.');
+        $this->enviarJustificantePago($pagoCreado);
+
+        return redirect()
+            ->route('panel.alumnos.show', $cuota->alumno_id)
+            ->with('ok', 'Pago registrado correctamente.');
     }
 
     public function edit(Cuota $cuota)
@@ -193,11 +205,13 @@ class CuotaController extends Controller
             'tipo_cuota_id' => $tipo->id,
             'importe' => $tipo->importe,
             'estado' => 'pendiente',
-            'fecha_inicio' => now()->toDateString(),
-            'fecha_fin' => now()->toDateString(),
+            'fecha_inicio' => null,
+            'fecha_fin' => null,
         ]);
 
-        return redirect()->route('panel.alumnos.show', $cuota->alumno_id)->with('ok', 'Cuota pendiente actualizada.');
+        return redirect()
+            ->route('panel.alumnos.show', $cuota->alumno_id)
+            ->with('ok', 'Cuota pendiente actualizada correctamente.');
     }
 
     public function destroy(Cuota $cuota)
@@ -243,6 +257,35 @@ class CuotaController extends Controller
             throw ValidationException::withMessages([
                 'fecha_pago' => $e->getMessage(),
             ]);
+        }
+    }
+
+    private function enviarJustificantePago(?Pago $pago): void
+    {
+        if (!$pago) {
+            return;
+        }
+
+        if (!config('mail.enviar_justificantes_pago')) {
+            return;
+        }
+
+        if (!app()->environment('production')) {
+            return;
+        }
+
+        $pago->loadMissing(['alumno', 'cuota.tipoCuota']);
+
+        $email = $pago->alumno?->email;
+
+        if (!$email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new JustificantePagoMail($pago));
+        } catch (\Throwable $e) {
+            report($e);
         }
     }
 }

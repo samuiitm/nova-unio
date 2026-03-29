@@ -15,6 +15,7 @@ return [
     */
 
     'default' => env('MAIL_MAILER', 'log'),
+    'enviar_justificantes_pago' => env('ENVIAR_JUSTIFICANTES_PAGO', false),
 
     /*
     |--------------------------------------------------------------------------
