@@ -300,6 +300,13 @@ class AlumnoController extends Controller
             ->orderByDesc('id')
             ->first();
 
+        $pagos = Pago::query()
+            ->where('alumno_id', $alumno->id)
+            ->with(['cuota.tipoCuota'])
+            ->orderByDesc('fecha_pago')
+            ->orderByDesc('id')
+            ->get();
+
         $estadoCuota = 'sin_cuota';
 
         if ($cuotaVigente) {
@@ -309,13 +316,6 @@ class AlumnoController extends Controller
         } elseif ($ultimaPagada && $ultimaPagada->fecha_fin && $ultimaPagada->fecha_fin->toDateString() < $hoy) {
             $estadoCuota = 'vencida';
         }
-
-        $cuotas = Cuota::query()
-            ->where('alumno_id', $alumno->id)
-            ->with(['tipoCuota', 'ultimoPago'])
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->get();
 
         $seguroVigente = Seguro::query()
             ->where('alumno_id', $alumno->id)
@@ -352,7 +352,7 @@ class AlumnoController extends Controller
             'cuotaVigente',
             'cuotaPendiente',
             'ultimaPagada',
-            'cuotas',
+            'pagos',
             'seguroVigente',
             'seguroPendiente',
             'ultimoSeguroPagado',

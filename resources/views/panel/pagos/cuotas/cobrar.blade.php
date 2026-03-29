@@ -51,9 +51,16 @@
             </select>
         </div>
 
-        <div class="lg:col-span-3">
-            <label class="text-sm panel-muted">Notas</label>
-            <input name="notas" value="{{ old('notas') }}" class="panel-input w-full mt-1 px-4 py-3" placeholder="Opcional">
+        <div>
+            <label class="text-sm panel-muted">Mes pagado</label>
+            <input
+                name="notas"
+                value="{{ old('notas') }}"
+                class="panel-input w-full mt-1 px-4 py-3"
+                placeholder="Ej. NOV 2026"
+                required
+            >
+            <p class="mt-1 text-xs panel-muted">Indica el mes o periodo pagado, por ejemplo: NOV 2026.</p>
         </div>
 
         <div class="lg:col-span-3 mt-2">

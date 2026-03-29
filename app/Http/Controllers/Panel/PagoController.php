@@ -185,11 +185,30 @@ class PagoController extends Controller
     // borrar pago para corregir errores (la cuota vuelve a pendiente)
     public function destroy(Pago $pago)
     {
-        DB::transaction(function () use ($pago) {
-            $pago->cuota()->update(['estado' => 'pendiente']);
+        $cuota = $pago->cuota;
+
+        if (!$cuota) {
+            return back()->withErrors([
+                'pago' => 'Este pago no tiene una cuota asociada válida.',
+            ]);
+        }
+
+        $totalPagosCuota = $cuota->pagos()->count();
+
+        if ($totalPagosCuota > 1) {
+            return back()->withErrors([
+                'pago' => 'Este pago pertenece a una cuota con historial antiguo reutilizado. Por seguridad no se puede borrar desde el panel. Revísalo manualmente para no perder historial.',
+            ]);
+        }
+
+        DB::transaction(function () use ($pago, $cuota) {
             $pago->delete();
+
+            $cuota->update([
+                'estado' => 'pendiente',
+            ]);
         });
 
-        return back()->with('ok', 'Pago eliminado. La cuota vuelve a pendiente.');
+        return back()->with('ok', 'Pago borrado correctamente. La cuota ha vuelto a pendiente.');
     }
 }

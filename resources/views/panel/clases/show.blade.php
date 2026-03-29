@@ -160,7 +160,14 @@
                         @endphp
                         <tr class="border-t panel-border">
                             <td class="py-3">
-                                <div class="font-medium">{{ $a->apellidos }}, {{ $a->nombre }}</div>
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        src="{{ $a->foto_url }}"
+                                        alt="Foto de {{ $a->nombre }}"
+                                        class="h-10 w-10 rounded-full object-cover border panel-border shrink-0"
+                                    >
+                                    <div class="font-medium">{{ $a->apellidos }}, {{ $a->nombre }}</div>
+                                </div>
                             </td>
 
                             <td class="py-3">

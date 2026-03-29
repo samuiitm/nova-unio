@@ -17,9 +17,7 @@
 
 <div class="flex items-start justify-between gap-4">
     <div>
-        <h1 class="text-2xl font-semibold">
-            {{ !empty($cuotaIdRenovar) ? 'Renovar cuota' : 'Asignar cuota' }}
-        </h1>
+        <h1 class="text-2xl font-semibold">Asignar cuota</h1>
         <p class="mt-1 panel-muted">{{ $alumno->nombre }} {{ $alumno->apellidos }}</p>
     </div>
 
@@ -43,11 +41,6 @@
     <div class="panel-card p-6">
         <form method="POST" action="{{ route('panel.pagos.cuotas.store', $alumno) }}" class="grid gap-3">
             @csrf
-
-            @if(!empty($cuotaIdRenovar))
-                <input type="hidden" name="cuota_id" value="{{ $cuotaIdRenovar }}">
-            @endif
-
             <div>
                 <label class="text-sm panel-muted">Tipo de cuota</label>
                 <select name="tipo_cuota_id" class="panel-input w-full mt-1 px-4 py-3" x-model="tipoId" @change="recalcular()">
@@ -84,8 +77,15 @@
                 </div>
 
                 <div>
-                    <label class="text-sm panel-muted">Notas</label>
-                    <input name="notas" value="{{ old('notas') }}" class="panel-input w-full mt-1 px-4 py-3" placeholder="Opcional">
+                    <label class="text-sm panel-muted">Mes pagado</label>
+                    <input
+                        name="notas"
+                        value="{{ old('notas') }}"
+                        class="panel-input w-full mt-1 px-4 py-3"
+                        placeholder="Ej. NOV 2026"
+                        :required="estado === 'pagada'"
+                    >
+                    <p class="mt-1 text-xs panel-muted">Indica el mes o periodo pagado, por ejemplo: NOV 2026.</p>
                 </div>
             </div>
 

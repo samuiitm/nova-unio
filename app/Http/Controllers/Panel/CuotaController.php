@@ -44,23 +44,12 @@ class CuotaController extends Controller
         }
 
         $tipos = TipoCuota::where('activo', 1)->orderBy('nombre')->get();
-
-        $hoy = now()->toDateString();
-        $cuotaVencida = Cuota::where('alumno_id', $alumno->id)
-            ->where('estado', 'pagada')
-            ->whereNotNull('fecha_fin')
-            ->whereDate('fecha_fin', '<', $hoy)
-            ->orderByDesc('fecha_fin')
-            ->first();
-
-        $cuotaIdRenovar = $cuotaVencida?->id;
         $fechaPagoSugerida = now()->toDateString();
 
         return view('panel.pagos.cuotas.crear', compact(
             'alumno',
             'tipos',
-            'fechaPagoSugerida',
-            'cuotaIdRenovar'
+            'fechaPagoSugerida'
         ));
     }
 
@@ -68,31 +57,15 @@ class CuotaController extends Controller
     {
         $data = $request->validated();
 
-        $cuota = null;
-
-        if ($request->filled('cuota_id')) {
-            $cuota = Cuota::where('id', $request->input('cuota_id'))
-                ->where('alumno_id', $alumno->id)
-                ->firstOrFail();
-        } else {
-            $hoy = now()->toDateString();
-            $cuota = Cuota::where('alumno_id', $alumno->id)
-                ->where('estado', 'pagada')
-                ->whereNotNull('fecha_fin')
-                ->whereDate('fecha_fin', '<', $hoy)
-                ->orderByDesc('fecha_fin')
-                ->first();
+        if ($this->alumnoTieneCuotaAsignada($alumno)) {
+            return back()->withErrors([
+                'tipo_cuota_id' => 'Este alumno ya tiene una cuota asignada (pendiente o vigente).',
+            ])->withInput();
         }
 
-        if (!$cuota) {
-            if ($this->alumnoTieneCuotaAsignada($alumno)) {
-                return back()->withErrors([
-                    'tipo_cuota_id' => 'Este alumno ya tiene una cuota asignada (pendiente o vigente).',
-                ])->withInput();
-            }
-
-            $cuota = new Cuota(['alumno_id' => $alumno->id]);
-        }
+        $cuota = new Cuota([
+            'alumno_id' => $alumno->id,
+        ]);
 
         $tipo = TipoCuota::findOrFail($data['tipo_cuota_id']);
 
@@ -229,13 +202,21 @@ class CuotaController extends Controller
 
     public function destroy(Cuota $cuota)
     {
+        if ($cuota->pagos()->exists()) {
+            return back()->withErrors([
+                'cuota' => 'No se puede eliminar una cuota que tiene pagos registrados. Para conservar el historial, esta acción queda bloqueada.',
+            ]);
+        }
+
         if ($cuota->estado !== 'pendiente') {
-            return back()->with('ok', 'Solo se pueden eliminar cuotas pendientes.');
+            return back()->withErrors([
+                'cuota' => 'Solo se pueden eliminar cuotas pendientes sin pagos.',
+            ]);
         }
 
         $cuota->delete();
 
-        return back()->with('ok', 'Cuota eliminada.');
+        return back()->with('ok', 'Cuota eliminada correctamente.');
     }
 
     private function calculadorCuotas(): CalculadorVigenciaCuotaService

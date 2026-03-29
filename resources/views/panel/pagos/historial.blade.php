@@ -77,7 +77,7 @@
                     <th class="py-2">Tipo</th>
                     <th class="py-2">Importe</th>
                     <th class="py-2">Método</th>
-                    <th class="py-2">Notas</th>
+                    <th class="py-2">Mes pagado</th>
                     <th class="py-2 text-right">Acción</th>
                 </tr>
             </thead>

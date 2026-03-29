@@ -34,7 +34,7 @@ class Cuota extends Model
 
     public function pagos()
     {
-        return $this->hasMany(Pago::class);
+        return $this->hasMany(\App\Models\Pago::class, 'cuota_id');
     }
 
     public function pago()

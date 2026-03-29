@@ -74,7 +74,7 @@
         </div>
     </div>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
         @if(\Illuminate\Support\Facades\Route::has('panel.pagos.cuotas.crear'))
             <a href="{{ route('panel.pagos.cuotas.crear', $alumno) }}" class="panel-btn px-5 py-3">
                 Asignar cuota
@@ -310,6 +310,8 @@
                     <div class="mt-2 text-sm panel-muted">
                         @if($estadoSeguro === 'vigente')
                             Estado: <span class="text-white">Vigente</span>
+                        @elseif($estadoSeguro === 'pendiente')
+                            Estado: <span class="text-white">Pendiente de pago</span>
                         @elseif($estadoSeguro === 'vencido')
                             Estado: <span class="text-white">Vencido</span>
                         @else
@@ -329,34 +331,54 @@
             <div class="mt-5 flex items-center justify-between">
                 <div class="panel-muted text-sm">
                     Inicio:
-                    <span class="text-white">{{ $inicioSeguro ? $inicioSeguro->format('d/m/Y') : '—' }}</span>
+                    <span class="text-white">
+                        {{ $inicioSeguro ? $inicioSeguro->format('d/m/Y') : ($estadoSeguro === 'pendiente' ? 'Al cobrar' : '—') }}
+                    </span>
                 </div>
                 <div class="panel-muted text-sm">
                     Fin:
-                    <span class="text-white">{{ $finSeguro ? $finSeguro->format('d/m/Y') : '—' }}</span>
+                    <span class="text-white">
+                        {{ $finSeguro ? $finSeguro->format('d/m/Y') : ($estadoSeguro === 'pendiente' ? 'Al cobrar' : '—') }}
+                    </span>
                 </div>
             </div>
 
             <div class="mt-6 flex flex-wrap gap-2">
-                @if(\Illuminate\Support\Facades\Route::has('panel.pagos.seguros.create'))
-                    @if(!$seguroVigente)
-                        <a class="panel-btn px-5 py-3" href="{{ route('panel.pagos.seguros.create', ['alumno' => $alumno->id]) }}">
-                            {{ $ultimoSeguroPagado ? 'Renovar seguro' : 'Registrar seguro' }}
-                        </a>
-                    @endif
-                @endif
+                @if($seguroPendiente)
+                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.cobrar', $seguroPendiente) }}">
+                        Cobrar
+                    </a>
 
-                @if($seguroVigente && \Illuminate\Support\Facades\Route::has('panel.pagos.seguros.edit'))
-                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.edit', $seguroVigente) }}">
-                        Editar seguro
+                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.edit', $seguroPendiente) }}">
+                        Editar
+                    </a>
+
+                    <form method="POST" action="{{ route('panel.pagos.seguros.destroy', $seguroPendiente) }}">
+                        @csrf
+                        @method('DELETE')
+                        <button class="panel-icon-btn px-5 py-3"
+                                onclick="return confirm('¿Eliminar este seguro pendiente?')">
+                            Eliminar
+                        </button>
+                    </form>
+                @elseif($seguroVigente)
+                    <form method="POST" action="{{ route('panel.pagos.seguros.pago.destroy', $seguroVigente) }}">
+                        @csrf
+                        @method('DELETE')
+                        <button class="panel-icon-btn px-5 py-3"
+                                onclick="return confirm('¿Borrar pago? El seguro volverá a pendiente para poder cobrarlo, editarlo o eliminarlo.')">
+                            Borrar pago
+                        </button>
+                    </form>
+                @else
+                    <a class="panel-btn px-5 py-3" href="{{ route('panel.pagos.seguros.create', ['alumno' => $alumno->id]) }}">
+                        {{ $ultimoSeguroPagado ? 'Renovar seguro' : 'Registrar seguro' }}
                     </a>
                 @endif
 
-                @if(\Illuminate\Support\Facades\Route::has('panel.pagos.seguros.index'))
-                    <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.index') }}">
-                        Ver seguros
-                    </a>
-                @endif
+                <a class="panel-icon-btn px-5 py-3" href="{{ route('panel.pagos.seguros.index') }}">
+                    Ver seguros
+                </a>
             </div>
         </div>
     </div>
@@ -364,77 +386,50 @@
 
 <div class="mt-5 space-y-4">
     <div class="panel-card p-6">
-        <h2 class="text-lg font-semibold">Historial de cuotas</h2>
+        <h2 class="text-lg font-semibold">Historial de pagos</h2>
+        <p class="mt-1 text-sm panel-muted">Aquí se ve cada cobro realizado, con el mes pagado indicado para cada pago.</p>
 
         <div class="mt-4 overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="text-left panel-muted">
                     <tr>
-                        <th class="py-2">Tipo</th>
-                        <th class="py-2">Estado</th>
+                        <th class="py-2">Fecha</th>
+                        <th class="py-2">Concepto</th>
                         <th class="py-2">Vigencia</th>
-                        <th class="py-2">Fecha pago</th>
                         <th class="py-2">Importe</th>
                         <th class="py-2">Método</th>
-                        <th class="py-2 text-right">Acciones</th>
+                        <th class="py-2">Mes pagado</th>
+                        <th class="py-2 text-right">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($cuotas as $c)
-                        @php
-                            if ($c->estado === 'anulada') {
-                                $estadoVisual = 'Anulada';
-                            } elseif ($c->estado === 'pendiente') {
-                                $estadoVisual = 'Pendiente';
-                            } else {
-                                $estadoVisual = ($c->fecha_fin && $c->fecha_fin->toDateString() < now()->toDateString()) ? 'Vencida' : 'Vigente';
-                            }
-                        @endphp
-
-                        <tr class="border-t panel-border {{ $c->estado === 'anulada' ? 'opacity-50' : '' }}">
-                            <td class="py-3">{{ $c->tipoCuota?->nombre ?? '—' }}</td>
-                            <td class="py-3">{{ $estadoVisual }}</td>
+                    @forelse($pagos as $p)
+                        <tr class="border-t panel-border">
+                            <td class="py-3">{{ $p->fecha_pago?->format('d/m/Y') }}</td>
+                            <td class="py-3">{{ $p->tipo_cuota_nombre ?? ($p->cuota->tipoCuota->nombre ?? '—') }}</td>
                             <td class="py-3">
-                                @if($c->fecha_inicio || $c->fecha_fin)
-                                    {{ $c->fecha_inicio?->format('d/m/Y') ?: '—' }} - {{ $c->fecha_fin?->format('d/m/Y') ?: '—' }}
-                                @else
-                                    —
-                                @endif
+                                {{ $p->vigencia_inicio ? \Carbon\Carbon::parse($p->vigencia_inicio)->format('d/m/Y') : '—' }}
+                                -
+                                {{ $p->vigencia_fin ? \Carbon\Carbon::parse($p->vigencia_fin)->format('d/m/Y') : '—' }}
                             </td>
-                            <td class="py-3">{{ $c->ultimoPago?->fecha_pago?->format('d/m/Y') ?: '—' }}</td>
-                            <td class="py-3">{{ number_format((float) $c->importe, 2, ',', '.') }} €</td>
-                            <td class="py-3">{{ $c->ultimoPago?->metodo ? ucfirst($c->ultimoPago->metodo) : '—' }}</td>
+                            <td class="py-3">{{ number_format((float) $p->importe, 2, ',', '.') }} €</td>
+                            <td class="py-3">{{ ucfirst($p->metodo) }}</td>
+                            <td class="py-3">{{ $p->notas ?: '—' }}</td>
                             <td class="py-3 text-right">
-                                <div class="inline-flex gap-2">
-                                    @if($c->estado === 'pendiente')
-                                        <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.cuotas.cobrar', $c) }}">Cobrar</a>
-                                        <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.cuotas.edit', $c) }}">Editar</a>
-
-                                        <form method="POST" action="{{ route('panel.pagos.cuotas.destroy', $c) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="panel-icon-btn px-4 py-2"
-                                                    onclick="return confirm('¿Eliminar esta cuota pendiente?')">
-                                                Eliminar
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    @if($c->estado === 'pagada' && $c->ultimoPago)
-                                        <form method="POST" action="{{ route('panel.pagos.destroy', $c->ultimoPago) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="panel-icon-btn px-4 py-2"
-                                                    onclick="return confirm('¿Borrar pago? La cuota volverá a pendiente para poder editarla o eliminarla.')">
-                                                Borrar pago
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
+                                <form method="POST" action="{{ route('panel.pagos.destroy', $p) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="panel-icon-btn px-4 py-2"
+                                            onclick="return confirm('¿Borrar este pago? La cuota volverá a pendiente.')">
+                                        Borrar pago
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="py-6 panel-muted">Sin cuotas.</td></tr>
+                        <tr>
+                            <td colspan="7" class="py-6 panel-muted">Sin pagos registrados.</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -473,7 +468,7 @@
                             <td class="py-3">{{ number_format((float) $seguro->importe, 2, ',', '.') }} €</td>
                             <td class="py-3">{{ $seguro->metodo ? ucfirst($seguro->metodo) : '—' }}</td>
                             <td class="py-3 text-right">
-                                <div class="inline-flex gap-2">
+                                <div class="inline-flex gap-2 flex-wrap justify-end">
                                     @if($seguro->estado === 'pendiente')
                                         <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.seguros.cobrar', $seguro) }}">Cobrar</a>
                                         <a class="panel-icon-btn px-4 py-2" href="{{ route('panel.pagos.seguros.edit', $seguro) }}">Editar</a>
