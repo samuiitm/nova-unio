@@ -367,7 +367,7 @@
             </div>
 
             <div class="flex items-center gap-6">
-                <a href="https://www.instagram.com/novaunioteam"
+                <a href="https://www.instagram.com/novaunio"
                     class="w-10 h-10 grid place-items-center border-2 rounded-full border-white/25 hover:border-white/60 text-main hover:text-white transition">
                     <span class="sr-only">Instagram</span>
                     <svg width="20" height="20" viewBox="0 0 7 7" fill="none" xmlns="http://www.w3.org/2000/svg">

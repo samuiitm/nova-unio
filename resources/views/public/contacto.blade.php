@@ -176,7 +176,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-accent">●</span>
-                        <a class="hover:text-white transition" href="https://www.instagram.com/novaunioteam"
+                        <a class="hover:text-white transition" href="https://www.instagram.com/novaunio"
                             target="_blank" rel="noreferrer">Instagram</a>
                     </div>
                     <div class="flex items-center gap-3">

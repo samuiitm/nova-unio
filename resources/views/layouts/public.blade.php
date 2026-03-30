@@ -223,7 +223,7 @@
 
             <div class="flex items-center gap-4 mt-6">
               <!-- Instagram -->
-              <a href="https://www.instagram.com/novaunioteam"
+              <a href="https://www.instagram.com/novaunio"
                  class="w-8 h-8 grid place-items-center border-2 rounded-full border-white/25 hover:border-white/60 text-main hover:text-white transition"
                  aria-label="Instagram">
                 <svg width="16" height="16" viewBox="0 0 7 7" fill="none" xmlns="http://www.w3.org/2000/svg">
