@@ -111,10 +111,14 @@
                                 if ($cuota->estado === 'pendiente') {
                                     $estadoCuota = 'pendiente';
                                 } elseif ($cuota->estado === 'pagada') {
-                                    if ($cuota->fecha_fin && $cuota->fecha_fin->toDateString() < $hoy) {
-                                        $estadoCuota = 'vencida';
-                                    } else {
+                                    $fechaFin = $cuota->fecha_fin?->toDateString();
+
+                                    if ($fechaFin === null || $fechaFin > $hoy) {
                                         $estadoCuota = 'vigente';
+                                    } elseif ($fechaFin === $hoy) {
+                                        $estadoCuota = 'vence_hoy';
+                                    } else {
+                                        $estadoCuota = 'vencida';
                                     }
                                 }
                             }
@@ -178,22 +182,27 @@
                             <td class="py-3">
                                 @if($estadoCuota === 'vigente')
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                        style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
                                         Vigente
+                                    </span>
+                                @elseif($estadoCuota === 'vence_hoy')
+                                    <span class="text-xs px-3 py-1 rounded-full"
+                                        style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                        Vence hoy
                                     </span>
                                 @elseif($estadoCuota === 'pendiente')
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                        style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
                                         Pendiente
                                     </span>
                                 @elseif($estadoCuota === 'vencida')
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                        style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
                                         Vencida
                                     </span>
                                 @else
                                     <span class="text-xs px-3 py-1 rounded-full"
-                                          style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
+                                        style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
                                         Sin cuota
                                     </span>
                                 @endif

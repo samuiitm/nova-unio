@@ -277,10 +277,18 @@ class AlumnoController extends Controller
             ->where('estado', 'pagada')
             ->where(function ($q) use ($hoy) {
                 $q->whereNull('fecha_fin')
-                    ->orWhereDate('fecha_fin', '>=', $hoy);
+                    ->orWhereDate('fecha_fin', '>', $hoy);
             })
             ->with(['tipoCuota', 'ultimoPago'])
             ->orderByDesc('fecha_fin')
+            ->orderByDesc('id')
+            ->first();
+
+        $cuotaVenceHoy = Cuota::query()
+            ->where('alumno_id', $alumno->id)
+            ->where('estado', 'pagada')
+            ->whereDate('fecha_fin', '=', $hoy)
+            ->with(['tipoCuota', 'ultimoPago'])
             ->orderByDesc('id')
             ->first();
 
@@ -311,6 +319,8 @@ class AlumnoController extends Controller
 
         if ($cuotaVigente) {
             $estadoCuota = 'vigente';
+        } elseif ($cuotaVenceHoy) {
+            $estadoCuota = 'vence_hoy';
         } elseif ($cuotaPendiente) {
             $estadoCuota = 'pendiente';
         } elseif ($ultimaPagada && $ultimaPagada->fecha_fin && $ultimaPagada->fecha_fin->toDateString() < $hoy) {
@@ -350,6 +360,7 @@ class AlumnoController extends Controller
             'gruposActivos',
             'estadoCuota',
             'cuotaVigente',
+            'cuotaVenceHoy',
             'cuotaPendiente',
             'ultimaPagada',
             'pagos',

@@ -5,23 +5,27 @@
 @section('content')
 @php
     $tituloCuota =
-        $estadoCuota === 'vigente' ? ($cuotaVigente->tipoCuota->nombre ?? 'Cuota') :
-        ($estadoCuota === 'pendiente' ? ($cuotaPendiente->tipoCuota->nombre ?? 'Cuota pendiente') :
-        ($estadoCuota === 'vencida' ? ($ultimaPagada->tipoCuota->nombre ?? 'Cuota vencida') :
-        'Sin cuota'));
+            $estadoCuota === 'vigente' ? ($cuotaVigente->tipoCuota->nombre ?? 'Cuota') :
+            ($estadoCuota === 'vence_hoy' ? ($cuotaVenceHoy->tipoCuota->nombre ?? 'Cuota') :
+            ($estadoCuota === 'pendiente' ? ($cuotaPendiente->tipoCuota->nombre ?? 'Cuota pendiente') :
+            ($estadoCuota === 'vencida' ? ($ultimaPagada->tipoCuota->nombre ?? 'Cuota vencida') :
+        'Sin cuota')));
 
     $inicio =
         $estadoCuota === 'vigente' ? $cuotaVigente->fecha_inicio :
-        ($estadoCuota === 'vencida' ? $ultimaPagada->fecha_inicio : null);
+        ($estadoCuota === 'vence_hoy' ? $cuotaVenceHoy->fecha_inicio :
+        ($estadoCuota === 'vencida' ? $ultimaPagada->fecha_inicio : null));
 
     $fin =
         $estadoCuota === 'vigente' ? $cuotaVigente->fecha_fin :
-        ($estadoCuota === 'vencida' ? $ultimaPagada->fecha_fin : null);
+        ($estadoCuota === 'vence_hoy' ? $cuotaVenceHoy->fecha_fin :
+        ($estadoCuota === 'vencida' ? $ultimaPagada->fecha_fin : null));
 
     $importe =
         $estadoCuota === 'vigente' ? $cuotaVigente->importe :
+        ($estadoCuota === 'vence_hoy' ? $cuotaVenceHoy->importe :
         ($estadoCuota === 'pendiente' ? $cuotaPendiente->importe :
-        ($estadoCuota === 'vencida' ? $ultimaPagada->importe : null));
+        ($estadoCuota === 'vencida' ? $ultimaPagada->importe : null)));
 
     $telefonosContacto = $alumno->telefonosContacto ?? collect();
 
@@ -232,6 +236,8 @@
                     <div class="mt-2 text-sm panel-muted">
                         @if($estadoCuota === 'vigente')
                             Estado: <span class="text-white">Vigente</span>
+                        @elseif($estadoCuota === 'vence_hoy')
+                            Estado: <span class="text-white">Vence hoy</span>
                         @elseif($estadoCuota === 'pendiente')
                             Estado: <span class="text-white">Pendiente de pago</span>
                         @elseif($estadoCuota === 'vencida')
