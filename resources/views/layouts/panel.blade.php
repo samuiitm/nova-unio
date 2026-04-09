@@ -367,15 +367,108 @@
                 </button>
 
                 <!-- Search (altura fija) -->
-                <div class="flex-1 min-w-0">
-                    <div class="panel-input h-12 flex items-center gap-3 px-4">
+                <div class="flex-1 min-w-0 relative"
+                    x-data="panelGlobalSearch({
+                        initialQuery: @js(request()->routeIs('panel.busqueda.*') ? request('q', '') : ''),
+                        minLength: 2,
+                        suggestionsUrl: @js(route('panel.busqueda.sugerencias')),
+                        fullResultsUrl: @js(route('panel.busqueda.index')),
+                    })"
+                    @keydown.escape.stop="close()"
+                    @click.outside="close()">
+                    <div class="panel-input h-12 flex items-center gap-3 px-4"
+                        :class="open ? 'ring-2 ring-indigo-500/30 border-indigo-400/40' : ''">
                         <svg class="h-5 w-5 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"/>
                             <path d="m21 21-4.3-4.3"/>
                         </svg>
                         <input type="text"
+                            x-model="q"
+                            @input="onInput()"
+                            @focus="if ((q || '').trim().length >= minLength && (results.length || loading)) open = true"
+                            @keydown.arrow-down.prevent="setActiveByOffset(1); open = true"
+                            @keydown.arrow-up.prevent="setActiveByOffset(-1); open = true"
+                            @keydown.enter.prevent="open ? goToActiveItem() : goToFullResults()"
                             class="w-full min-w-0 bg-transparent border-none text-md focus:outline-none focus:ring-0"
-                            placeholder="Busca alumnos, secciones, grupos...">
+                            placeholder="Busca alumnos, secciones, grupos..."
+                            autocomplete="off"
+                            aria-label="Buscar en el panel">
+
+                        <button type="button"
+                                x-cloak
+                                x-show="(q || '').length > 0"
+                                @click="q=''; results=[]; total=0; close()"
+                                class="panel-muted hover:text-white transition"
+                                aria-label="Limpiar búsqueda">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6 6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div x-cloak
+                        x-show="open"
+                        x-transition.origin.top.left
+                        class="absolute left-0 right-0 mt-2 panel-search-dropdown overflow-hidden z-50">
+                        <div class="max-h-[70vh] overflow-y-auto">
+                            <div x-show="loading" class="px-4 py-4 text-sm panel-muted">
+                                Buscando…
+                            </div>
+
+                            <template x-if="!loading && ((q || '').trim().length < minLength)">
+                                <div class="px-4 py-4 text-sm panel-muted">Escribe al menos 2 caracteres.</div>
+                            </template>
+
+                            <template x-if="!loading && ((q || '').trim().length >= minLength) && results.length === 0">
+                                <div class="px-4 py-4 text-sm panel-muted">No hay resultados para tu búsqueda.</div>
+                            </template>
+
+                            <template x-for="(group, groupIndex) in results" :key="group.key">
+                                <div>
+                                    <div class="px-4 pt-4 pb-2 text-[11px] uppercase tracking-[0.18em] panel-muted" x-text="group.label"></div>
+
+                                    <div class="px-2 pb-2">
+                                        <template x-for="(item, itemIndex) in group.items" :key="`${group.key}-${item.type}-${item.url}-${itemIndex}`">
+                                            <a :href="item.url"
+                                            class="panel-search-result-item items-start gap-3 px-3 py-3"
+                                            :class="isActive(groupIndex, itemIndex) ? 'is-active' : ''"
+                                            @mouseenter="activeIndex = itemGlobalIndex(groupIndex, itemIndex)">
+                                                <template x-if="item.image_url">
+                                                    <img :src="item.image_url" alt="" class="h-10 w-10 rounded-xl object-cover border panel-border shrink-0">
+                                                </template>
+
+                                                <template x-if="!item.image_url && item.color">
+                                                    <span class="mt-1 h-4 w-4 rounded-full shrink-0 border border-white/20" :style="`background-color: ${item.color}`"></span>
+                                                </template>
+
+                                                <template x-if="!item.image_url && !item.color">
+                                                    <span class="h-10 w-10 rounded-xl panel-icon-btn shrink-0 flex items-center justify-center text-xs uppercase tracking-wide" x-text="(item.title || '?').slice(0, 1)"></span>
+                                                </template>
+
+                                                <span class="min-w-0 flex-1">
+                                                    <span class="block text-sm font-semibold text-white truncate" x-text="item.title"></span>
+                                                    <span x-show="item.subtitle" class="mt-1 block text-sm panel-muted break-words" x-text="item.subtitle"></span>
+                                                    <span x-show="item.meta" class="mt-1 block text-xs text-white/70 break-words" x-text="item.meta"></span>
+                                                </span>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="border-t panel-border px-4 py-3 flex items-center justify-between gap-3"
+                            x-show="!loading && ((q || '').trim().length >= minLength)">
+                            <p class="text-xs panel-muted">
+                                <span x-text="total"></span> resultado(s)
+                            </p>
+
+                            <button type="button"
+                                    class="text-sm font-medium text-indigo-300 hover:text-indigo-200 transition"
+                                    @click="goToFullResults()">
+                                Ver todos
+                            </button>
+                        </div>
                     </div>
                 </div>
 

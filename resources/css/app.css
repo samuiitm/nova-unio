@@ -274,3 +274,23 @@ body {
     color: rgb(var(--p-text));
   }
 }
+
+@layer components {
+  .panel-search-dropdown{
+    background: rgb(var(--p-shell));
+    border: 1px solid rgb(var(--p-border) / var(--p-border-a));
+    border-radius: 18px;
+    box-shadow: 0 20px 45px -28px rgba(0, 0, 0, .85);
+  }
+
+  .panel-search-result-item{
+    display: flex;
+    transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
+    border-radius: 14px;
+  }
+
+  .panel-search-result-item:hover,
+  .panel-search-result-item.is-active{
+    background: rgb(var(--p-surface) / .08);
+  }
+}

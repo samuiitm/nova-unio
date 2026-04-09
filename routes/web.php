@@ -84,6 +84,12 @@ Route::prefix('panel')
             Route::get('/', [\App\Http\Controllers\Panel\DashboardController::class, 'index'])
                 ->name('home');
 
+            Route::get('busqueda', [\App\Http\Controllers\Panel\BusquedaGlobalController::class, 'index'])
+                ->name('busqueda.index');
+
+            Route::get('busqueda/sugerencias', [\App\Http\Controllers\Panel\BusquedaGlobalController::class, 'sugerencias'])
+                ->name('busqueda.sugerencias');
+
             // =========================
             // MEDIA PRIVADA
             // =========================
