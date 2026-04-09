@@ -43,8 +43,6 @@ class StoreAlumnoRequest extends FormRequest
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'quitar_foto' => ['nullable', 'boolean'],
 
-            'notas' => ['nullable', 'string'],
-
             'grupos' => ['nullable', 'array'],
             'grupos.*' => ['integer', 'exists:grupos,id'],
 

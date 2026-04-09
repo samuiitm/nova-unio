@@ -194,13 +194,6 @@
             </div>
         </div>
 
-        <div class="mt-6 border-t panel-border pt-5">
-            <h3 class="text-base font-semibold">Notas</h3>
-            <p class="mt-3 text-sm panel-muted whitespace-pre-line">
-                {{ $alumno->notas ?: 'Sin notas.' }}
-            </p>
-        </div>
-
         <div class="mt-5 flex gap-2">
             @if($alumno->activo)
                 <form method="POST" action="{{ route('panel.alumnos.baja', $alumno) }}">

@@ -138,14 +138,6 @@
                        class="mt-1 w-full panel-input px-4 py-3"
                        placeholder="Barcelona">
             </div>
-
-            <div class="sm:col-span-2">
-                <label class="text-sm font-medium">Notas</label>
-                <textarea name="notas"
-                          rows="4"
-                          class="mt-1 w-full panel-input px-4 py-3"
-                          placeholder="Notas internas...">{{ old('notas', $alumno->notas ?? '') }}</textarea>
-            </div>
         </div>
     </div>
 

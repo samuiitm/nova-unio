@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateGrupoRequest;
 use App\Models\Alumno;
 use App\Models\Grupo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GrupoController extends Controller
 {
@@ -100,18 +101,26 @@ class GrupoController extends Controller
             'fecha_alta' => ['nullable', 'date'],
         ]);
 
-        $yaEsta = $grupo->alumnos()
-            ->where('alumnos.id', $data['alumno_id'])
-            ->wherePivotNull('fecha_baja')
+        $hoy = $data['fecha_alta'] ?? now()->toDateString();
+        $ahora = now();
+
+        $yaEsta = DB::table('alumno_grupo')
+            ->where('grupo_id', $grupo->id)
+            ->where('alumno_id', $data['alumno_id'])
+            ->whereNull('fecha_baja')
             ->exists();
 
         if ($yaEsta) {
             return back()->with('ok', 'Ese alumno ya está en el grupo.');
         }
 
-        $grupo->alumnos()->attach($data['alumno_id'], [
-            'fecha_alta' => $data['fecha_alta'] ?? now()->toDateString(),
+        DB::table('alumno_grupo')->insert([
+            'grupo_id' => $grupo->id,
+            'alumno_id' => (int) $data['alumno_id'],
+            'fecha_alta' => $hoy,
             'fecha_baja' => null,
+            'created_at' => $ahora,
+            'updated_at' => $ahora,
         ]);
 
         return back()->with('ok', 'Alumno asignado al grupo.');
@@ -119,27 +128,41 @@ class GrupoController extends Controller
 
     public function bajaAlumno(Grupo $grupo, Alumno $alumno)
     {
-        $grupo->alumnos()->updateExistingPivot($alumno->id, [
-            'fecha_baja' => now()->toDateString(),
-        ]);
+        $actualizadas = DB::table('alumno_grupo')
+            ->where('grupo_id', $grupo->id)
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('fecha_baja')
+            ->update([
+                'fecha_baja' => now()->toDateString(),
+                'updated_at' => now(),
+            ]);
+
+        if (!$actualizadas) {
+            return back()->with('ok', 'No había ninguna asignación activa de este alumno en el grupo.');
+        }
 
         return back()->with('ok', 'Alumno dado de baja del grupo.');
     }
 
     public function activarAlumno(Grupo $grupo, Alumno $alumno)
     {
-        $yaEsta = $grupo->alumnos()
-            ->where('alumnos.id', $alumno->id)
-            ->wherePivotNull('fecha_baja')
+        $yaEsta = DB::table('alumno_grupo')
+            ->where('grupo_id', $grupo->id)
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('fecha_baja')
             ->exists();
 
         if ($yaEsta) {
             return back()->with('ok', 'Ese alumno ya está activo en el grupo.');
         }
 
-        $grupo->alumnos()->attach($alumno->id, [
+        DB::table('alumno_grupo')->insert([
+            'grupo_id' => $grupo->id,
+            'alumno_id' => $alumno->id,
             'fecha_alta' => now()->toDateString(),
             'fecha_baja' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return back()->with('ok', 'Alumno activado en el grupo.');

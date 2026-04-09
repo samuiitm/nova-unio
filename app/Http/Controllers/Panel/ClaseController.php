@@ -17,7 +17,7 @@ class ClaseController extends Controller
             ->wherePivot('fecha_alta', '<=', $clase->fecha)
             ->where(function ($q) use ($clase) {
                 $q->whereNull('alumno_grupo.fecha_baja')
-                    ->orWhereDate('alumno_grupo.fecha_baja', '>', $clase->fecha);
+                    ->orWhereDate('alumno_grupo.fecha_baja', '>=', $clase->fecha);
             })
             ->where(function ($q) use ($clase) {
                 $q->where(function ($w) {
