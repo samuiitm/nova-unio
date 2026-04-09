@@ -6,7 +6,7 @@
 <div class="flex items-start justify-between gap-4">
     <div>
         <h1 class="text-2xl font-semibold">Pendientes de pago</h1>
-        <p class="mt-1 panel-muted">Cuotas pendientes (no vencidas) y alumnos sin cuota.</p>
+        <p class="mt-1 panel-muted">Cuotas pendientes de cobro y alumnos sin cuota.</p>
     </div>
 
     <a href="{{ route('panel.pagos.pendientes') }}" class="panel-icon-btn px-5 py-3">Limpiar</a>
@@ -60,8 +60,8 @@
 </div>
 
 <div class="mt-5 panel-card p-6">
-    <h2 class="text-lg font-semibold">Cuotas pendientes (no vencidas)</h2>
-    <p class="mt-1 panel-muted text-sm">Estas cuotas todavía están dentro del periodo o en futuro.</p>
+    <h2 class="text-lg font-semibold">Cuotas pendientes</h2>
+    <p class="mt-1 panel-muted text-sm">Todavía no se han cobrado. La vigencia real se calcula al registrar el pago.</p>
 
     <div class="mt-4 overflow-x-auto">
         <table class="w-full text-sm">
@@ -84,7 +84,11 @@
                         <td class="py-3">{{ $c->alumno->apellidos }}, {{ $c->alumno->nombre }}</td>
                         <td class="py-3">{{ $grupo?->nombre ?? '—' }}</td>
                         <td class="py-3">
-                            {{ $c->fecha_inicio?->format('d/m/Y') }} - {{ $c->fecha_fin?->format('d/m/Y') }}
+                            @if($c->fecha_inicio || $c->fecha_fin)
+                                {{ $c->fecha_inicio?->format('d/m/Y') ?: '—' }} - {{ $c->fecha_fin?->format('d/m/Y') ?: '—' }}
+                            @else
+                                <span class="panel-muted">Al cobrar</span>
+                            @endif
                         </td>
                         <td class="py-3">{{ number_format((float)$c->importe, 2, ',', '.') }} €</td>
                         <td class="py-3">{{ $c->tipoCuota?->nombre ?? '—' }}</td>

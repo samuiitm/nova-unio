@@ -87,7 +87,7 @@
                         <td class="py-3">{{ $p->fecha_pago?->format('d/m/Y') }}</td>
                         <td class="py-3">{{ $p->alumno->apellidos }}, {{ $p->alumno->nombre }}</td>
                         <td class="py-3">
-                            {{ $p->cuota->fecha_inicio?->format('d/m/Y') }} - {{ $p->cuota->fecha_fin?->format('d/m/Y') }}
+                            {{ $p->vigencia_inicio?->format('d/m/Y') ?: '—' }} - {{ $p->vigencia_fin?->format('d/m/Y') ?: '—' }}
                         </td>
                         <td class="py-3">{{ $p->tipo_cuota_nombre ?? ($p->cuota->tipoCuota?->nombre ?? '—') }}</td>
                         <td class="py-3">{{ number_format((float)$p->importe, 2, ',', '.') }} €</td>

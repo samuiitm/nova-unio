@@ -583,8 +583,8 @@ class AlumnoController extends Controller
             Cuota::create([
                 'alumno_id' => $alumno->id,
                 'tipo_cuota_id' => $tipo->id,
-                'fecha_inicio' => now()->toDateString(),
-                'fecha_fin' => now()->toDateString(),
+                'fecha_inicio' => null,
+                'fecha_fin' => null,
                 'importe' => $tipo->importe,
                 'estado' => 'pendiente',
             ]);
