@@ -117,4 +117,9 @@ return [
     ],
 
     'contact_to' => env('MAIL_CONTACT_TO', 'contacto@novaunio.cat'),
+
+    'receipts_from' => [
+        'address' => env('MAIL_RECEIPTS_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => env('MAIL_RECEIPTS_FROM_NAME', env('MAIL_FROM_NAME', 'Nova Unió')),
+    ],
 ];

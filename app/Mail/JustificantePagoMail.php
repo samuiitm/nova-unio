@@ -31,7 +31,11 @@ class JustificantePagoMail extends Mailable
 
         $nombreArchivo = "justificante-pago-{$this->pago->id}-{$nombreAlumnoSlug}-{$fecha}.pdf";
 
-        return $this
+       return $this
+            ->from(
+                config('mail.receipts_from.address'),
+                config('mail.receipts_from.name')
+            )
             ->subject('Justificante de pago - Nova Unió')
             ->view('emails.justificante-pago-texto')
             ->attachData(
