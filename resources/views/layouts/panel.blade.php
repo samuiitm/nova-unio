@@ -474,15 +474,6 @@
 
                 <!-- Right actions -->
                 <div class="flex items-center gap-2 sm:gap-3">
-
-                    <!-- Notificaciones (altura fija) -->
-                    <button class="panel-icon-btn h-12 w-12 flex items-center justify-center" aria-label="Notificaciones">
-                        <svg class="h-5 w-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
-                            <path d="M13.7 21a2 2 0 01-3.4 0"/>
-                        </svg>
-                    </button>
-
                     <!-- User dropdown -->
                     <div class="relative" x-data="{ open:false }" @keydown.escape.window="open=false">
                         <button type="button"
