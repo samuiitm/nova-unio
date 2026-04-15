@@ -12,9 +12,6 @@
 
     $cursor = $inicio->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
     $finCalendario = $fin->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-
-    $limiteSinLista = now()->subDay()->toDateString();
-    $limiteBloqueo  = now()->subDays(2)->toDateString();
 @endphp
 
 <div class="flex items-start justify-between gap-4">
@@ -62,19 +59,18 @@
                 $fechaStr = $cursor->toDateString();
                 $lista = $clases->get($fechaStr, collect());
 
-                $haySinLista = $lista->contains(function($c) use ($limiteSinLista) {
+                $haySinLista = $lista->contains(function($c) {
                     $total = (int) ($c->asistencias_total ?? 0);
-                    return $c->estado !== 'cancelada'
-                        && !$c->asistencia_cerrada
-                        && $c->fecha <= $limiteSinLista
-                        && $total === 0;
+                    $estado = $c->estadoVisualAsistencia($total);
+
+                    return in_array($estado['clave'], ['sin_lista', 'sin_lista_bloqueada'], true);
                 });
 
                 $hayPasada = $lista->contains(function($c) {
                     $total = (int) ($c->asistencias_total ?? 0);
-                    return $c->estado !== 'cancelada'
-                        && !$c->asistencia_cerrada
-                        && $total > 0;
+                    $estado = $c->estadoVisualAsistencia($total);
+
+                    return in_array($estado['clave'], ['pasada', 'cerrada'], true);
                 });
             @endphp
 
@@ -104,28 +100,24 @@
                 <div class="mt-2 space-y-1">
                     @foreach($lista as $clase)
                         @php
-                            $esCancelada = $clase->estado === 'cancelada';
-                            $cerradaManual = (bool) $clase->asistencia_cerrada;
                             $total = (int) ($clase->asistencias_total ?? 0);
-
-                            $bloqueadaSinLista = !$esCancelada && !$cerradaManual && ($clase->fecha <= $limiteBloqueo) && $total === 0;
-                            $sinLista = !$esCancelada && !$cerradaManual && ($clase->fecha <= $limiteSinLista) && $total === 0 && !$bloqueadaSinLista;
-                            $pasada = !$esCancelada && !$cerradaManual && $total > 0;
+                            $estadoInfo = $clase->estadoVisualAsistencia($total);
+                            $estadoVisual = $estadoInfo['clave'];
 
                             $grupoHex = $clase->grupo->color_hex ?? '#7C5CFF';
                             $grupoRgb = $clase->grupo->color_rgb ?? '124 92 255';
 
                             $baseGrupo = '$grupoHex' . ';';
 
-                            if ($esCancelada) {
+                            if ($estadoVisual === 'cancelada') {
                                 $style = 'background: rgb(255 80 120 / .12); color: rgb(255 215 225 / .95); border: 1px solid rgb(255 80 120 / .22); ' . $baseGrupo;
-                            } elseif ($cerradaManual) {
+                            } elseif ($estadoVisual === 'cerrada') {
                                 $style = 'background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .88); border: 1px solid rgb(255 255 255 / .10); ' . $baseGrupo;
-                            } elseif ($bloqueadaSinLista) {
+                            } elseif ($estadoVisual === 'sin_lista_bloqueada') {
                                 $style = 'background: rgb(255 180 80 / .10); color: rgb(255 235 210 / .95); border: 1px solid rgb(255 180 80 / .18); opacity: .82; ' . $baseGrupo;
-                            } elseif ($sinLista) {
+                            } elseif ($estadoVisual === 'sin_lista') {
                                 $style = 'background: rgb(255 180 80 / .12); color: rgb(255 235 210 / .95); border: 1px solid rgb(255 180 80 / .22); ' . $baseGrupo;
-                            } elseif ($pasada) {
+                            } elseif ($estadoVisual === 'pasada') {
                                 $style = 'background: linear-gradient(0deg, rgb(' . $grupoRgb . ' / .22), rgb(' . $grupoRgb . ' / .22)), rgb(255 255 255 / .03); color: rgb(255 255 255 / .94); border: 1px solid rgb(' . $grupoRgb . ' / .34); ' . $baseGrupo;
                             } else {
                                 $style = 'background: linear-gradient(0deg, rgb(' . $grupoRgb . ' / .14), rgb(' . $grupoRgb . ' / .14)), rgb(255 255 255 / .03); color: rgb(255 255 255 / .94); border: 1px solid rgb(' . $grupoRgb . ' / .26); ' . $baseGrupo;
@@ -138,16 +130,16 @@
                             <div class="flex items-center justify-between gap-2">
                                 <span class="font-semibold">{{ substr($clase->hora_inicio,0,5) }}</span>
 
-                                @if($esCancelada)
+                                @if($estadoVisual === 'cancelada')
                                     <span class="text-[10px] opacity-90">cancelada</span>
-                                @elseif($cerradaManual)
+                                @elseif($estadoVisual === 'cerrada')
                                     <span class="text-[10px] opacity-80">cerrada</span>
-                                @elseif($bloqueadaSinLista)
+                                @elseif($estadoVisual === 'sin_lista_bloqueada')
                                     <span class="text-[10px] opacity-80">sin lista</span>
                                     <span class="text-[10px] opacity-70">bloq.</span>
-                                @elseif($sinLista)
+                                @elseif($estadoVisual === 'sin_lista')
                                     <span class="text-[10px] opacity-80">sin lista</span>
-                                @elseif($pasada)
+                                @elseif($estadoVisual === 'pasada')
                                     <span class="text-[10px] opacity-80">pasada</span>
                                 @else
                                     <span class="text-[10px] opacity-80">abierta</span>

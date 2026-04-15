@@ -50,30 +50,6 @@ class AsistenciaController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $limiteCierre = now()->subDay()->toDateString(); // ayer
-
-        $idsACerrar = $clases->getCollection()
-            ->filter(function ($c) use ($limiteCierre) {
-                return !$c->asistencia_cerrada
-                    && $c->fecha <= $limiteCierre
-                    && (int) $c->total > 0;
-            })
-            ->pluck('id');
-
-        if ($idsACerrar->isNotEmpty()) {
-            Clase::whereIn('id', $idsACerrar)->update(['asistencia_cerrada' => true]);
-
-            // para que se vea en la vista sin recargar
-            $clases->setCollection(
-                $clases->getCollection()->map(function ($c) use ($idsACerrar) {
-                    if ($idsACerrar->contains($c->id)) {
-                        $c->asistencia_cerrada = true;
-                    }
-                    return $c;
-                })
-            );
-        }
-
         return view('panel.asistencias.index', compact(
             'clases',
             'grupos',

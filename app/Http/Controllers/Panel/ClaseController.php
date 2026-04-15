@@ -90,24 +90,9 @@ class ClaseController extends Controller
 
     private function estadoVisual(Clase $clase, int $totalAsistencias): array
     {
-        $fecha = Carbon::parse($clase->fecha)->startOfDay();
+        $estado = $clase->estadoVisualAsistencia($totalAsistencias);
 
-        $limiteSinLista = now()->subDay()->startOfDay();
-        $limiteBloqueo = now()->subDays(3)->startOfDay();
-
-        $esCancelada = ($clase->estado ?? null) === 'cancelada';
-        $cerradaManual = (bool) ($clase->asistencia_cerrada ?? false);
-
-        $bloqueadaSinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteBloqueo) && $totalAsistencias === 0;
-        $sinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteSinLista) && $totalAsistencias === 0 && !$bloqueadaSinLista;
-
-        if ($esCancelada) return ['cancelada', true];
-        if ($cerradaManual) return ['cerrada', true];
-        if ($bloqueadaSinLista) return ['sin_lista_bloqueada', true];
-        if ($sinLista) return ['sin_lista', false];
-        if ($totalAsistencias > 0) return ['pasada', false];
-
-        return ['abierta', false];
+        return [$estado['clave'], $estado['bloqueada']];
     }
 
     public function show(Request $request, Clase $clase)

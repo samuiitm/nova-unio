@@ -27,6 +27,25 @@ class DashboardController extends Controller
         $inicioMes = now()->copy()->startOfMonth();
         $finMes = now()->copy()->endOfMonth();
 
+        $clasesPendientesLista = Clase::query()
+            ->with('grupo')
+            ->whereBetween('fecha', [
+                now()->copy()->subDays(2)->toDateString(),
+                $hoy->toDateString(),
+            ])
+            ->where(function ($q) {
+                $q->whereNull('estado')
+                    ->orWhere('estado', '!=', 'cancelada');
+            })
+            ->doesntHave('asistencias')
+            ->orderByDesc('fecha')
+            ->orderBy('hora_inicio')
+            ->get()
+            ->filter(function (Clase $clase) {
+                return $clase->estadoVisualAsistencia(0)['clave'] === 'sin_lista';
+            })
+            ->values();
+
         if ($puedeGestionClub) {
             return view('panel.dashboard', [
                 'modo' => 'gestion',
@@ -148,14 +167,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'titulo' => 'Listas pendientes',
-                    'valor' => Clase::query()
-                        ->whereDate('fecha', '<=', $hoy->toDateString())
-                        ->where(function ($q) {
-                            $q->whereNull('estado')
-                                ->orWhere('estado', '!=', 'cancelada');
-                        })
-                        ->doesntHave('asistencias')
-                        ->count(),
+                    'valor' => $clasesPendientesLista->count(),
                     'link' => route('panel.asistencias.index'),
                     'icono' => 'asistencias',
                 ],
@@ -189,18 +201,9 @@ class DashboardController extends Controller
                 ->limit(8)
                 ->get(),
             'preinscripcionesRecientes' => collect(),
-            'clasesSinLista' => Clase::query()
-                ->with('grupo')
-                ->whereDate('fecha', '<=', $hoy->toDateString())
-                ->where(function ($q) {
-                    $q->whereNull('estado')
-                        ->orWhere('estado', '!=', 'cancelada');
-                })
-                ->doesntHave('asistencias')
-                ->orderByDesc('fecha')
-                ->orderBy('hora_inicio')
-                ->limit(8)
-                ->get(),
+            'clasesSinLista' => $clasesPendientesLista
+                ->take(8)
+                ->values(),
         ]);
     }
 

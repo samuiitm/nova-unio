@@ -9,6 +9,7 @@
     $fechaFmt = \Carbon\Carbon::parse($clase->fecha)->format('d/m/Y');
     $horaIni = $clase->hora_inicio ? substr($clase->hora_inicio, 0, 5) : '—';
     $horaFin = $clase->hora_fin ? substr($clase->hora_fin, 0, 5) : '—';
+    $limiteEdicion = $clase->limiteEdicionAsistenciaCarbon();
 @endphp
 
 <div class="flex items-start justify-between gap-4 flex-wrap">
@@ -119,21 +120,24 @@
             </div>
             <div class="mt-1 text-sm panel-muted">
                 @if($estadoVisual === 'sin_lista_bloqueada')
-                    Han pasado 2 días sin pasar lista.
+                    Se superó el plazo de 48 horas desde el inicio de la clase.
                 @elseif($estadoVisual === 'cerrada')
-                    La asistencia está cerrada.
+                    El plazo de edición ha terminado o la asistencia está cerrada.
                 @elseif($estadoVisual === 'cancelada')
                     La clase está cancelada.
                 @endif
+            </div>
+            <div class="mt-1 text-xs panel-muted">
+                Límite para pasar lista: {{ $limiteEdicion->format('d/m/Y H:i') }}.
             </div>
         </div>
     @elseif($estadoVisual === 'sin_lista')
         <div class="mt-4 panel-card p-4">
             <div class="text-sm">
-                Aviso: esta clase ya es de hace 1 día y aún no se ha pasado lista.
+                Esta clase sigue pendiente de lista y aún se puede editar.
             </div>
             <div class="mt-1 text-sm panel-muted">
-                Si pasan 2 días sin lista, se bloqueará.
+                Se puede pasar lista hasta {{ $limiteEdicion->format('d/m/Y H:i') }}.
             </div>
         </div>
     @endif

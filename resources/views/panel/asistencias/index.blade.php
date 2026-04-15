@@ -3,10 +3,6 @@
 @section('title', 'Asistencias | Nova Unió')
 
 @section('content')
-@php
-    $limiteSinLista = now()->subDay()->startOfDay();   // ayer
-    $limiteBloqueo  = now()->subDays(2)->startOfDay(); // hace 2 días
-@endphp
 
 <div class="flex items-start justify-between gap-4">
     <div>
@@ -66,14 +62,8 @@
                         $horaFin = $c->hora_fin ? substr($c->hora_fin,0,5) : '—';
 
                         $total = (int) $c->total;
-
-                        $esCancelada = ($c->estado ?? null) === 'cancelada';
-                        $cerradaManual = (bool) ($c->asistencia_cerrada ?? false);
-
-                        $bloqueadaSinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteBloqueo) && $total === 0;
-                        $sinLista = !$esCancelada && !$cerradaManual && $fecha->lte($limiteSinLista) && $total === 0 && !$bloqueadaSinLista;
-
-                        $pasada = !$esCancelada && !$cerradaManual && $total > 0;
+                        $estadoInfo = $c->estadoVisualAsistencia($total);
+                        $estadoVisual = $estadoInfo['clave'];
                     @endphp
 
                     <tr class="border-t panel-border">
@@ -99,34 +89,34 @@
                         </td>
 
                         <td class="py-3">
-                            @if($esCancelada)
+                            @if($estadoVisual === 'cancelada')
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
+                                    style="background: rgb(255 80 120 / .12); color: rgb(255 130 170); border: 1px solid rgb(255 80 120 / .22);">
                                     Cancelada
                                 </span>
-                            @elseif($cerradaManual)
+                            @elseif($estadoVisual === 'cerrada')
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
+                                    style="background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .70); border: 1px solid rgb(255 255 255 / .10);">
                                     Cerrada
                                 </span>
-                            @elseif($bloqueadaSinLista)
+                            @elseif($estadoVisual === 'sin_lista_bloqueada')
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 180 80 / .08); color: rgb(255 205 140 / .85); border: 1px solid rgb(255 180 80 / .18); opacity:.85;">
+                                    style="background: rgb(255 180 80 / .08); color: rgb(255 205 140 / .85); border: 1px solid rgb(255 180 80 / .18); opacity:.85;">
                                     Sin lista (bloq.)
                                 </span>
-                            @elseif($sinLista)
+                            @elseif($estadoVisual === 'sin_lista')
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
+                                    style="background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);">
                                     Sin lista
                                 </span>
-                            @elseif($pasada)
+                            @elseif($estadoVisual === 'pasada')
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
+                                    style="background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);">
                                     Pasada
                                 </span>
                             @else
                                 <span class="text-xs px-3 py-1 rounded-full"
-                                      style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
+                                    style="background: rgb(var(--p-accent) / .14); color: rgb(var(--p-accent)); border: 1px solid rgb(var(--p-accent) / .25);">
                                     Abierta
                                 </span>
                             @endif
