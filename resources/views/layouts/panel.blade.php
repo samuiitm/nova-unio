@@ -83,7 +83,7 @@
 
                 <div class="min-w-0" x-show="!sidebarCollapsed" x-cloak>
                     <div class="text-lg font-semibold leading-5">Nova Unió</div>
-                    <div class="text-xs panel-muted">Panel privat</div>
+                    <div class="text-xs panel-muted">Panel privado</div>
                 </div>
             </div>
         </div>
