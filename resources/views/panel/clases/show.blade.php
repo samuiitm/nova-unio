@@ -170,7 +170,10 @@
                                         alt="Foto de {{ $a->nombre }}"
                                         class="h-10 w-10 rounded-full object-cover border panel-border shrink-0"
                                     >
-                                    <div class="font-medium">{{ $a->apellidos }}, {{ $a->nombre }}</div>
+                                    <a href="{{ route('panel.alumnos.show', $a) }}"
+                                    class="font-medium hover:underline underline-offset-4">
+                                        {{ $a->apellidos }}, {{ $a->nombre }}
+                                    </a>
                                 </div>
                             </td>
 

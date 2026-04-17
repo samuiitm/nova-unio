@@ -269,6 +269,7 @@ class AlumnoController extends Controller
         $alumno->load('telefonosContacto');
 
         $hoy = now()->toDateString();
+        $ahora = now();
 
         $gruposActivos = $alumno->gruposActivos()->orderBy('nombre')->get();
 
@@ -355,6 +356,68 @@ class AlumnoController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $historialAsistencias = DB::table('clases')
+            ->join('grupos', 'grupos.id', '=', 'clases.grupo_id')
+            ->join('alumno_grupo', function ($join) use ($alumno) {
+                $join->on('alumno_grupo.grupo_id', '=', 'clases.grupo_id')
+                    ->where('alumno_grupo.alumno_id', '=', $alumno->id);
+            })
+            ->leftJoin('asistencias', function ($join) use ($alumno) {
+                $join->on('asistencias.clase_id', '=', 'clases.id')
+                    ->where('asistencias.alumno_id', '=', $alumno->id);
+            })
+            ->where(function ($q) {
+                $q->whereNull('alumno_grupo.fecha_alta')
+                    ->orWhereColumn('alumno_grupo.fecha_alta', '<=', 'clases.fecha');
+            })
+            ->where(function ($q) {
+                $q->whereNull('alumno_grupo.fecha_baja')
+                    ->orWhereColumn('alumno_grupo.fecha_baja', '>=', 'clases.fecha');
+            })
+            ->when(
+                !$alumno->activo && $alumno->fecha_baja,
+                fn ($q) => $q->whereDate('clases.fecha', '<=', $alumno->fecha_baja->toDateString())
+            )
+            ->where(function ($q) use ($ahora) {
+                $q->whereDate('clases.fecha', '<', $ahora->toDateString())
+                    ->orWhere(function ($q2) use ($ahora) {
+                        $q2->whereDate('clases.fecha', '=', $ahora->toDateString())
+                            ->whereTime('clases.hora_inicio', '<=', $ahora->format('H:i:s'));
+                    });
+            })
+            ->where(function ($q) {
+                $q->whereNull('clases.estado')
+                    ->orWhere('clases.estado', '!=', 'cancelada');
+            })
+            ->select([
+                'clases.id',
+                'clases.fecha',
+                'clases.hora_inicio',
+                'clases.hora_fin',
+                'grupos.nombre as grupo_nombre',
+                'asistencias.estado as asistencia_estado',
+            ])
+            ->distinct()
+            ->orderByDesc('clases.fecha')
+            ->orderByDesc('clases.hora_inicio')
+            ->limit(10)
+            ->get()
+            ->map(function ($fila) {
+                $fila->estado_clave = match ($fila->asistencia_estado) {
+                    'presente' => 'presente',
+                    'ausente' => 'ausente',
+                    default => 'sin_registrar',
+                };
+
+                $fila->estado_texto = match ($fila->asistencia_estado) {
+                    'presente' => 'Presente',
+                    'ausente' => 'Ausente',
+                    default => 'Sin registrar',
+                };
+
+                return $fila;
+            });
+
         return view('panel.alumnos.show', compact(
             'alumno',
             'gruposActivos',
@@ -367,7 +430,8 @@ class AlumnoController extends Controller
             'seguroVigente',
             'seguroPendiente',
             'ultimoSeguroPagado',
-            'seguros'
+            'seguros',
+            'historialAsistencias'
         ));
     }
 
