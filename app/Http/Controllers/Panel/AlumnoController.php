@@ -397,10 +397,10 @@ class AlumnoController extends Controller
                 'grupos.nombre as grupo_nombre',
                 'asistencias.estado as asistencia_estado',
             ])
+            ->whereDate('clases.fecha', '>=', $ahora->copy()->subMonth()->toDateString())
             ->distinct()
             ->orderByDesc('clases.fecha')
             ->orderByDesc('clases.hora_inicio')
-            ->limit(10)
             ->get()
             ->map(function ($fila) {
                 $fila->estado_clave = match ($fila->asistencia_estado) {

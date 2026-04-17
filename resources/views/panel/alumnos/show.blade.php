@@ -506,58 +506,75 @@
             </table>
         </div>
     </div>
-        <div class="panel-card p-6">
-        <h2 class="text-lg font-semibold">Últimas 10 asistencias</h2>
-        <p class="mt-1 text-sm panel-muted">
-            Aquí se muestran las últimas clases del alumno. Si no se pasó lista, aparecerá como <span class="text-white">Sin registrar</span>.
-        </p>
+        <div class="panel-card p-5">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-semibold">Asistencias del último mes</h2>
+                    <p class="mt-1 text-xs panel-muted">
+                        Se muestran las clases del último mes. Si no se pasó lista, aparecerá como
+                        <span class="text-white">Sin registrar</span>.
+                    </p>
+                </div>
 
-        <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="text-left panel-muted">
-                    <tr>
-                        <th class="py-2">Fecha</th>
-                        <th class="py-2">Hora</th>
-                        <th class="py-2">Grupo</th>
-                        <th class="py-2">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($historialAsistencias as $fila)
-                        @php
-                            $estiloAsistencia = match($fila->estado_clave) {
-                                'presente' => 'background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);',
-                                'ausente' => 'background: rgb(255 80 120 / .12); color: rgb(255 150 170); border: 1px solid rgb(255 80 120 / .22);',
-                                default => 'background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);',
-                            };
-                        @endphp
+                <div class="text-right shrink-0">
+                    <div class="text-xs panel-muted">Registros</div>
+                    <div class="text-sm font-semibold">{{ $historialAsistencias->count() }}</div>
+                </div>
+            </div>
 
-                        <tr class="border-t panel-border">
-                            <td class="py-3">
-                                {{ \Carbon\Carbon::parse($fila->fecha)->format('d/m/Y') }}
-                            </td>
-                            <td class="py-3">
-                                {{ $fila->hora_inicio ? substr($fila->hora_inicio, 0, 5) : '—' }}
-                                -
-                                {{ $fila->hora_fin ? substr($fila->hora_fin, 0, 5) : '—' }}
-                            </td>
-                            <td class="py-3">{{ $fila->grupo_nombre }}</td>
-                            <td class="py-3">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                                      style="{{ $estiloAsistencia }}">
-                                    {{ $fila->estado_texto }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="py-6 panel-muted">
-                                No hay clases anteriores para mostrar.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+            <div class="mt-4 overflow-x-auto">
+                <div class="max-h-80 overflow-y-auto rounded-2xl border panel-border">
+                    <table class="w-full text-xs">
+                        <thead class="text-left panel-muted bg-white/5 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2 font-medium">Fecha</th>
+                                <th class="px-3 py-2 font-medium">Hora</th>
+                                <th class="px-3 py-2 font-medium">Grupo</th>
+                                <th class="px-3 py-2 font-medium">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($historialAsistencias as $fila)
+                                @php
+                                    $estiloAsistencia = match($fila->estado_clave) {
+                                        'presente' => 'background: rgb(80 200 120 / .12); color: rgb(140 255 190); border: 1px solid rgb(80 200 120 / .22);',
+                                        'ausente' => 'background: rgb(255 80 120 / .12); color: rgb(255 150 170); border: 1px solid rgb(255 80 120 / .22);',
+                                        default => 'background: rgb(255 180 80 / .12); color: rgb(255 205 140); border: 1px solid rgb(255 180 80 / .22);',
+                                    };
+                                @endphp
+
+                                <tr class="border-t panel-border">
+                                    <td class="px-3 py-2 whitespace-nowrap">
+                                        {{ \Carbon\Carbon::parse($fila->fecha)->format('d/m/Y') }}
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap">
+                                        {{ $fila->hora_inicio ? substr($fila->hora_inicio, 0, 5) : '—' }}
+                                        -
+                                        {{ $fila->hora_fin ? substr($fila->hora_fin, 0, 5) : '—' }}
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <span class="block truncate max-w-[180px]" title="{{ $fila->grupo_nombre }}">
+                                            {{ $fila->grupo_nombre }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
+                                            style="{{ $estiloAsistencia }}">
+                                            {{ $fila->estado_texto }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-3 py-5 panel-muted text-sm">
+                                        No hay clases anteriores para mostrar.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
