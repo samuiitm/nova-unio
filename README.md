@@ -123,29 +123,7 @@ Per exemple:
 
 ---
 
-### 7. Configurar la base de dades al fitxer `.env`
-
-Un cop creat el fitxer `.env`, s’ha d’obrir i deixar aquestes variables amb les dades de la base de dades local:
-
-```env
-APP_NAME="Nova Unió"
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://127.0.0.1:8000
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=novaunio_local
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-> Si al teu ordinador el nom d’usuari o la contrasenya de MySQL són diferents, només cal canviar-los aquí.
-
----
-
-### 8. Generar la clau de Laravel
+### 7. Generar la clau de Laravel
 
 ```bash
 php artisan key:generate
@@ -153,7 +131,7 @@ php artisan key:generate
 
 ---
 
-### 9. Crear les taules i carregar les dades demo
+### 8. Crear les taules i carregar les dades demo
 
 ```bash
 php artisan migrate:fresh --seed
@@ -163,7 +141,7 @@ Aquest comandament crearà tota l’estructura de la base de dades i carregarà 
 
 ---
 
-### 10. Compilar els assets del frontend
+### 9. Compilar els assets del frontend
 
 ```bash
 npm run build
@@ -177,7 +155,7 @@ npm run dev
 
 ---
 
-### 11. Arrencar el servidor local
+### 10. Arrencar el servidor local
 
 ```bash
 php artisan serve
