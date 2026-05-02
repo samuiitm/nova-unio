@@ -1,59 +1,289 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# NOVA UNIÓ
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicació web de gestió per al **Club Esportiu Nova Unió**, un club de **Lloret de Mar** centrat principalment en **MMA** i **Sambo**.
 
-## About Laravel
+Aquest projecte neix amb la idea de centralitzar en una sola aplicació tota la gestió del club: alumnes, grups, classes, assistències, quotes, pagaments, assegurances esportives i preinscripcions. A més, també inclou una part pública informativa i un panell intern per a la gestió del dia a dia.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+# Accés ràpid per a la prova
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Quan estigui tot instal·lat, es podrà obrir directament al navegador:
 
-## Learning Laravel
+- **Panell intern:** `http://127.0.0.1:8000/panel/login`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Usuari demo d’administrador:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Email:** `admin@novaunio.local`
+- **Contrasenya:** `NovaUnio1234!`
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Què inclou el projecte
 
-### Premium Partners
+## Part pública
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+La part pública és la web informativa del club i inclou pàgines com:
 
-## Contributing
+- Inici
+- El club
+- Professors
+- Horaris
+- Plans
+- FAQ
+- Contacte
+- Preinscripció
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Panell privat
 
-## Code of Conduct
+La part privada és el panell intern, accessible des de `/panel`, on es pot gestionar:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Dashboard
+- Alumnes
+- Grups
+- Programació de grups
+- Calendari
+- Assistències
+- Quotes i pagaments
+- Assegurances esportives
+- Preinscripcions
+- Informes
+- Usuaris
+- Perfil
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Què es necessita per provar-ho en local
 
-## License
+Per poder muntar el projecte en local, és recomanable tenir instal·lat:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **PHP**
+- **Composer**
+- **Node.js i npm**
+- **MySQL o MariaDB**
+- Un entorn local tipus **XAMPP**, **Laragon**, **MAMP** o similar
+
+> El més recomanable és muntar-ho amb **MySQL/MariaDB**, perquè és el mateix tipus de base de dades que s’ha utilitzat durant el desenvolupament.
+
+---
+
+# Com provar l’aplicació en local
+
+## Passos exactes per poder obrir el panell al navegador
+
+### 1. Descomprimir o clonar el projecte
+
+Posar el projecte dins d’una carpeta local de l’ordinador.
+
+---
+
+### 2. Obrir una terminal dins de la carpeta del projecte
+
+Totes les comandes següents s’han d’executar dins de la carpeta arrel del projecte.
+
+---
+
+### 3. Instal·lar les dependències de PHP
+
+```bash
+composer install
+```
+
+---
+
+### 4. Instal·lar les dependències del frontend
+
+```bash
+npm install
+```
+
+---
+
+### 5. Crear el fitxer `.env`
+
+S’ha de copiar el fitxer `.env.example` i canviar-li el nom a `.env`.
+
+Si es vol fer per terminal:
+
+```bash
+cp .env.example .env
+```
+
+En Windows, si aquesta comanda no funciona, es pot fer manualment duplicant el fitxer `.env.example` i canviant-li el nom a `.env`.
+
+---
+
+### 6. Crear una base de dades local
+
+S’ha de crear una base de dades buida a **MySQL** o **MariaDB**.
+
+Per exemple:
+
+- `novaunio_local`
+
+---
+
+### 7. Configurar la base de dades al fitxer `.env`
+
+Un cop creat el fitxer `.env`, s’ha d’obrir i deixar aquestes variables amb les dades de la base de dades local:
+
+```env
+APP_NAME="Nova Unió"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=novaunio_local
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+> Si al teu ordinador el nom d’usuari o la contrasenya de MySQL són diferents, només cal canviar-los aquí.
+
+---
+
+### 8. Generar la clau de Laravel
+
+```bash
+php artisan key:generate
+```
+
+---
+
+### 9. Crear les taules i carregar les dades demo
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Aquest comandament crearà tota l’estructura de la base de dades i carregarà dades de prova per poder entrar a l’aplicació i revisar-la sense trobar-ho tot buit.
+
+---
+
+### 10. Compilar els assets del frontend
+
+```bash
+npm run build
+```
+
+Si es prefereix treballar amb Vite en desenvolupament, també es pot fer servir:
+
+```bash
+npm run dev
+```
+
+---
+
+### 11. Arrencar el servidor local
+
+```bash
+php artisan serve
+```
+
+---
+
+## Obrir l’aplicació al navegador
+
+Quan s’hagi executat l’última comanda, es podrà obrir al navegador:
+
+- **Web pública:** `http://127.0.0.1:8000`
+- **Panell intern:** `http://127.0.0.1:8000/panel/login`
+
+---
+
+# Usuari demo per provar l’aplicació
+
+## Administrador
+
+- **Email:** `admin@novaunio.local`
+- **Contrasenya:** `NovaUnio1234!`
+
+## Entrenador admin
+
+- **Email:** `entrenadoradmin@novaunio.local`
+- **Contrasenya:** `NovaUnio1234!`
+
+## Entrenador
+
+- **Email:** `entrenador@novaunio.local`
+- **Contrasenya:** `NovaUnio1234!`
+
+> Si es vol revisar tota l’aplicació amb accés complet, el millor és entrar amb l’usuari **admin**.
+
+---
+
+# Dades demo incloses
+
+Quan es fa la instal·lació local, l’aplicació carrega dades de prova perquè es pugui revisar millor el funcionament del sistema. Entre aquestes dades hi ha:
+
+- grups de prova
+- alumnes actius
+- quotes pagades i pendents
+- pagaments registrats
+- assegurances esportives
+- preinscripcions
+- classes passades i futures
+- assistències registrades i classes sense llista
+
+Això permet provar millor apartats com:
+
+- la fitxa de l’alumne
+- l’historial de pagaments
+- el calendari
+- les assistències
+- el dashboard
+- la gestió d’usuaris
+
+---
+
+# Si es vol començar de zero
+
+Si es vol reiniciar tot l’entorn demo, només cal executar una altra vegada:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Això tornarà a crear tota la base de dades amb les dades de prova.
+
+---
+
+# Resum ràpid de comandes
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+npm run build
+php artisan serve
+```
+
+Després d’això, només cal obrir:
+
+- `http://127.0.0.1:8000/panel/login`
+
+I entrar amb:
+
+- `admin@novaunio.local`
+- `NovaUnio1234!`
+
+---
+
+# Notes importants
+
+- Els usuaris i les dades demo estan preparats **només per provar el projecte en local**.
+- No s’han pensat per utilitzar-se en producció.
+- El projecte està preparat perquè el professor el pugui muntar en local i provar-lo directament amb un usuari administrador demo.
+
+---
+
+# Context del projecte
+
+NOVA UNIÓ no és només una pràctica acadèmica. És una eina pensada per donar resposta a una necessitat real del club i ajudar a organitzar millor el seu dia a dia. La idea és que l’aplicació pugui ser útil de veritat per gestionar alumnes, classes, assistències, pagaments, preinscripcions i tot el que hi ha darrere del funcionament del club.
+
+Per això, més enllà de la part tècnica, el projecte s’ha intentat desenvolupar d’una manera pràctica, clara i pensada perquè es pugui continuar millorant i fent créixer amb el temps.
